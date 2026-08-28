@@ -1,0 +1,9 @@
+{"sessionId":"f3aa2a","location":"main.js:setup:start","message":"setup entered","data":{"build":"439"},"hypothesisId":"C","timestamp":1783150890823,"runId":"post-fix"}
+{"sessionId":"f3aa2a","location":"main.js:applyOutputNamingPatterns","message":"naming sync","data":{"count":1,"watchKey":"doc_type\u0001\u00016\u0001true\u0001yyyyMMdd\u0001_","build":"439","prefixMode":"doc_type"},"hypothesisId":"A","timestamp":1783150890878,"runId":"post-fix"}
+{"sessionId":"f3aa2a","location":"main.js:syncMasterMatchExportSettings","message":"master export sync","data":{"count":1,"ruleCount":0},"hypothesisId":"A","timestamp":1783150890894,"runId":"post-fix"}
+{"sessionId":"f3aa2a","location":"main.js:exportPreviewRoot:watch","message":"export preview watch fired","data":{"count":1,"nodeCount":15},"hypothesisId":"B","timestamp":1783150890901,"runId":"post-fix"}
+{"sessionId":"f3aa2a","location":"main.js:exportPreviewRoot:watch","message":"export preview watch fired","data":{"count":2,"nodeCount":15},"hypothesisId":"B","timestamp":1783150891848,"runId":"post-fix"}
+{"sessionId":"f3aa2a","location":"main.js:mount:success","message":"vue mounted","data":{"appHtmlLen":40830},"hypothesisId":"E","timestamp":1783150892313,"runId":"post-fix"}
+{"sessionId":"f3aa2a","location":"main.js:syncMasterMatchExportSettings","message":"master export sync","data":{"count":2,"ruleCount":2},"hypothesisId":"A","timestamp":1783150892315,"runId":"post-fix"}
+{"sessionId":"f3aa2a","location":"main.js:exportPreviewRoot:watch","message":"export preview watch fired","data":{"count":3,"nodeCount":16},"hypothesisId":"B","timestamp":1783150892316,"runId":"post-fix"}
+{"sessionId":"f3aa2a","location":"main.js:exportPreviewRoot:watch","message":"export preview watch fired","data":{"count":4,"nodeCount":16},"hypothesisId":"B","timestamp":1783150892318,"runId":"post-fix"}
