@@ -75,12 +75,7 @@ const WORKFLOW_DEFAULTS = {
     llmOcrEnabled: true,
   },
   fraudDetect: {
-    psTamper: false,
-    psTamperDocTypes: [],
-    aiGenerated: false,
-    aiGeneratedDocTypes: [],
-    templateFeature: false,
-    templateFeatureDocTypes: [],
+    enabledTypes: [],
   },
 };
 
@@ -91,39 +86,38 @@ const FRAUD_DETECT_METHOD_OPTIONS = [
 
 function normalizeFraudDetectConfig(fraudDetect, allowedTypes = []) {
   const raw = fraudDetect || {};
-  const base = { ...cloneJson(WORKFLOW_DEFAULTS.fraudDetect), ...raw };
   const allowed = Array.isArray(allowedTypes)
     ? allowedTypes.map((item) => (typeof item === 'string' ? item : item?.type)).filter(Boolean)
     : [];
+  let enabledTypes = Array.isArray(raw.enabledTypes) ? raw.enabledTypes.filter(Boolean) : [];
 
-  let psTamper = base.psTamper === true;
-  let aiGenerated = base.aiGenerated === true;
-  let templateFeature = base.templateFeature === true;
-  const legacyDocTypes = Array.isArray(base.targetDocTypes) ? base.targetDocTypes.filter(Boolean) : [];
-  const legacyCategories = Array.isArray(base.detectCategories) ? base.detectCategories.filter(Boolean) : [];
-  if (legacyCategories.length) {
-    if (legacyCategories.includes('ps_tamper')) psTamper = true;
-    if (legacyCategories.includes('ai_generated')) aiGenerated = true;
-    if (legacyCategories.includes('template_feature')) templateFeature = true;
-  }
-  if (base.detectCategory === 'ps_tamper') psTamper = true;
-  if (legacyDocTypes.length) {
-    if (psTamper && !base.psTamperDocTypes?.length) base.psTamperDocTypes = [...legacyDocTypes];
-    if (aiGenerated && !base.aiGeneratedDocTypes?.length) base.aiGeneratedDocTypes = [...legacyDocTypes];
-    if (templateFeature && !base.templateFeatureDocTypes?.length) base.templateFeatureDocTypes = [...legacyDocTypes];
+  if (!enabledTypes.length) {
+    const legacyUnion = new Set();
+    [
+      ['psTamper', 'psTamperDocTypes'],
+      ['aiGenerated', 'aiGeneratedDocTypes'],
+      ['templateFeature', 'templateFeatureDocTypes'],
+    ].forEach(([switchKey, docTypesKey]) => {
+      if (raw[switchKey] === true) {
+        const types = Array.isArray(raw[docTypesKey]) && raw[docTypesKey].length
+          ? raw[docTypesKey]
+          : allowed;
+        types.forEach((type) => legacyUnion.add(type));
+      }
+    });
+    const legacyCategories = Array.isArray(raw.detectCategories) ? raw.detectCategories : [];
+    if (legacyCategories.length && !legacyUnion.size) {
+      allowed.forEach((type) => legacyUnion.add(type));
+    }
+    const legacyDocTypes = Array.isArray(raw.targetDocTypes) ? raw.targetDocTypes.filter(Boolean) : [];
+    if (legacyDocTypes.length && !legacyUnion.size) {
+      legacyDocTypes.forEach((type) => legacyUnion.add(type));
+    }
+    enabledTypes = [...legacyUnion];
   }
 
-  const normalizeDocTypes = (enabled, docTypes) => {
-    if (!enabled) return [];
-    return filterImageDocTypes(docTypes, allowed);
-  };
   return {
-    psTamper,
-    psTamperDocTypes: normalizeDocTypes(psTamper, base.psTamperDocTypes),
-    aiGenerated,
-    aiGeneratedDocTypes: normalizeDocTypes(aiGenerated, base.aiGeneratedDocTypes),
-    templateFeature,
-    templateFeatureDocTypes: normalizeDocTypes(templateFeature, base.templateFeatureDocTypes),
+    enabledTypes: filterImageDocTypes(enabledTypes, allowed),
   };
 }
 
@@ -254,6 +248,7 @@ const HITL_ROLE_OPTIONS = [
   { value: 'operator', label: '操作員', hint: '通常の確認・修正作業を担当' },
   { value: 'operation_admin', label: '操作管理者', hint: '運用管理・例外確認を担当' },
 ];
+const HITL_GATE_ROLE_OPTIONS = HITL_ROLE_OPTIONS.filter((item) => item.value !== 'case_owner');
 
 const DOC_TYPE_REGISTRY = [
   { id: '保険請求書', category: 'claim', icon: '請', fields: ['証券番号', '被保険者氏名', '請求日（記入日）', '受取人（請求者）フリガナ', '受取人（請求者）氏名', '携帯電話番号', '登録住所', '送付先指定欄', '親権者または後見人 氏名', '親権者または後見人 フリガナ', '口座名義人 フリガナ', '口座名義人 氏名', '金融機関名', '支店名', '預金種目', '口座番号', '通帳記号（5ケタ）', '通帳番号（8ケタ以下）', '請求番号'] },

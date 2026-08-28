@@ -45,7 +45,7 @@ const INSPECTOR_HINTS = {
   inputSetting: '画面上アップロードまたは APIアップロードでファイルを受け付けます。APIアップロードを有効にした場合はエンドポイント URL を指定します。',
   inputLimits: 'ファイル形式・最大ファイルサイズ（上限 20MB・それ以下のみ）を指定します。',
   preprocess: 'OCR 前に画像補正、画像回転、画像整列を実行します。\n\n・画像補正：歪み・傾きの補正。対象帳票未指定時は全帳票タイプが対象。\n・画像回転：スキャン方向の自動補正。対象帳票未指定時は全帳票タイプが対象。\n・画像整列：同一帳票タイプ内の画像を整列。',
-  fraudDetect: '帳票画像の改ざん・偽造リスクを判定します。各検知種別を ON にした後、対象帳票を指定できます（未指定時は全帳票）。\n\n・PSチェック：Photoshop 等による加工痕跡を検出。\n・AI生成検知：AI 生成画像の疑いを検出。\n・テンプレート特徴検知：正規テンプレートとの特徴不一致を検出。',
+  fraudDetect: '帳票画像の改ざん・偽造リスクを判定します。PS 加工痕跡、AI 生成画像、テンプレート特徴不一致などを統合検知し、帳票タイプごとに実行有無を切り替えます。',
   ocrSetting: '抽出フィールド・Prompt・信頼度閾値などの詳細は帳票 template またはシステムモデル設定で管理します。',
   ocrExtract: 'Step1で関連付けた帳票タイプを参照します。帳票タイプごとにOCR抽出の実行有無を選択し、抽出項目は「帳票タイプ設定」で編集します。',
   qrRead: 'QR 解析ルールは帳票タイプ設定 Step2（QR読取）で編集。OCR 抽出設定から帳票タイプ設定へ移動できます。',
@@ -85,7 +85,7 @@ const INSPECTOR_HINTS = {
   decisionContext: '案件就緒・検証結果・処理完了など、分岐の業務意味を選びます。変更時は既定条件で上書きされます。',
   decisionElseLabel: '接続線ラベルや実行ログに表示される名称です。',
   decisionOutputVar: '分岐名は後続ノードの条件式で参照できます。',
-  fraud_detect: '画像の PS 加工痕跡・AI 生成画像・テンプレート特徴の不一致を判定します。各検知種別を ON にした後、対象帳票を指定できます（未指定時は全帳票）。',
+  fraud_detect: '帳票画像の改ざん・偽造リスクを判定します。帳票タイプごとに実行有無を切り替えます。',
   startTriggers: 'システム固定入口。設定項目はありません。',
   endTriggers: 'Workflow の終点。設定項目・出力変数はありません。',
   startTriggerSchedule: 'スケジュール起動は現在バージョンでは未対応です。',
@@ -141,7 +141,7 @@ const LEGACY_CASE_WORKFLOW_TEMPLATE_NODE_IDS = [
 /** 主処理チェーンの推奨順序（Dify Start → 処理ノード） */
 const WORKFLOW_MAIN_CHAIN_ORDER = [
   { type: 'preprocess', label: '前処理', step: 1 },
-  { type: 'fraud_detect', label: '不正検知', step: 2 },
+  { type: 'fraud_detect', label: '画像不正検知', step: 2 },
   { type: 'ocr', label: 'OCR抽出', step: 3 },
   { type: 'data_mapping', label: 'データマッピング', step: 4 },
   { type: 'ai_verify', label: 'AI検証', step: 5 },
@@ -209,7 +209,7 @@ const CASE_FLOW_NODE_GROUPS = [
     category: '業務 Agent',
     nodes: [
       { type: 'preprocess', label: '前処理' },
-      { type: 'fraud_detect', label: '不正検知' },
+      { type: 'fraud_detect', label: '画像不正検知' },
       { type: 'ocr', label: 'OCR抽出' },
       { type: 'data_mapping', label: 'データマッピング' },
       { type: 'ai_verify', label: 'AI検証' },
@@ -563,9 +563,9 @@ const WORKFLOW_NODE_META = {
   },
   fraud_detect: {
     icon: 'FD',
-    title: '不正検知',
-    desc: 'PS加工・AI生成・テンプレート特徴の不正検知',
-    tasks: ['PSチェック', 'AI生成検知', 'テンプレート特徴検知'],
+    title: '画像不正検知',
+    desc: '帳票画像の改ざん・偽造リスクを判定',
+    tasks: ['改ざん検知', '偽造判定'],
     input: 'Logical Document',
     output: 'Fraud Risk',
     accent: '#d92d20',
@@ -1530,33 +1530,6 @@ const PREPROCESS_CANVAS_SHORT_LABELS = {
 
 const FRAUD_DETECT_RISK_THRESHOLD = 70;
 
-const FRAUD_DETECT_SETTING_ITEMS = [
-  {
-    key: 'ps_tamper',
-    label: 'PSチェック',
-    switchKey: 'psTamper',
-    docTypesKey: 'psTamperDocTypes',
-  },
-  {
-    key: 'ai_generated',
-    label: 'AI生成検知',
-    switchKey: 'aiGenerated',
-    docTypesKey: 'aiGeneratedDocTypes',
-  },
-  {
-    key: 'template_feature',
-    label: 'テンプレート特徴検知',
-    switchKey: 'templateFeature',
-    docTypesKey: 'templateFeatureDocTypes',
-  },
-];
-
-const FRAUD_DETECT_CANVAS_SHORT_LABELS = {
-  ps_tamper: 'PS',
-  ai_generated: 'AI生成',
-  template_feature: 'テンプレ',
-};
-
 const AI_VERIFY_CANVAS_SHORT_LABELS = {
   required_fields: '必須項目',
   required_documents: '必要書類',
@@ -1584,14 +1557,8 @@ function buildPreprocessCanvasSummaryChips(imageConfig = {}) {
 }
 
 function buildFraudDetectCanvasSummaryChips(fraudConfig = {}) {
-  return FRAUD_DETECT_SETTING_ITEMS
-    .filter((item) => fraudConfig[item.switchKey])
-    .map((item) => {
-      const types = fraudConfig[item.docTypesKey];
-      const count = Array.isArray(types) && types.length ? types.length : 0;
-      const short = FRAUD_DETECT_CANVAS_SHORT_LABELS[item.key] || item.label;
-      return count > 0 ? `${short} ${count}件` : short;
-    });
+  const enabledTypes = Array.isArray(fraudConfig.enabledTypes) ? fraudConfig.enabledTypes.filter(Boolean) : [];
+  return enabledTypes;
 }
 
 function buildAiVerifyCanvasSummaryChips(node, getModuleRuleCount) {
@@ -1621,14 +1588,17 @@ function getWorkflowNodeReuseSummaryPrefix(node) {
   return clipped ? `${statusLabel}: ${clipped}` : statusLabel;
 }
 
-const HITL_GATE_CANVAS_ROLE_FALLBACK = '案件担当者';
+const HITL_GATE_CANVAS_ROLE_FALLBACK = '操作員';
 
 function formatHitlGateCanvasRoleLabel(role) {
   const raw = String(role || '').trim();
   if (!raw) return HITL_GATE_CANVAS_ROLE_FALLBACK;
-  const options = typeof HITL_ROLE_OPTIONS !== 'undefined' ? HITL_ROLE_OPTIONS : [];
-  const match = options.find((item) => item.value === raw);
-  return match?.label || raw;
+  const gateRole = normalizeHitlGateRole(raw);
+  const options = typeof HITL_GATE_ROLE_OPTIONS !== 'undefined'
+    ? HITL_GATE_ROLE_OPTIONS
+    : (typeof HITL_ROLE_OPTIONS !== 'undefined' ? HITL_ROLE_OPTIONS : []);
+  const match = options.find((item) => item.value === gateRole);
+  return match?.label || gateRole;
 }
 
 function buildHitlGateCanvasSummary(node, workflow = null) {
@@ -1670,13 +1640,18 @@ function buildWorkflowNodeCanvasSummary(node, ctx = {}) {
       );
     }
     case 'fraud_detect': {
-      const chips = buildFraudDetectCanvasSummaryChips(ctx.fraudDetect || {});
-      if (!chips.length) {
+      const stats = ctx.fraudDetectStats || { total: 0, enabled: 0, enabledLabels: [] };
+      const enabledLabels = Array.isArray(stats.enabledLabels) ? stats.enabledLabels : [];
+      if (!stats.enabled) {
         return reusePrefix
           ? joinWorkflowCanvasSummary(reusePrefix, WORKFLOW_CANVAS_SUMMARY_EMPTY)
           : WORKFLOW_CANVAS_SUMMARY_EMPTY;
       }
-      return joinWorkflowCanvasSummary(reusePrefix, `${chips.length}件有効`, ...chips.slice(0, 2));
+      return joinWorkflowCanvasSummary(
+        reusePrefix,
+        `${stats.enabled}件有効`,
+        ...enabledLabels.slice(0, 2),
+      );
     }
     case 'data_mapping': {
       const ruleCount = Number(ctx.dataMappingRuleCount) || 0;
@@ -1779,7 +1754,7 @@ function getWorkflowNodePickerSummary(type) {
 
 const WORKFLOW_NODE_PICKER_DESCRIPTIONS = {
   preprocess: '画像回転、画像補正、画像整列などの前処理を実行します。',
-  fraud_detect: 'PS 加工痕跡・AI 生成画像・テンプレート特徴不一致を判定します。検知種別ごとに対象帳票を指定できます。',
+  fraud_detect: '帳票画像の改ざん・偽造リスクを判定します。帳票タイプごとに実行有無を切り替えます。',
   ocr: '帳票タイプごとに OCR テンプレートを実行し、抽出項目を出力します。',
   data_mapping: 'OCR 抽出項目を標準項目へ変換します。',
   ai_verify: '必須フィールド、必要書類、テキスト検証、データ検証、標準データ整合性、署名・印鑑検証を実行します。',
@@ -1910,7 +1885,7 @@ const HITL_LEGACY_ACTION_MAP = {
 };
 
 const HITL_CONTEXT_DEFAULT_ROLE = {
-  preprocess: 'case_owner',
+  preprocess: 'operator',
   ocr: 'operator',
   verification: 'operation_admin',
 };
@@ -1925,9 +1900,14 @@ const HITL_ROLE_LEGACY_MAP = {
   'その他ロール': 'operation_admin',
 };
 
-function normalizeHitlRole(role, fallback = 'case_owner') {
+function normalizeHitlRole(role, fallback = 'operator') {
   const raw = String(role || '').trim();
   return HITL_ROLE_LEGACY_MAP[raw] || raw || fallback;
+}
+
+function normalizeHitlGateRole(role, fallback = 'operator') {
+  const normalized = normalizeHitlRole(role, fallback);
+  return normalized === 'case_owner' ? 'operator' : normalized;
 }
 
 const HITL_LEGACY_CONTEXT_MAP = {
@@ -2437,7 +2417,7 @@ function inferHitlGateConditionType(node) {
 }
 
 function getHitlGateDefaultRole(hitlContext) {
-  return HITL_CONTEXT_DEFAULT_ROLE[hitlContext] || 'case_owner';
+  return HITL_CONTEXT_DEFAULT_ROLE[hitlContext] || 'operator';
 }
 
 function isHitlGateNode(node) {
@@ -2576,7 +2556,7 @@ function normalizeHitlGateNode(node, workflow = null) {
     type: 'hitl_gate',
     hitlContext,
     label: node.label || '人工確認',
-    role: normalizeHitlRole(node.role, getHitlGateDefaultRole(hitlContext)),
+    role: normalizeHitlGateRole(node.role, getHitlGateDefaultRole(hitlContext)),
     actions: normalizeHitlGateActions(node.actions),
     description: node.description || '',
   });
@@ -4168,7 +4148,7 @@ function buildDefaultCaseWorkflow() {
     type: 'hitl_gate',
     label: '前処理人工確認',
     hitlContext: 'preprocess',
-    role: 'case_owner',
+    role: 'operator',
   });
   place({
     id: 'wf-hu-ocr',
@@ -4464,7 +4444,7 @@ function migrateQrReadNodesToFraudDetect(workflow) {
   workflow.nodes.forEach((node) => {
     if (node.type !== 'qr_read') return;
     node.type = 'fraud_detect';
-    if (!node.label || node.label === 'QR読取') node.label = '不正検知';
+    if (!node.label || node.label === 'QR読取' || node.label === '不正検知') node.label = '画像不正検知';
   });
 }
 

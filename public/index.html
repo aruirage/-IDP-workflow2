@@ -186,7 +186,7 @@
                   </div>
                   <div
                     class="fixed-doc-preview-canvas"
-                    :class="{ 'is-panning': fixedDocPreviewPanning, 'is-qr-region-edit': !!fixedDocQrRegionEditId }"
+                    :class="{ 'is-panning': fixedDocPreviewPanning }"
                     @pointerdown="onFixedDocPreviewPointerDown"
                     @pointermove="onFixedDocPreviewPointerMove"
                     @pointerup="onFixedDocPreviewPointerUp"
@@ -200,47 +200,39 @@
                       :style="fixedDocPreviewTransformStyle"
                     >
                       <div class="fixed-doc-preview-sheet">
-                        <img
-                          class="fixed-doc-preview-image"
-                          :src="fixedDocPreviewImage"
-                          :alt="fixedDocPreviewTitle"
-                          draggable="false"
-                        />
-                        <div
-                          v-if="fixedDocPreviewShowQrHotspots"
-                          class="fixed-doc-preview-hotspots"
-                          aria-hidden="true"
-                        >
-                          <button
-                            v-for="src in fixedDocPreviewQrHotspots"
-                            :key="'qr-hot-' + src.id"
-                            type="button"
-                            class="fixed-doc-preview-hotspot"
-                            :data-source-id="src.id"
-                            :class="{ 'is-active': fixedDocActiveQrSourceId === src.id, 'is-disabled': src.enabled === false, 'is-editing': fixedDocQrRegionEditId === src.id }"
-                            :style="{
-                              left: src.rect.x + '%',
-                              top: src.rect.y + '%',
-                              width: src.rect.w + '%',
-                              height: src.rect.h + '%',
-                            }"
-                            :title="src.id + ' · ' + src.label"
-                            @click.stop="selectFixedDocPreviewQrSource(src.id)"
+                        <div class="fixed-doc-preview-image-wrap">
+                          <img
+                            class="fixed-doc-preview-image"
+                            :src="fixedDocPreviewImage"
+                            :alt="fixedDocPreviewTitle"
+                            draggable="false"
+                          />
+                          <div
+                            v-if="fixedDocPreviewShowQrHotspots"
+                            class="fixed-doc-preview-hotspots"
+                            aria-hidden="true"
                           >
-                            <span class="fixed-doc-preview-hotspot-label">{{ src.id }}</span>
-                            <span class="fixed-doc-preview-hotspot-body" data-region-action="move"></span>
-                            <span class="fixed-doc-preview-hotspot-handle fixed-doc-preview-hotspot-handle--nw" data-region-action="resize-nw"></span>
-                            <span class="fixed-doc-preview-hotspot-handle fixed-doc-preview-hotspot-handle--ne" data-region-action="resize-ne"></span>
-                            <span class="fixed-doc-preview-hotspot-handle fixed-doc-preview-hotspot-handle--sw" data-region-action="resize-sw"></span>
-                            <span class="fixed-doc-preview-hotspot-handle fixed-doc-preview-hotspot-handle--se" data-region-action="resize-se"></span>
-                          </button>
+                            <button
+                              v-for="src in fixedDocPreviewQrHotspots"
+                              :key="'qr-hot-' + src.id"
+                              type="button"
+                              class="fixed-doc-preview-hotspot fixed-doc-preview-hotspot--readonly"
+                              :data-source-id="src.id"
+                              :class="{ 'is-active': fixedDocActiveQrSourceId === src.id, 'is-disabled': src.enabled === false }"
+                              :style="{
+                                left: src.rect.x + '%',
+                                top: src.rect.y + '%',
+                                width: src.rect.w + '%',
+                                height: src.rect.h + '%',
+                              }"
+                              :title="src.id + ' · ' + src.label"
+                              @pointerdown.stop
+                              @click.stop="selectFixedDocPreviewQrSource(src.id)"
+                            >
+                              <span class="fixed-doc-preview-hotspot-label">{{ src.id }}</span>
+                            </button>
+                          </div>
                         </div>
-                        <div
-                          v-if="fixedDocQrRegionDraft.active"
-                          class="fixed-doc-preview-region-draft"
-                          :style="fixedDocQrRegionDraftStyle"
-                          aria-hidden="true"
-                        ></div>
                       </div>
                     </div>
                   </div>
@@ -290,6 +282,29 @@
                           <el-button type="primary">AI</el-button>
                           <el-button>⌫</el-button>
                         </div>
+                      </div>
+                    </div>
+                    <div class="fixed-doc-form-row">
+                      <label>
+                        分類信頼度閾値
+                        <el-tooltip placement="top" :show-after="200">
+                          <template #content>
+                            案件集約時の画像分類信頼度
+                          </template>
+                          <span class="fixed-doc-info" tabindex="0">i</span>
+                        </el-tooltip>
+                        <span class="fixed-doc-required">必須</span>
+                      </label>
+                      <div class="fixed-doc-threshold-field">
+                        <el-input-number
+                          v-model="fixedDocClassificationConfidenceThreshold"
+                          :min="0"
+                          :max="100"
+                          :step="1"
+                          controls-position="right"
+                          class="fixed-doc-image-control fixed-doc-image-number"
+                        ></el-input-number>
+                        <span class="fixed-doc-threshold-unit">%</span>
                       </div>
                     </div>
                   </section>
@@ -441,38 +456,39 @@
                                 :show-after="200"
                               >
                                 <template #content>
-                                  Step1 テンプレートから検出した QRソースです。プレビュー上の QR 枠をドラッグして読取領域を修正できます。
+                                  QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1～QR6 を割り当てます。テンプレート変更後は「QR解析」で再実行できます。
                                 </template>
                                 <span class="fixed-doc-info" tabindex="0">i</span>
                               </el-tooltip>
                               <span v-if="!fixedDocHasStep1Template" class="fixed-doc-qr-source-empty">Step1 でテンプレートをアップロードしてください</span>
+                              <span v-else-if="fixedDocQrScanActive" class="fixed-doc-qr-source-empty">読取中…</span>
+                              <span v-else-if="!fixedDocQrSourceCatalog.length" class="fixed-doc-qr-source-empty">QR を検出できませんでした。「QR解析」で再試行できます</span>
                             </div>
                             <div v-if="fixedDocHasStep1Template" class="fixed-doc-qr-source-list-wrap">
-                              <div class="fixed-doc-qr-source-scroll">
+                              <div v-if="fixedDocQrSourceCatalog.length" class="fixed-doc-qr-source-scroll">
                                 <ul class="fixed-doc-qr-source-list">
                                   <li
                                     v-for="src in fixedDocQrSourceCatalog"
                                     :key="'qr-src-' + src.id"
-                                    :class="{ 'is-active': fixedDocActiveQrSourceId === src.id, 'is-editing': fixedDocQrRegionEditId === src.id, 'is-unbound': !src.rect }"
+                                    :class="{ 'is-active': fixedDocActiveQrSourceId === src.id }"
                                     @click="selectFixedDocPreviewQrSource(src.id)"
                                   >
                                     <code>{{ fixedDocQrSourceDisplayLabel(src) }}</code>
-                                    <div class="fixed-doc-qr-source-item-actions">
-                                      <button
-                                        type="button"
-                                        class="fixed-doc-qr-source-icon-btn fixed-doc-qr-source-remove"
-                                        title="削除"
-                                        aria-label="削除"
-                                        @click.stop="removeFixedDocQrSource(src.id)"
-                                      >
-                                        ×
-                                      </button>
-                                    </div>
                                   </li>
                                 </ul>
                               </div>
                               <div class="fixed-doc-qr-source-actions">
-                                <el-button size="small" plain type="primary" class="fixed-doc-qr-source-add" :disabled="!fixedDocCanAddQrSource" @click="addFixedDocQrSource">＋ 追加</el-button>
+                                <el-button
+                                  size="small"
+                                  plain
+                                  type="primary"
+                                  class="fixed-doc-qr-source-parse"
+                                  :loading="fixedDocQrScanActive"
+                                  :disabled="fixedDocQrScanActive"
+                                  @click="parseFixedDocQrSourcesFromTemplate"
+                                >
+                                  QR解析
+                                </el-button>
                               </div>
                             </div>
                           </div>
@@ -575,7 +591,6 @@
                                         size="small"
                                         class="fixed-doc-qr-index-input"
                                         :class="{ 'is-error': !!getFixedDocQrFetchIndexError(row.fieldId) }"
-                                        placeholder="1"
                                         @focus="beginFixedDocQrFetchIndexDraft(row.fieldId)"
                                         @update:model-value="setFixedDocQrFetchIndexDraft(row.fieldId, $event)"
                                         @blur="commitFixedDocQrFetchIndexDraft(row.fieldId)"
@@ -2625,52 +2640,33 @@
                   </inspector-module>
                 </div>
 
-                <!-- 不正検知 -->
+                <!-- 画像不正検知 -->
                 <div v-show="inspectorPanel === 'fraud_detect'" class="inspector-panel-section fraud-detect-inspector">
                   <inspector-module>
-                    <inspector-module-card title="不正検知設定">
-                      <div class="preprocess-settings-list">
-                        <div
-                          v-for="item in FRAUD_DETECT_SETTING_ITEMS"
-                          :key="item.key"
-                          class="preprocess-setting-row"
-                          :class="{ 'is-on': isFraudDetectSettingOn(item) }"
-                        >
-                          <div class="preprocess-setting-row__head">
-                            <span class="preprocess-setting-row__label">{{ item.label }}</span>
-                            <el-switch
-                              v-model="processingForm.fraudDetect[item.switchKey]"
-                              size="small"
-                            />
-                          </div>
+                    <inspector-module-card title="画像不正検知設定">
+                      <div class="ocr-extract-panel">
+                        <div v-if="fraudDetectItems.length" class="ocr-extract-list">
                           <div
-                            v-if="showFraudDetectSettingDetail(item)"
-                            class="preprocess-setting-row__detail"
+                            v-for="item in fraudDetectItems"
+                            :key="'fraud-' + item.type"
+                            class="ocr-extract-row"
                           >
-                            <el-select
-                              v-model="processingForm.fraudDetect[item.docTypesKey]"
-                              multiple
-                              collapse-tags
-                              collapse-tags-tooltip
-                              :max-collapse-tags="1"
-                              size="small"
-                              placeholder="対象帳票（未指定時は全帳票）"
-                              class="inspector-field-control inspector-multi-select preprocess-doc-select"
-                              :disabled="!sceneDocTypes.length"
-                              teleported
-                              placement="bottom-start"
-                              popper-class="idp-inspector-select-popper"
-                              :popper-options="{ strategy: 'fixed' }"
-                            >
-                              <el-option
-                                v-for="t in sceneDocTypes"
-                                :key="item.key + '-' + t"
-                                :label="getDocDisplayLabel(t)"
-                                :value="t"
+                            <div class="ocr-extract-row__main">
+                              <span class="ocr-extract-doc-name" :title="getDocDisplayLabel(item.type)">{{ getDocDisplayLabel(item.type) }}</span>
+                            </div>
+                            <div class="ocr-extract-row__actions">
+                              <el-switch
+                                :model-value="item.enabled"
+                                size="small"
+                                @change="toggleFraudDetect(item.type, $event)"
                               />
-                            </el-select>
+                            </div>
                           </div>
                         </div>
+                        <p v-if="fraudDetectStats.total" class="ocr-extract-summary">
+                          関連帳票 {{ fraudDetectStats.total }} 件 · 有効 {{ fraudDetectStats.enabled }} 件
+                        </p>
+                        <p v-else class="verify-empty">業務シーン設定で関連帳票を追加してください</p>
                       </div>
                     </inspector-module-card>
                   </inspector-module>
@@ -4044,6 +4040,6 @@
   <script src="scripts/workflow-core.js?v=683"></script>
   <script src="scripts/mock-data.js?v=678"></script>
   <script src="scripts/scene-config.js?v=675"></script>
-  <script src="main.js?v=701"></script>
+  <script src="main.js?v=713"></script>
 </body>
 </html>

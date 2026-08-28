@@ -48,6 +48,31 @@ function syncOcrExtractTypesOnForm(formData) {
   formData.processing.ocrExtract.enabledTypes = enabled;
 }
 
+function syncFraudDetectTypesOnForm(formData) {
+  if (!formData.processing) return;
+  if (!formData.processing.fraudDetect) {
+    formData.processing.fraudDetect = normalizeFraudDetectConfig(cloneJson(WORKFLOW_DEFAULTS.fraudDetect));
+  }
+  formData.processing.fraudDetect = normalizeFraudDetectConfig(
+    formData.processing.fraudDetect,
+    formData.scene?.documents || [],
+  );
+  if (!Array.isArray(formData.processing.fraudDetect.enabledTypes)) {
+    formData.processing.fraudDetect.enabledTypes = [];
+  }
+  const types = (formData.scene?.documents || []).map((d) => d.type);
+  let enabled = formData.processing.fraudDetect.enabledTypes || [];
+  if (!enabled.length && types.length) {
+    formData.processing.fraudDetect.enabledTypes = [...types];
+    return;
+  }
+  enabled = enabled.filter((t) => types.includes(t));
+  types.forEach((t) => {
+    if (!enabled.includes(t)) enabled.push(t);
+  });
+  formData.processing.fraudDetect.enabledTypes = enabled;
+}
+
 function processingBlock() {
   const block = {
     input: cloneJson(WORKFLOW_DEFAULTS.input),
@@ -1328,9 +1353,8 @@ function normalizeLoadedForm(form) {
   form.processing.fraudDetect = normalizeFraudDetectConfig(form.processing.fraudDetect, form.scene.documents);
   if (Array.isArray(form.processing.qrRead?.enabledTypes) && form.processing.qrRead.enabledTypes.length) {
     const legacyTypes = [...form.processing.qrRead.enabledTypes];
-    if (!form.processing.fraudDetect.psTamper) {
-      form.processing.fraudDetect.psTamper = true;
-      form.processing.fraudDetect.psTamperDocTypes = legacyTypes;
+    if (!form.processing.fraudDetect.enabledTypes?.length) {
+      form.processing.fraudDetect.enabledTypes = legacyTypes;
     }
   }
   delete form.processing.qrRead;
@@ -1347,6 +1371,7 @@ function normalizeLoadedForm(form) {
   form.verify = normalizeVerifyConfig(form.verify);
   form.output = normalizeOutputConfig(form.output, form.scene.documents, form.master.mappings, form.master.knowledgeSource);
   syncOcrExtractTypesOnForm(form);
+  syncFraudDetectTypesOnForm(form);
   ensureFormWorkflows(form, { force: true });
   if (typeof normalizeWorkflowTestCase === 'function') {
     form.workflowTestCase = normalizeWorkflowTestCase(form.workflowTestCase);

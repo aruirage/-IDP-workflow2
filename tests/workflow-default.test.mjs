@@ -541,6 +541,7 @@ test('supports email recipients with delimiter-separated addresses in Step3 noti
 
 test('uses accent dots and keeps human review configuration role-only', async () => {
   const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
 
   const hitlStart = index.indexOf("inspectorPanel === 'hitl_gate'");
@@ -548,6 +549,8 @@ test('uses accent dots and keeps human review configuration role-only', async ()
   const hitlPanel = index.slice(hitlStart, hitlEnd);
   assert.match(hitlPanel, /title="ゲート設定" desc="人工確認を担当するロールを指定します。"/);
   assert.match(hitlPanel, />担当ロール<\/label>/);
+  assert.doesNotMatch(hitlPanel, /担当者/);
+  assert.match(main, /hitlRoleOptions: HITL_GATE_ROLE_OPTIONS/);
   assert.doesNotMatch(hitlPanel, /確認対象|selectedHitlGatePreset/);
   assert.match(style, /\.inspector-module-title::before\s*\{[^}]*width:\s*8px;[^}]*height:\s*8px;[^}]*border-radius:\s*50%;/s);
 });

@@ -6256,6 +6256,10 @@ code.export-config-meta-value {
   border-radius: 2px;
   box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
 }
+.fixed-doc-preview-image-wrap {
+  position: relative;
+  width: 100%;
+}
 .fixed-doc-preview-image {
   display: block;
   width: 100%;
@@ -6352,6 +6356,9 @@ code.export-config-meta-value {
 .fixed-doc-preview-hotspot.is-disabled .fixed-doc-preview-hotspot-label {
   background: #98a2b3;
   color: #fff;
+}
+.fixed-doc-preview-hotspot--readonly {
+  cursor: pointer;
 }
 .fixed-doc-preview-region-draft {
   position: absolute;
@@ -6485,6 +6492,17 @@ code.export-config-meta-value {
 .fixed-doc-form-row label {
   color: #667085;
   font-size: 15px;
+  line-height: 32px;
+}
+.fixed-doc-threshold-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+}
+.fixed-doc-threshold-unit {
+  color: #667085;
+  font-size: 14px;
   line-height: 32px;
 }
 .fixed-doc-readonly {
