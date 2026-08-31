@@ -44,7 +44,7 @@ const INSPECTOR_HINTS = {
   scene: '業務シーン作成時、またはステップ1で関連帳票・案件集約・帳票間関連を設定します。',
   inputSetting: '画面上アップロードまたは APIアップロードでファイルを受け付けます。APIアップロードを有効にした場合はエンドポイント URL を指定します。',
   inputLimits: 'ファイル形式・最大ファイルサイズ（上限 20MB・それ以下のみ）を指定します。',
-  preprocess: 'OCR 前に画像補正、画像回転、画像整列を実行します。\n\n・画像補正：歪み・傾きの補正。対象帳票未指定時は全帳票タイプが対象。\n・画像回転：スキャン方向の自動補正。対象帳票未指定時は全帳票タイプが対象。\n・画像整列：同一帳票タイプ内の画像を整列。',
+  preprocess: 'OCR 前に画像不正検知、敏感情報脱敏、画像回転、画像補正、画像整列を実行します。\n\n・画像不正検知：改ざん・偽造リスク判定。対象帳票未指定時は全帳票タイプが対象。\n・敏感情報脱敏：帳票タイプ Step2 でマスク ON にしたフィールドを対象に、实例画像上の個人情報を検出し、黒塗り等でマスキング（脱敏）します。脱敏後の实例を OCR へ渡します。対象帳票未指定時は、マスク ON フィールドがある関連帳票すべて。\n・画像回転：スキャン方向の自動補正。対象帳票未指定時は全帳票タイプが対象。\n・画像補正：歪み・傾きの補正。対象帳票未指定時は全帳票タイプが対象。\n・画像整列：同一帳票タイプ内の画像を整列。',
   fraudDetect: '帳票画像の改ざん・偽造リスクを判定します。PS 加工痕跡、AI 生成画像、テンプレート特徴不一致などを統合検知し、帳票タイプごとに実行有無を切り替えます。',
   ocrSetting: '抽出フィールド・Prompt・信頼度閾値などの詳細は帳票 template またはシステムモデル設定で管理します。',
   ocrExtract: 'Step1で関連付けた帳票タイプを参照します。帳票タイプごとにOCR抽出の実行有無を選択し、抽出項目は「帳票タイプ設定」で編集します。',
@@ -54,15 +54,15 @@ const INSPECTOR_HINTS = {
   dataMappingRules: '入力フィールド、標準フィールド、変換ルールを定義します。後続ノードは標準フィールド名で参照できます。',
   dataMappingStandard: '標準データモデルで利用する項目です。案件データセット、照合、検証、エクスポートの共通キーになります。',
   nodeOutput: '後続ノード・IF/ELSE 条件で使える出力変数です。{ノード変数名.項目} 形式で指定します。',
-  nodeOutputPreprocess: '処理状態と処理結果を出力します。状態は実行の成否、結果は業務上の通過/要確認です。',
+  nodeOutputPreprocess: '処理状態（preprocessStatus）と処理結果（preprocessResult）を出力します。\n\n・処理状態：前処理ノード全体の実行成否（processing / success / failed）。画像不正検知・敏感情報脱敏・回転・補正・整列の各モジュール結果を集約。\n・処理結果：業務結論（passed / reviewRequired）。画像不正検知で要確認のとき reviewRequired。',
   nodeOutputOcr: '処理状態と処理結果を出力します。状態は実行の成否、結果は業務上の通過/要確認です。',
   nodeOutputVerify: '処理状態と処理結果を出力します。状態は実行の成否、結果は業務上の通過/要確認です。',
   nodeOutputStart: '案件 ID（caseId）とファイル一覧（files[]）のみ。帳票タイプは条件ノードで Step1 から直接選択。',
   nodeOutputEnd: '終了ノードは出力変数なし。設定項目なし。',
   nodeOutputHitl: '人工確認の処理状態（hitlStatus）のみ。分岐は画布三出口で直接接続。',
   nodeOutputQrRead: 'QR 読取の処理状態（qrReadStatus）のみ。解析結果は OCR フィールドへ反映し、要確認は OCR と同様 HITL へ進みます。',
-  nodeOutputFraudDetect: '処理状態（fraudDetectStatus）と処理結果（fraudDetectResult）を出力します。\n\n・処理状態：ノード実行の成否（processing / success / failed）。対象外帳票は success。\n・処理結果：業務結論（passed / reviewRequired）。不正疑い検知時は reviewRequired となり、条件分岐または人工確認へ進めます。リスク閾値はシステム固定（70）。',
-  nodeOutputPiiMask: '個人情報マスクの処理状態（piiMaskStatus）のみ。マスク結果はファイル／フィールド内容へ反映します。',
+  nodeOutputFraudDetect: '処理状態（fraudDetectStatus）と処理結果（fraudDetectResult）を出力します。\n\n・処理状態：ノード実行の成否（processing / success / failed）。対象外帳票は success。\n・処理結果：業務結論（passed / reviewRequired）。モデルは二値判定（是/否）のみを返し、リスクスコアや閾値はありません。不正疑い「是」のとき reviewRequired となり、条件分岐または人工確認へ進めます。',
+  nodeOutputPiiMask: '敏感情報検出の処理状態（piiMaskStatus）のみ。検出・マスク結果はファイル／フィールド内容へ反映します。',
   dataMappingOutput: '処理状態と標準変数を出力します。標準フィールドは条件選択時に葉項目として参照します。',
   externalApiIo: '前工程から自動連携される入力です。',
   knowledgeSelect: 'ナレッジデータソースを選択します。+ ボタンから新規作成（文書アップロード / Web Site API）ができます。',
@@ -107,24 +107,39 @@ const INSPECTOR_HINTS = {
   sceneMatchingDefaults: '既定動作：補件ファイルは既存案件に紐付け、マスタなしファイルは保留プールへ送ります（本画面では変更できません）。',
 };
 
-const CASE_WORKFLOW_TEMPLATE_VERSION = 31;
-const CANONICAL_CASE_WORKFLOW_LAYOUT_VERSION = 27;
+const CASE_WORKFLOW_TEMPLATE_VERSION = 37;
+const CANONICAL_CASE_WORKFLOW_LAYOUT_VERSION = 31;
 const WF_LAYOUT_PAD = { x: 72, y: 132 };
 const WF_BRANCH_LANE_GAP = 108;
 const WF_LAYOUT_MIN_EDGE_GAP = 112;
 const STRAIGHT_CASE_WORKFLOW_NODE_IDS = [
-  'wf-start', 'wf-pp', 'wf-d-pre', 'wf-oc', 'wf-d-ocr',
-  'wf-map', 'wf-ai', 'wf-d-final', 'wf-hu-pre', 'wf-hu-ocr', 'wf-hu-final', 'wf-end',
+  'wf-start', 'wf-pp', 'wf-d-pre', 'wf-hu-pre', 'wf-oc', 'wf-d-ocr', 'wf-hu-ocr',
+  'wf-map', 'wf-ai', 'wf-d-final', 'wf-hu-final', 'wf-code', 'wf-end',
 ];
 
 const DEFAULT_CASE_WORKFLOW_TEMPLATE_NODE_IDS = [
-  'wf-pp', 'wf-d-pre', 'wf-oc', 'wf-d-ocr',
-  'wf-map', 'wf-ai', 'wf-d-final', 'wf-hu-pre', 'wf-hu-ocr', 'wf-hu-final',
+  'wf-pp', 'wf-d-pre', 'wf-hu-pre', 'wf-oc', 'wf-d-ocr', 'wf-hu-ocr',
+  'wf-map', 'wf-ai', 'wf-d-final', 'wf-hu-final', 'wf-code',
+];
+
+const PREVIOUS_V35_CASE_WORKFLOW_TEMPLATE_NODE_IDS = [
+  'wf-fd', 'wf-pii', 'wf-pp', 'wf-d-pre', 'wf-hu-pre', 'wf-oc', 'wf-d-ocr', 'wf-hu-ocr',
+  'wf-map', 'wf-ai', 'wf-d-final', 'wf-hu-final', 'wf-code',
+];
+
+const PREVIOUS_V32_CASE_WORKFLOW_TEMPLATE_NODE_IDS = [
+  'wf-fd', 'wf-pp', 'wf-d-pre', 'wf-hu-pre', 'wf-oc', 'wf-d-ocr', 'wf-hu-ocr',
+  'wf-map', 'wf-ai', 'wf-d-final', 'wf-hu-final', 'wf-code',
 ];
 
 const PREVIOUS_CASE_WORKFLOW_TEMPLATE_NODE_IDS = [
   'wf-intake', 'wf-d-quality', 'wf-d-ocr', 'wf-logic', 'wf-auto', 'wf-d-audit',
   'wf-hu-quality', 'wf-hu-audit', 'wf-hu-prelim',
+];
+
+const PREVIOUS_V31_CASE_WORKFLOW_TEMPLATE_NODE_IDS = [
+  'wf-pp', 'wf-d-pre', 'wf-oc', 'wf-d-ocr',
+  'wf-map', 'wf-ai', 'wf-d-final', 'wf-hu-pre', 'wf-hu-ocr', 'wf-hu-final',
 ];
 
 const PREVIOUS_V6_CASE_WORKFLOW_TEMPLATE_NODE_IDS = [
@@ -141,10 +156,10 @@ const LEGACY_CASE_WORKFLOW_TEMPLATE_NODE_IDS = [
 /** 主処理チェーンの推奨順序（Dify Start → 処理ノード） */
 const WORKFLOW_MAIN_CHAIN_ORDER = [
   { type: 'preprocess', label: '前処理', step: 1 },
-  { type: 'fraud_detect', label: '画像不正検知', step: 2 },
-  { type: 'ocr', label: 'OCR抽出', step: 3 },
-  { type: 'data_mapping', label: 'データマッピング', step: 4 },
-  { type: 'ai_verify', label: 'AI検証', step: 5 },
+  { type: 'ocr', label: 'OCR抽出', step: 2 },
+  { type: 'data_mapping', label: 'データマッピング', step: 3 },
+  { type: 'ai_verify', label: 'AI検証', step: 4 },
+  { type: 'code', label: 'カスタム関数', step: 5 },
 ];
 
 const WORKFLOW_MAIN_CHAIN_TYPE_ORDER = Object.fromEntries(
@@ -209,11 +224,9 @@ const CASE_FLOW_NODE_GROUPS = [
     category: '業務 Agent',
     nodes: [
       { type: 'preprocess', label: '前処理' },
-      { type: 'fraud_detect', label: '画像不正検知' },
       { type: 'ocr', label: 'OCR抽出' },
       { type: 'data_mapping', label: 'データマッピング' },
       { type: 'ai_verify', label: 'AI検証' },
-      { type: 'pii_mask', label: '個人情報マスク' },
     ],
   },
   {
@@ -248,18 +261,16 @@ const REMOVED_WORKFLOW_NODE_TYPES = new Set([
   'supplement_upload', 'case_pool_update', 'verify_rerun', 'status_update',
   'case_link', 'scene_aggregate', 'scene_completeness',
   'input', 'output', 'qr_read', 'master_match', 'mcp',
-  'notify',
+  'notify', 'fraud_detect', 'pii_mask',
 ]);
 
 const WORKFLOW_INSPECTOR_MAP = {
   start: 'start',
   end: 'end',
   preprocess: 'image',
-  fraud_detect: 'fraud_detect',
   ocr: 'ocr',
   ai_verify: 'ai_verify',
   data_mapping: 'data_mapping',
-  pii_mask: 'pii_mask',
   decision: 'decision',
   hitl_gate: 'hitl_gate',
   code: 'code',
@@ -555,8 +566,8 @@ const WORKFLOW_NODE_META = {
   preprocess: {
     icon: 'PP',
     title: '前処理',
-    desc: '画像補正・回転・画像整列',
-    tasks: ['画像補正', '画像回転', '画像整列'],
+    desc: '画像不正検知・敏感情報脱敏・回転・補正・整列',
+    tasks: ['画像不正検知', '敏感情報脱敏', '画像回転', '画像補正', '画像整列'],
     input: 'Physical Files',
     output: 'Logical Document Set',
     accent: '#006afa',
@@ -599,9 +610,9 @@ const WORKFLOW_NODE_META = {
   },
   pii_mask: {
     icon: 'PI',
-    title: '個人情報マスク',
-    desc: '帳票タイプ Step2 のマスク対象に基づき PII を検出・脱敏',
-    tasks: ['PII検出', 'マスキング'],
+    title: '敏感情報脱敏',
+    desc: 'Step2 マスク ON フィールドを対象に实例画像を検出・黒塗り等で脱敏し、OCR 前にマスキング済み实例を出力',
+    tasks: ['PII検出', '实例脱敏'],
     input: 'Document + OCR Fields',
     output: 'Masked Files',
     accent: '#e04f16',
@@ -838,6 +849,7 @@ function isDecisionCatalogTemporalDataType(dataType = '') {
 }
 
 function isWorkflowVarForCatalog(item, catalogMode) {
+  if (catalogMode === 'diy') return true;
   const paths = getWorkflowVarConsumptionPaths(item);
   if (catalogMode === 'condition') return paths.includes(WORKFLOW_VAR_CONSUMPTION.CONDITION);
   if (catalogMode === 'notify') {
@@ -973,8 +985,8 @@ const WORKFLOW_NODE_OUTPUT_VAR_DEFS = {
   ],
   end: [],
   preprocess: [
-    { id: 'case.preprocessStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.nodeStatus, description: '本ノードの実行進捗。対象ファイルなし、または設定 OFF の場合も success とし、skip は別値として出力しない。業務上通過したかは「処理結果」を見る。' },
-    { id: 'case.preprocessResult', label: '処理結果', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.processResult, description: '業務結論。通過は主フローへ進み、要確認は人工確認へ進む。' },
+    { id: 'case.preprocessStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.nodeStatus, description: '前処理ノード全体の実行進捗。各モジュール（不正検知・脱敏・回転・補正・整列）の成否を集約。対象ファイルなし、または全モジュール OFF の場合も success。' },
+    { id: 'case.preprocessResult', label: '処理結果', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.processResult, description: '前処理ノード全体の業務結論。画像不正検知要確認時は reviewRequired。通過は主フローへ、要確認は人工確認へ。' },
   ],
   ocr: [
     { id: 'case.ocrStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.nodeStatus, description: '本ノードの実行進捗。対象ファイルなし、または設定 OFF の場合も success とし、skip は別値として出力しない。業務上通過したかは「処理結果」を見る。' },
@@ -982,7 +994,7 @@ const WORKFLOW_NODE_OUTPUT_VAR_DEFS = {
   ],
   fraud_detect: [
     { id: 'case.fraudDetectStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.nodeStatus, description: '本ノードの実行進捗。対象帳票 OFF または検知対象外の場合も success とし、skip は別値として出力しない。業務上通過したかは「処理結果」を見る。' },
-    { id: 'case.fraudDetectResult', label: '処理結果', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.processResult, description: '業務結論。通過は主フローへ進み、不正疑い検知（固定閾値 70 超）時は reviewRequired で人工確認へ進む。' },
+    { id: 'case.fraudDetectResult', label: '処理結果', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.processResult, description: '業務結論。モデル二値判定「否」→ passed、「是」→ reviewRequired で人工確認へ進む。スコア・閾値は出力しない。' },
   ],
   pii_mask: [
     { id: 'case.piiMaskStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.nodeStatus, description: '本ノードの実行進捗。マスク対象なしまたは OFF の場合も success。Agent 実行失敗は failed。' },
@@ -1054,8 +1066,9 @@ function appendNodeOutputVarCatalog(node, workflow, options, catalogMode = 'cond
   items.forEach((item) => {
     if (WORKFLOW_CATALOG_CONTAINER_SKIP_IDS.has(item.id)) return;
     if (catalogMode === 'condition' && DECISION_CATALOG_SKIP_IDS.has(item.id)) return;
+    if (catalogMode === 'diy' && item.id === 'case.standardFields') return;
     if (!isWorkflowVarForCatalog(item, catalogMode)) return;
-    if (isDecisionCatalogTemporalDataType(item.type)) return;
+    if (catalogMode === 'condition' && isDecisionCatalogTemporalDataType(item.type)) return;
     if (catalogMode === 'condition' && normalizeDecisionDataType(item.type) === 'array') return;
     if (catalogMode === 'condition' && isDecisionCatalogFileScopeVar(item)) return;
     appendDecisionVarOption(options, {
@@ -1495,6 +1508,18 @@ const INSPECTOR_HEAD_HINT_KEYS = {
 
 const PREPROCESS_SETTING_ITEMS = [
   {
+    key: 'fraudDetect',
+    label: '画像不正検知',
+    switchKey: 'fraudDetect',
+    docTypesKey: 'fraudDetectDocTypes',
+  },
+  {
+    key: 'piiDetect',
+    label: '敏感情報脱敏',
+    switchKey: 'piiDetect',
+    docTypesKey: 'piiDetectDocTypes',
+  },
+  {
     key: 'rotate',
     label: '画像回転',
     switchKey: 'rotate',
@@ -1523,12 +1548,12 @@ const WORKFLOW_CANVAS_SUMMARY_EMPTY = '未設定';
 const WORKFLOW_CANVAS_SUMMARY_LINE_H = 22;
 
 const PREPROCESS_CANVAS_SHORT_LABELS = {
+  fraudDetect: '不正',
+  piiDetect: '脱敏',
   rotate: '回転',
   perspective: '補正',
   sort: '整列',
 };
-
-const FRAUD_DETECT_RISK_THRESHOLD = 70;
 
 const AI_VERIFY_CANVAS_SHORT_LABELS = {
   required_fields: '必須項目',
@@ -1758,7 +1783,7 @@ const WORKFLOW_NODE_PICKER_DESCRIPTIONS = {
   ocr: '帳票タイプごとに OCR テンプレートを実行し、抽出項目を出力します。',
   data_mapping: 'OCR 抽出項目を標準項目へ変換します。',
   ai_verify: '必須フィールド、必要書類、テキスト検証、データ検証、標準データ整合性、署名・印鑑検証を実行します。',
-  pii_mask: '帳票タイプ Step2 でマスク ON のフィールドを Agent が検出し、脱敏ファイルを出力します。',
+  pii_mask: 'Step2 マスク ON フィールドを Agent が検出し、实例画像を黒塗り等で脱敏してから OCR へ渡します。',
   decision: '条件式と入力値に基づいて後続処理を分岐します。',
   hitl_gate: '人工確認タスクを作成し、指定ロールの処理を待ちます。',
   code: '入力変数を参照し、JavaScript を実行します。',
@@ -2238,6 +2263,7 @@ function inferJudgmentContext(node) {
 const HITL_UPSTREAM_TYPE_TO_CONTEXT = {
   preprocess: 'preprocess',
   ocr: 'ocr',
+  pii_mask: 'ocr',
   ai_verify: 'verification',
 };
 
@@ -2285,7 +2311,7 @@ function inferHitlContext(node, workflow = null) {
       .filter((edge) => edge.to === node.id)
       .map((edge) => edge.from);
     const sources = collectHitlUpstreamSources(workflow, node.id);
-    const priority = ['preprocess', 'ocr', 'ai_verify'];
+    const priority = ['preprocess', 'ocr', 'pii_mask', 'ai_verify'];
     for (let i = 0; i < priority.length; i += 1) {
       const type = priority[i];
       if (sources.some((source) => source.type === type)) {
@@ -2880,7 +2906,7 @@ function buildCodeSourceVariableOptions(workflow, nodeId, sceneContext = null) {
     });
   }
 
-  buildDecisionVariableCatalog(workflow, nodeId, null, sceneContext).forEach((item) => {
+  buildDiyVariableCatalog(workflow, nodeId, null, sceneContext).forEach((item) => {
     appendDecisionVarOption(options, {
       ...item,
       label: item.label,
@@ -2889,7 +2915,7 @@ function buildCodeSourceVariableOptions(workflow, nodeId, sceneContext = null) {
       consumptionPathLabel: formatWorkflowVarConsumptionLabels([WORKFLOW_VAR_CONSUMPTION.TODO]),
     });
   });
-  return options;
+  return dedupeNotifyVarOptions(options);
 }
 
 function buildCodeVariableOptions(workflow, nodeId, sceneContext = null) {
@@ -3275,6 +3301,24 @@ function buildDecisionVariableCatalog(workflow, nodeId, verifyConfig = null, sce
     appendDocTypeFieldTemplateCatalog(docTypes, getDocSchemaFn, options, getDocLabelFn);
   }
   return options;
+}
+
+function buildDiyVariableCatalog(workflow, nodeId, verifyConfig = null, sceneContext = null) {
+  const nodeMap = Object.fromEntries((workflow?.nodes || []).map((n) => [n.id, n]));
+  const options = [];
+  getDecisionUpstreamNodeIds(workflow, nodeId).forEach((id) => {
+    const n = nodeMap[id];
+    if (!n || n.type === 'decision') return;
+    appendNodeOutputVarCatalog(n, workflow, options, 'diy');
+    if (n.type === 'data_mapping') appendDataMappingStandardFieldCatalog(n, workflow, options);
+  });
+  const docTypes = sceneContext?.docTypes || [];
+  const getDocSchemaFn = sceneContext?.getDocSchema;
+  const getDocLabelFn = sceneContext?.getDocLabel;
+  if (docTypes.length) {
+    appendDocTypeFieldTemplateCatalog(docTypes, getDocSchemaFn, options, getDocLabelFn);
+  }
+  return dedupeNotifyVarOptions(options);
 }
 
 function dedupeNotifyVarOptions(options = []) {
@@ -4103,6 +4147,14 @@ function buildDefaultCaseWorkflow() {
         y: 0,
         ...(isStart ? { isStart: true } : {}),
       }, wf);
+    } else if (type === 'code') {
+      node = normalizeCodeNode({
+        id,
+        type,
+        label: label || 'カスタム関数',
+        x: 0,
+        y: 0,
+      }, wf);
     } else if (type === 'start' || type === 'end') {
       node = type === 'start'
         ? normalizeStartNode({
@@ -4164,6 +4216,7 @@ function buildDefaultCaseWorkflow() {
     hitlContext: 'verification',
     role: 'operation_admin',
   });
+  place({ id: 'wf-code', type: 'code', label: 'カスタム関数' });
   place({ id: 'wf-end', type: 'end', label: '終了' });
 
   const ppVar = getWorkflowNodeVarName(nodes.find((n) => n.id === 'wf-pp'), wf);
@@ -4213,6 +4266,14 @@ function buildDefaultCaseWorkflow() {
           cond(`${aiVar}.case.verifyResult`, 'is', 'passed'),
         ],
       }),
+      createDecisionCase('elif', {
+        id: 'elif-error',
+        label: '異常',
+        logic: 'and',
+        conditions: [
+          cond(`${aiVar}.case.verifyStatus`, 'is', 'failed'),
+        ],
+      }),
     ],
     elseLabel: '人工確認',
   });
@@ -4227,15 +4288,16 @@ function buildDefaultCaseWorkflow() {
     { from: 'wf-d-ocr', to: 'wf-hu-ocr', branch: 'else', label: '人工確認' },
     { from: 'wf-map', to: 'wf-ai' },
     { from: 'wf-ai', to: 'wf-d-final' },
-    { from: 'wf-d-final', to: 'wf-end', branch: 'if', label: '通過' },
+    { from: 'wf-d-final', to: 'wf-code', branch: 'if', label: '通過' },
     { from: 'wf-d-final', to: 'wf-end', branch: 'elif-error', label: '異常' },
     { from: 'wf-d-final', to: 'wf-hu-final', branch: 'else', label: '人工確認' },
     { from: 'wf-hu-pre', to: 'wf-oc', branch: 'approve', label: '完了' },
     { from: 'wf-hu-pre', to: 'wf-pp', branch: 'request_supplement', label: '補件' },
     { from: 'wf-hu-ocr', to: 'wf-map', branch: 'approve', label: '完了' },
     { from: 'wf-hu-ocr', to: 'wf-oc', branch: 'request_supplement', label: '補件' },
-    { from: 'wf-hu-final', to: 'wf-end', branch: 'approve', label: '完了' },
+    { from: 'wf-hu-final', to: 'wf-code', branch: 'approve', label: '完了' },
     { from: 'wf-hu-final', to: 'wf-ai', branch: 'request_supplement', label: '補件' },
+    { from: 'wf-code', to: 'wf-end' },
   );
 
   wf.nodes = wf.nodes.map((n) => {
@@ -4272,14 +4334,15 @@ function applyDefaultCaseWorkflowStaticLayout(workflow) {
   const branchY = 372;
   const positions = {
     'wf-start': { x: 72, y: rowY + 12 },
-    'wf-pp': { x: 220, y: rowY },
-    'wf-d-pre': { x: 520, y: rowY },
-    'wf-oc': { x: 1050, y: rowY },
-    'wf-d-ocr': { x: 1330, y: rowY },
-    'wf-map': { x: 1860, y: rowY },
-    'wf-ai': { x: 2140, y: rowY },
-    'wf-d-final': { x: 2420, y: rowY },
-    'wf-end': { x: 3100, y: rowY + 6 },
+    'wf-pp': { x: 200, y: rowY },
+    'wf-d-pre': { x: 380, y: rowY },
+    'wf-oc': { x: 560, y: rowY },
+    'wf-d-ocr': { x: 740, y: rowY },
+    'wf-map': { x: 1080, y: rowY },
+    'wf-ai': { x: 1360, y: rowY },
+    'wf-d-final': { x: 1640, y: rowY },
+    'wf-code': { x: 1920, y: rowY },
+    'wf-end': { x: 2200, y: rowY + 6 },
   };
   Object.entries(positions).forEach(([id, pos]) => {
     if (!byId[id]) return;
@@ -4290,7 +4353,7 @@ function applyDefaultCaseWorkflowStaticLayout(workflow) {
   [
     ['wf-hu-pre', 'wf-d-pre', 'wf-oc'],
     ['wf-hu-ocr', 'wf-d-ocr', 'wf-map'],
-    ['wf-hu-final', 'wf-d-final', 'wf-end'],
+    ['wf-hu-final', 'wf-d-final', 'wf-code'],
   ].forEach(([hitlId, fromId, toId]) => {
     const hitl = byId[hitlId];
     const from = byId[fromId];
@@ -4338,6 +4401,20 @@ function isDefaultCaseWorkflowTemplate(workflow) {
     && workflow?.templateVersion === CASE_WORKFLOW_TEMPLATE_VERSION;
 }
 
+function isPreviousV35CaseWorkflowTemplate(workflow) {
+  return workflowHasTemplateNodeIds(workflow, PREVIOUS_V35_CASE_WORKFLOW_TEMPLATE_NODE_IDS);
+}
+
+function isPreviousV32CaseWorkflowTemplate(workflow) {
+  return workflowHasTemplateNodeIds(workflow, PREVIOUS_V32_CASE_WORKFLOW_TEMPLATE_NODE_IDS)
+    && !workflowHasTemplateNodeIds(workflow, ['wf-pii']);
+}
+
+function isPreviousV31CaseWorkflowTemplate(workflow) {
+  return workflowHasTemplateNodeIds(workflow, PREVIOUS_V31_CASE_WORKFLOW_TEMPLATE_NODE_IDS)
+    && !workflowHasTemplateNodeIds(workflow, ['wf-fd', 'wf-code']);
+}
+
 function isPreviousV6CaseWorkflowTemplate(workflow) {
   return workflowHasTemplateNodeIds(workflow, PREVIOUS_V6_CASE_WORKFLOW_TEMPLATE_NODE_IDS)
     && !workflowHasTemplateNodeIds(workflow, ['wf-d-pre', 'wf-d-ocr', 'wf-d-hitl-result']);
@@ -4364,6 +4441,9 @@ function shouldMigrateCaseWorkflowToDefault(workflow) {
     return !workflow.templateVersion || workflow.templateVersion < CASE_WORKFLOW_TEMPLATE_VERSION;
   }
   if (isLegacyCaseWorkflowTemplate(workflow)) return true;
+  if (isPreviousV35CaseWorkflowTemplate(workflow)) return true;
+  if (isPreviousV32CaseWorkflowTemplate(workflow)) return true;
+  if (isPreviousV31CaseWorkflowTemplate(workflow)) return true;
   if (isPreviousV6CaseWorkflowTemplate(workflow)) return true;
   if (!workflow.templateVersion || workflow.templateVersion < CASE_WORKFLOW_TEMPLATE_VERSION) return true;
   if (workflow.isTemplate) return true;
@@ -5121,7 +5201,7 @@ function isStraightCaseWorkflowLayoutTarget(workflow) {
   const ids = new Set((workflow?.nodes || []).map((node) => node.id));
   const coreIds = [
     'wf-start', 'wf-pp', 'wf-d-pre', 'wf-hu-pre', 'wf-oc', 'wf-d-ocr', 'wf-hu-ocr',
-    'wf-map', 'wf-ai', 'wf-d-final', 'wf-hu-final',
+    'wf-map', 'wf-ai', 'wf-d-final', 'wf-hu-final', 'wf-code',
   ];
   if (!coreIds.every((id) => ids.has(id))) return false;
   return ['wf-n-ok', 'wf-n-supp', 'wf-n-error'].some((id) => ids.has(id));
@@ -5173,12 +5253,12 @@ function layoutStraightCaseWorkflow(workflow, sizes) {
   const byId = Object.fromEntries(workflow.nodes.map((node) => [node.id, node]));
   const mainIds = [
     'wf-start', 'wf-pp', 'wf-d-pre', 'wf-oc', 'wf-d-ocr',
-    'wf-map', 'wf-ai', 'wf-d-final',
+    'wf-map', 'wf-ai', 'wf-d-final', 'wf-code',
   ].filter((id) => byId[id]);
   const hitlAnchors = [
     ['wf-hu-pre', 'wf-d-pre', 'wf-oc'],
     ['wf-hu-ocr', 'wf-d-ocr', 'wf-map'],
-    ['wf-hu-final', 'wf-d-final', 'wf-end'],
+    ['wf-hu-final', 'wf-d-final', 'wf-code'],
   ].filter(([hitlId, anchorId]) => byId[hitlId] && byId[anchorId]);
   const notifyIds = ['wf-n-ok', 'wf-n-supp', 'wf-n-error'].filter((id) => byId[id]);
   const stepGap = 112;

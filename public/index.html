@@ -137,10 +137,10 @@
                 <div class="fixed-doc-type-list-title-row">
                   <h2>帳票タイプ</h2>
                   <button type="button" class="scene-collapse-btn" title="折りたたむ" @click="toggleFixedDocTypeList">‹</button>
-                </div>
+              </div>
                 <el-input v-model="fixedDocTypeSearch" placeholder="帳票タイプで検索" clearable class="fixed-doc-type-search" />
                 <el-button type="primary" class="fixed-doc-type-add" @click="createFixedDocType">＋ タイプ追加</el-button>
-              </div>
+            </div>
               <div v-show="!fixedDocTypeListCollapsed" class="fixed-doc-type-list">
                 <button
                   v-for="type in fixedDocTypeItemsFiltered"
@@ -208,17 +208,15 @@
                             draggable="false"
                           />
                           <div
-                            v-if="fixedDocPreviewShowQrHotspots"
+                            v-if="fixedDocPreviewQrHotspots.length"
                             class="fixed-doc-preview-hotspots"
                             aria-hidden="true"
                           >
-                            <button
+                            <div
                               v-for="src in fixedDocPreviewQrHotspots"
                               :key="'qr-hot-' + src.id"
-                              type="button"
-                              class="fixed-doc-preview-hotspot fixed-doc-preview-hotspot--readonly"
+                              class="fixed-doc-preview-hotspot fixed-doc-preview-hotspot--readonly is-active"
                               :data-source-id="src.id"
-                              :class="{ 'is-active': fixedDocActiveQrSourceId === src.id, 'is-disabled': src.enabled === false }"
                               :style="{
                                 left: src.rect.x + '%',
                                 top: src.rect.y + '%',
@@ -226,12 +224,10 @@
                                 height: src.rect.h + '%',
                               }"
                               :title="src.id + ' · ' + src.label"
-                              @pointerdown.stop
-                              @click.stop="selectFixedDocPreviewQrSource(src.id)"
                             >
                               <span class="fixed-doc-preview-hotspot-label">{{ src.id }}</span>
-                            </button>
-                          </div>
+                      </div>
+                      </div>
                         </div>
                       </div>
                     </div>
@@ -312,9 +308,9 @@
                   <section v-show="fixedDocSetupStep === 2" class="fixed-doc-panel fixed-doc-step-panel fixed-doc-step-panel--read">
                     <div class="fixed-doc-tabs fixed-doc-tabs--local">
                       <div class="fixed-doc-tabs-nav">
-                        <button type="button" :class="{ 'is-active': fixedDocReadTab === 'text' }" @click="fixedDocReadTab = 'text'">テキスト読取</button>
+                      <button type="button" :class="{ 'is-active': fixedDocReadTab === 'text' }" @click="fixedDocReadTab = 'text'">テキスト読取</button>
                         <button type="button" :class="{ 'is-active': fixedDocReadTab === 'table' }" @click="fixedDocReadTab = 'table'; fixedDocReadMode = 'ocr'">テーブル情報読取</button>
-                      </div>
+                    </div>
                       <div class="fixed-doc-tabs-actions">
                         <el-button
                           v-if="fixedDocReadTab === 'table' || (fixedDocReadTab === 'text' && fixedDocReadMode === 'ocr')"
@@ -350,14 +346,14 @@
                     <template v-if="fixedDocReadTab === 'text'">
                     <div v-if="fixedDocReadMode === 'ocr'" class="fixed-doc-read-body">
                       <div class="fixed-doc-textarea-wrap">
-                        <el-input
-                          class="fixed-doc-common-prompt"
-                          type="textarea"
-                          :rows="4"
-                          maxlength="2000"
-                          show-word-limit
-                          :model-value="fixedDocCommonPrompt"
-                        ></el-input>
+                      <el-input
+                        class="fixed-doc-common-prompt"
+                        type="textarea"
+                        :rows="4"
+                        maxlength="2000"
+                        show-word-limit
+                        :model-value="fixedDocCommonPrompt"
+                      ></el-input>
                         <div class="fixed-doc-ai-actions">
                           <el-button type="primary">AI</el-button>
                           <el-button>⌫</el-button>
@@ -365,11 +361,11 @@
                       </div>
                       <div class="fixed-doc-table-panel">
                         <div class="fixed-doc-table-scroll">
-                          <table class="fixed-doc-table fixed-doc-table--read">
-                            <thead>
-                              <tr>
-                                <th>番号</th>
-                                <th>項目名 <span class="fixed-doc-required">必須</span></th>
+                      <table class="fixed-doc-table fixed-doc-table--read">
+                        <thead>
+                          <tr>
+                            <th>番号</th>
+                            <th>項目名 <span class="fixed-doc-required">必須</span></th>
                                 <th>
                                   <span class="fixed-doc-th-label">
                                     タイプ
@@ -378,7 +374,7 @@
                                     </el-tooltip>
                                   </span>
                                 </th>
-                                <th>プロンプト</th>
+                            <th>プロンプト</th>
                                 <th>
                                   <span class="fixed-doc-th-label">
                                     正解サンプル
@@ -398,15 +394,15 @@
                                 <th>
                                   <span class="fixed-doc-th-label">
                                     マスク
-                                    <el-tooltip placement="top" :show-after="200" content="この項目は個人情報マスク対象の判定に使用されます。">
+                                    <el-tooltip placement="top" :show-after="200" content="この項目は前処理の個人情報脱敏（マスキング）対象フィールドの指定に使用されます。">
                                       <span class="fixed-doc-info" tabindex="0">i</span>
                                     </el-tooltip>
                                   </span>
                                 </th>
                                 <th class="fixed-doc-row-actions-col">操作</th>
-                              </tr>
-                            </thead>
-                            <tbody>
+                          </tr>
+                        </thead>
+                        <tbody>
                               <tr
                                 v-for="row in fixedDocTextRows"
                                 :key="'fd-read-' + row.fieldId"
@@ -414,16 +410,16 @@
                                 @dragover.prevent="onFixedDocTextFieldDragOver(row.fieldId, $event)"
                                 @drop.prevent="onFixedDocTextFieldDrop(row.fieldId, $event)"
                               >
-                                <td>{{ row.no }}</td>
-                                <td><el-input :model-value="row.name"></el-input></td>
+                            <td>{{ row.no }}</td>
+                            <td><el-input :model-value="row.name"></el-input></td>
                                 <td>
                                   <el-select :model-value="row.type" @change="setFixedDocFieldType(row.fieldId, $event)">
                                     <el-option label="string" value="string"></el-option>
                                     <el-option label="number" value="number"></el-option>
                                   </el-select>
                                 </td>
-                                <td><el-input :model-value="row.prompt"></el-input></td>
-                                <td><el-input :model-value="row.sample"></el-input></td>
+                            <td><el-input :model-value="row.prompt"></el-input></td>
+                            <td><el-input :model-value="row.sample"></el-input></td>
                                 <td><el-switch :model-value="row.required" size="small"></el-switch></td>
                                 <td class="fixed-doc-mask-cell">
                                   <el-switch
@@ -438,9 +434,9 @@
                                     <button type="button" class="fixed-doc-row-delete" title="削除" aria-label="削除" @click="deleteFixedDocTextField(row.fieldId)">×</button>
                                   </div>
                                 </td>
-                              </tr>
-                            </tbody>
-                          </table>
+                          </tr>
+                        </tbody>
+                      </table>
                         </div>
                       </div>
                       <el-button class="fixed-doc-add-field" type="primary" plain>＋ 項目追加({{ fixedDocTextRows.length }}/200)</el-button>
@@ -456,14 +452,14 @@
                                 :show-after="200"
                               >
                                 <template #content>
-                                  QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1～QR6 を割り当てます。テンプレート変更後は「QR解析」で再実行できます。
+                                  QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1、QR2… と検出数に応じて割り当てます。不要な QR は削除、漏れた QR は追加できます。テンプレート変更後は「QR解析」で再実行できます。
                                 </template>
                                 <span class="fixed-doc-info" tabindex="0">i</span>
                               </el-tooltip>
                               <span v-if="!fixedDocHasStep1Template" class="fixed-doc-qr-source-empty">Step1 でテンプレートをアップロードしてください</span>
                               <span v-else-if="fixedDocQrScanActive" class="fixed-doc-qr-source-empty">読取中…</span>
                               <span v-else-if="!fixedDocQrSourceCatalog.length" class="fixed-doc-qr-source-empty">QR を検出できませんでした。「QR解析」で再試行できます</span>
-                            </div>
+                      </div>
                             <div v-if="fixedDocHasStep1Template" class="fixed-doc-qr-source-list-wrap">
                               <div v-if="fixedDocQrSourceCatalog.length" class="fixed-doc-qr-source-scroll">
                                 <ul class="fixed-doc-qr-source-list">
@@ -474,10 +470,28 @@
                                     @click="selectFixedDocPreviewQrSource(src.id)"
                                   >
                                     <code>{{ fixedDocQrSourceDisplayLabel(src) }}</code>
+                                    <div class="fixed-doc-qr-source-item-actions">
+                                      <button
+                                        type="button"
+                                        class="fixed-doc-qr-source-icon-btn fixed-doc-qr-source-remove"
+                                        aria-label="削除"
+                                        title="削除"
+                                        @click.stop="removeFixedDocQrSource(src.id)"
+                                      >×</button>
+                    </div>
                                   </li>
                                 </ul>
-                              </div>
+                    </div>
                               <div class="fixed-doc-qr-source-actions">
+                                <el-button
+                                  size="small"
+                                  plain
+                                  class="fixed-doc-qr-source-add"
+                                  :disabled="!fixedDocCanAddQrSource || fixedDocQrScanActive"
+                                  @click="appendNextFixedDocQrSourceFromIgnored"
+                                >
+                                  追加
+                                </el-button>
                                 <el-button
                                   size="small"
                                   plain
@@ -494,9 +508,9 @@
                           </div>
                           <div class="fixed-doc-table-scroll">
                             <table class="fixed-doc-table fixed-doc-table--read fixed-doc-table--qr-read">
-                              <thead>
-                                <tr>
-                                  <th>番号</th>
+                      <thead>
+                        <tr>
+                          <th>番号</th>
                                   <th>項目名 <span class="fixed-doc-required">必須</span></th>
                                   <th class="fixed-doc-qr-type-col">
                                     タイプ
@@ -530,16 +544,17 @@
                                       <span class="fixed-doc-info" tabindex="0">i</span>
                                     </el-tooltip>
                                   </th>
-                                </tr>
-                              </thead>
-                              <tbody>
+                        </tr>
+                      </thead>
+                      <tbody>
                                 <tr
                                   v-for="row in fixedDocQrReadRows"
                                   :key="'fd-qr-read-' + row.fieldId"
                                   :class="{ 'is-qr-source-active': fixedDocActiveQrSourceId && row.qrSourceId === fixedDocActiveQrSourceId }"
+                                  @click="onFixedDocQrMappingRowClick(row, $event)"
                                 >
-                                  <td>{{ row.no }}</td>
-                                  <td>{{ row.name }}</td>
+                          <td>{{ row.no }}</td>
+                          <td>{{ row.name }}</td>
                                   <td class="fixed-doc-qr-type-col">
                                     <span class="fixed-doc-type-readonly">{{ row.type }}</span>
                                   </td>
@@ -676,7 +691,7 @@
                                     <th>
                                       <span class="fixed-doc-th-label">
                                         マスク
-                                        <el-tooltip placement="top" :show-after="200" content="この列は個人情報マスク対象の判定に使用されます。">
+                                        <el-tooltip placement="top" :show-after="200" content="この列は前処理の個人情報脱敏（マスキング）対象フィールドの指定に使用されます。">
                                           <span class="fixed-doc-info" tabindex="0">i</span>
                                         </el-tooltip>
                                       </span>
@@ -692,7 +707,7 @@
                                       <el-select :model-value="col.type" size="small" @change="setFixedDocTableColumnType(table.id, col.columnId, $event)">
                                         <el-option label="string" value="string"></el-option>
                                         <el-option label="number" value="number"></el-option>
-                                      </el-select>
+                              </el-select>
                                     </td>
                                     <td><el-input v-model="col.prompt" size="small"></el-input></td>
                                     <td><el-input v-model="col.sample" size="small"></el-input></td>
@@ -774,8 +789,8 @@
                                   </el-select>
                                   <div v-if="isFixedDocMasterRule(row)" class="fixed-doc-rule-detail fixed-doc-rule-detail--master">
                                     <el-select :model-value="row.master" size="small" class="fixed-doc-rule-master-select">
-                                      <el-option :label="row.master" :value="row.master"></el-option>
-                                    </el-select>
+                                <el-option :label="row.master" :value="row.master"></el-option>
+                              </el-select>
                                     <el-input model-value="1" size="small" class="fixed-doc-rule-master-priority"></el-input>
                                   </div>
                                   <div v-else-if="isFixedDocTextReplaceRule(row)" class="fixed-doc-rule-detail fixed-doc-rule-detail--replace">
@@ -793,8 +808,8 @@
                                       @update:model-value="setFixedDocFieldRule(row.fieldId, { replaceTo: $event })"
                                     ></el-input>
                                   </div>
-                                </div>
-                              </td>
+                            </div>
+                          </td>
                               <td v-if="fixedDocShowNormalConditionColumn" class="fixed-doc-normal-condition-col">
                                 <div
                                   v-if="canFixedDocRowHaveNormalCondition(row)"
@@ -850,10 +865,10 @@
                                 </div>
                               </td>
                               <td class="fixed-doc-confidence-col"><el-input :model-value="row.confidence" size="small"></el-input></td>
-                            </tr>
+                        </tr>
                           </template>
-                        </tbody>
-                      </table>
+                      </tbody>
+                    </table>
                       </div>
                     </div>
                     <div v-if="fixedDocRuleTab === 'table'" class="fixed-doc-read-table-list fixed-doc-rule-table-list">
@@ -985,7 +1000,7 @@
                           :disabled="!group.enabled"
                           class="fixed-doc-image-control"
                         >
-                          <el-option v-for="opt in item.options" :key="opt" :label="opt" :value="opt"></el-option>
+                            <el-option v-for="opt in item.options" :key="opt" :label="opt" :value="opt"></el-option>
                         </el-select>
                         <el-radio-group
                           v-else-if="item.kind === 'radio'"
@@ -993,7 +1008,7 @@
                           :disabled="!group.enabled"
                           class="fixed-doc-image-control"
                         >
-                          <el-radio v-for="opt in item.options" :key="opt" :label="opt">{{ opt }}</el-radio>
+                            <el-radio v-for="opt in item.options" :key="opt" :label="opt">{{ opt }}</el-radio>
                         </el-radio-group>
                         <el-input-number
                           v-else-if="item.kind === 'number'"
@@ -1018,8 +1033,8 @@
                   <section v-show="fixedDocSetupStep === 5" class="fixed-doc-panel fixed-doc-test-panel">
                     <div class="fixed-doc-tabs fixed-doc-tabs--local fixed-doc-tabs--test">
                       <div class="fixed-doc-tabs-nav">
-                        <button type="button" :class="{ 'is-active': fixedDocTestTab === 'text' }" @click="fixedDocTestTab = 'text'">テキスト読取</button>
-                        <button type="button" :class="{ 'is-active': fixedDocTestTab === 'table' }" @click="fixedDocTestTab = 'table'">テーブル情報読取</button>
+                      <button type="button" :class="{ 'is-active': fixedDocTestTab === 'text' }" @click="fixedDocTestTab = 'text'">テキスト読取</button>
+                      <button type="button" :class="{ 'is-active': fixedDocTestTab === 'table' }" @click="fixedDocTestTab = 'table'">テーブル情報読取</button>
                       </div>
                     </div>
                     <div v-if="fixedDocTestTab === 'text'" class="fixed-doc-test-list">
@@ -2558,7 +2573,8 @@
                 <!-- 前処理 -->
                 <div v-show="inspectorPanel === 'image'" class="inspector-panel-section">
                   <inspector-module>
-                    <inspector-module-card title="前処理オプション">
+                    <inspector-module-card title="前処理設定">
+                      <!-- 各モジュールを ON にし、対象帳票を指定（未指定時は関連帳票すべて） -->
                       <div class="preprocess-settings-list">
                         <div
                           v-for="item in PREPROCESS_SETTING_ITEMS"
@@ -2569,11 +2585,18 @@
                           <div class="preprocess-setting-row__head">
                             <span class="preprocess-setting-row__label">{{ item.label }}</span>
                             <span v-if="item.alwaysOn" class="inspector-always-on-badge">常時有効</span>
-                            <el-switch
+                            <button
                               v-else
-                              v-model="processingForm.image[item.switchKey]"
-                              size="small"
-                            />
+                              type="button"
+                              class="preprocess-module-switch-btn"
+                              :aria-pressed="isPreprocessSettingOn(item)"
+                              :aria-label="item.label + (isPreprocessSettingOn(item) ? ' ON' : ' OFF')"
+                              @click="togglePreprocessModule(item)"
+                            >
+                              <span class="workflow-module-toggle-switch" :class="{ 'is-on': isPreprocessSettingOn(item) }">
+                                <span class="workflow-module-toggle-knob"></span>
+                              </span>
+                            </button>
                           </div>
                           <div
                             v-if="showPreprocessSettingDetail(item) && item.docTypesKey"
@@ -2586,87 +2609,27 @@
                               collapse-tags-tooltip
                               :max-collapse-tags="1"
                               size="small"
-                              placeholder="対象帳票（未指定時は全帳票）"
+                              :placeholder="getPreprocessDocTypePlaceholder(item)"
                               class="inspector-field-control inspector-multi-select preprocess-doc-select"
-                              :disabled="!sceneDocTypes.length"
+                              :disabled="!getPreprocessSettingDocTypes(item).length"
                               teleported
                               placement="bottom-start"
                               popper-class="idp-inspector-select-popper"
                               :popper-options="{ strategy: 'fixed' }"
                             >
                               <el-option
-                                v-for="t in sceneDocTypes"
+                                v-for="t in getPreprocessSettingDocTypes(item)"
                                 :key="item.key + '-' + t"
                                 :label="getDocDisplayLabel(t)"
                                 :value="t"
                               />
                             </el-select>
+                            <p
+                              v-if="item.key === 'piiDetect' && isPreprocessSettingOn(item) && !piiDetectEligibleDocTypes.length"
+                              class="inspector-field-hint preprocess-pii-empty-hint"
+                            >Step2 でマスク ON の帳票がありません。帳票タイプ設定 Step2 OCR 読取でマスク対象フィールドを設定してください。</p>
                           </div>
                         </div>
-                      </div>
-                    </inspector-module-card>
-                  </inspector-module>
-                </div>
-
-                <!-- 個人情報マスク -->
-                <div v-show="inspectorPanel === 'pii_mask'" class="inspector-panel-section pii-mask-inspector">
-                  <inspector-module>
-                    <inspector-module-card title="個人情報マスク設定">
-                      <div class="ocr-extract-panel">
-                        <div v-if="piiMaskItems.length" class="ocr-extract-list">
-                          <div
-                            v-for="item in piiMaskItems"
-                            :key="'pii-' + item.type"
-                            class="ocr-extract-row"
-                          >
-                            <div class="ocr-extract-row__main">
-                              <span class="ocr-extract-doc-name" :title="getDocDisplayLabel(item.type)">{{ getDocDisplayLabel(item.type) }}</span>
-                            </div>
-                            <div class="ocr-extract-row__actions">
-                              <el-switch
-                                :model-value="item.enabled"
-                                size="small"
-                                @change="togglePiiMask(item.type, $event)"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <p v-if="piiMaskStats.total" class="ocr-extract-summary">
-                          関連帳票 {{ piiMaskStats.total }} 件 · 有効 {{ piiMaskStats.enabled }} 件
-                        </p>
-                        <p v-else class="verify-empty">業務シーン設定で関連帳票を追加してください</p>
-                      </div>
-                    </inspector-module-card>
-                  </inspector-module>
-                </div>
-
-                <!-- 画像不正検知 -->
-                <div v-show="inspectorPanel === 'fraud_detect'" class="inspector-panel-section fraud-detect-inspector">
-                  <inspector-module>
-                    <inspector-module-card title="画像不正検知設定">
-                      <div class="ocr-extract-panel">
-                        <div v-if="fraudDetectItems.length" class="ocr-extract-list">
-                          <div
-                            v-for="item in fraudDetectItems"
-                            :key="'fraud-' + item.type"
-                            class="ocr-extract-row"
-                          >
-                            <div class="ocr-extract-row__main">
-                              <span class="ocr-extract-doc-name" :title="getDocDisplayLabel(item.type)">{{ getDocDisplayLabel(item.type) }}</span>
-                            </div>
-                            <div class="ocr-extract-row__actions">
-                              <el-switch
-                                :model-value="item.enabled"
-                                size="small"
-                                @change="toggleFraudDetect(item.type, $event)"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <p v-if="fraudDetectStats.total" class="ocr-extract-summary">
-                          関連帳票 {{ fraudDetectStats.total }} 件 · 有効 {{ fraudDetectStats.enabled }} 件
-                        </p>
-                        <p v-else class="verify-empty">業務シーン設定で関連帳票を追加してください</p>
                       </div>
                     </inspector-module-card>
                   </inspector-module>
@@ -2691,11 +2654,17 @@
                               <span class="ocr-extract-doc-name" :title="getDocDisplayLabel(item.type)">{{ getDocDisplayLabel(item.type) }}</span>
                             </div>
                             <div class="ocr-extract-row__actions">
-                              <el-switch
-                                :model-value="item.enabled"
-                                size="small"
-                                @change="toggleOcrExtract(item.type, $event)"
-                              />
+                              <button
+                                type="button"
+                                class="ocr-extract-row__toggle ocr-extract-toggle-btn"
+                                :aria-pressed="item.enabled"
+                                :aria-label="getDocDisplayLabel(item.type) + (item.enabled ? ' ON' : ' OFF')"
+                                @click="toggleOcrExtract(item.type, !item.enabled)"
+                              >
+                                <span class="workflow-module-toggle-switch" :class="{ 'is-on': item.enabled }">
+                                  <span class="workflow-module-toggle-knob"></span>
+                                </span>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -3036,25 +3005,25 @@
                     class="workflow-notification-channel-fields"
                   >
                     <label v-if="notificationRuleDraft.channels.includes('system')" class="workflow-notification-field">
-                      <span>通知対象 <em>必須</em></span>
-                      <el-select
-                        v-model="notificationRuleDraft.recipients"
-                        multiple
-                        collapse-tags
-                        collapse-tags-tooltip
-                        teleported
-                        popper-class="idp-workflow-notification-select-popper"
-                        placeholder="通知対象を選択"
-                        size="small"
-                      >
-                        <el-option
-                          v-for="option in NOTIFY_RECIPIENT_OPTIONS"
-                          :key="option.value"
-                          :label="option.label"
-                          :value="option.value"
-                        />
-                      </el-select>
-                    </label>
+                    <span>通知対象 <em>必須</em></span>
+                    <el-select
+                      v-model="notificationRuleDraft.recipients"
+                      multiple
+                      collapse-tags
+                      collapse-tags-tooltip
+                      teleported
+                      popper-class="idp-workflow-notification-select-popper"
+                      placeholder="通知対象を選択"
+                      size="small"
+                    >
+                      <el-option
+                        v-for="option in NOTIFY_RECIPIENT_OPTIONS"
+                        :key="option.value"
+                        :label="option.label"
+                        :value="option.value"
+                      />
+                    </el-select>
+                  </label>
                     <label v-if="notificationRuleDraft.channels.includes('email')" class="workflow-notification-field">
                       <span>メール宛先 <em>必須</em></span>
                       <small class="workflow-notification-email-hint">複数のメールアドレスはカンマ・セミコロン・改行などで区切って入力できます。</small>
@@ -3668,25 +3637,25 @@
             class="workflow-notification-channel-fields"
           >
             <label v-if="notificationRuleEditDraft.channels.includes('system')" class="workflow-notification-field">
-              <span>通知対象 <em>必須</em></span>
-              <el-select
-                v-model="notificationRuleEditDraft.recipients"
-                multiple
-                collapse-tags
-                collapse-tags-tooltip
-                teleported
-                popper-class="idp-workflow-notification-select-popper"
-                placeholder="通知対象を選択"
-                size="small"
-              >
-                <el-option
-                  v-for="option in NOTIFY_RECIPIENT_OPTIONS"
-                  :key="option.value"
-                  :label="option.label"
-                  :value="option.value"
-                />
-              </el-select>
-            </label>
+            <span>通知対象 <em>必須</em></span>
+            <el-select
+              v-model="notificationRuleEditDraft.recipients"
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
+              teleported
+              popper-class="idp-workflow-notification-select-popper"
+              placeholder="通知対象を選択"
+              size="small"
+            >
+              <el-option
+                v-for="option in NOTIFY_RECIPIENT_OPTIONS"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </label>
             <label v-if="notificationRuleEditDraft.channels.includes('email')" class="workflow-notification-field">
               <span>メール宛先 <em>必須</em></span>
               <small class="workflow-notification-email-hint">複数のメールアドレスはカンマ・セミコロン・改行などで区切って入力できます。</small>

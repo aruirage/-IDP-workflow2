@@ -50,6 +50,10 @@ const WORKFLOW_DEFAULTS = {
     maxFileSizeMb: 20,
   },
   image: {
+    fraudDetect: true,
+    fraudDetectDocTypes: [],
+    piiDetect: true,
+    piiDetectDocTypes: [],
     rotate: true,
     rotateDocTypes: [],
     perspective: true,
@@ -1592,6 +1596,17 @@ function filterImageDocTypes(docTypes, allowedTypes) {
   return (docTypes || []).filter((t) => allowed.has(t));
 }
 
+const FIXED_DOC_FIELD_MASK_DEFAULT_PATTERN = /氏名|生年月日|住所|電話|証券|口座|患者|被保険者|フリガナ|マイナンバー/;
+
+function docTypeHasMaskFieldConfigured(docType) {
+  const fields = getDocFieldOptions(docType);
+  return fields.some((name) => FIXED_DOC_FIELD_MASK_DEFAULT_PATTERN.test(String(name || '')));
+}
+
+function filterDocTypesWithMaskEnabled(docTypes) {
+  return (docTypes || []).filter((t) => docTypeHasMaskFieldConfigured(t));
+}
+
 function defaultImageDocTypes(enabled, docTypes, allowedTypes) {
   if (!enabled) return [];
   const filtered = filterImageDocTypes(docTypes, allowedTypes);
@@ -2963,6 +2978,29 @@ const WORKFLOW_TEST_HITL_CONTEXT_RULES = {
   verification: { label: 'AI検証確認', allowedTypes: ['ai_verify'] },
 };
 
+const HITL_ALLOWED_UPSTREAM_TYPES = {
+  preprocess: ['preprocess'],
+  ocr: ['ocr'],
+  verification: ['ai_verify'],
+};
+
+const HITL_ALLOWED_UPSTREAM_LABELS = {
+  preprocess: '前処理',
+  ocr: 'OCR',
+  verification: 'AI検証',
+};
+
+function getHitlAllowedUpstreamTypes(node) {
+  const ctx = node?.hitlContext || '';
+  if (HITL_ALLOWED_UPSTREAM_TYPES[ctx]) return HITL_ALLOWED_UPSTREAM_TYPES[ctx];
+  return ['preprocess', 'ocr', 'ai_verify'];
+}
+
+function getHitlAllowedUpstreamLabel(node) {
+  const ctx = node?.hitlContext || '';
+  return HITL_ALLOWED_UPSTREAM_LABELS[ctx] || '前処理・OCR・AI検証';
+}
+
 function collectWorkflowTestHitlSourceTypes(workflow, hitlNodeId) {
   const wf = workflow || { nodes: [], edges: [] };
   const nodeMap = Object.fromEntries((wf.nodes || []).map((node) => [node.id, node]));
@@ -2989,8 +3027,9 @@ function validateWorkflowTestHitlContext(workflow) {
   const hitlNodes = (wf.nodes || []).filter((node) => node.type === 'hitl_gate');
   const nodeMap = Object.fromEntries((wf.nodes || []).map((node) => [node.id, node]));
   const issues = [];
-  const allowedTypes = ['preprocess', 'ocr', 'ai_verify'];
   hitlNodes.forEach((node) => {
+    const allowedTypes = getHitlAllowedUpstreamTypes(node);
+    const allowedLabel = getHitlAllowedUpstreamLabel(node);
     const sources = typeof collectHitlUpstreamSources === 'function'
       ? collectHitlUpstreamSources(wf, node.id)
       : collectWorkflowTestHitlSourceTypes(wf, node.id);
@@ -3001,7 +3040,7 @@ function validateWorkflowTestHitlContext(workflow) {
         : '上流ノードなし';
       issues.push({
         nodeId: node.id,
-        message: `${node.label || '人工確認'}：条件ノードを挟んだ直前上流が前処理・OCR・AI検証のいずれかになるよう接続してください。現在の上流は ${sourceLabels} です。`,
+        message: `${node.label || '人工確認'}：条件ノードを挟んだ直前上流が${allowedLabel}のいずれかになるよう接続してください。現在の上流は ${sourceLabels} です。`,
       });
     }
     const supplementEdge = (wf.edges || []).find((edge) => (

@@ -291,11 +291,20 @@ test('shows searchable node descriptions and colored icons in the node picker', 
 
 test('aligns OCR extraction switches to the row end', async () => {
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const workflowCore = await readFile(new URL('../scripts/workflow-core.js', import.meta.url), 'utf8');
 
   assert.match(style, /\.ocr-extract-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto;/s);
   assert.match(style, /\.ocr-extract-row__toggle\s*\{[^}]*margin-left:\s*auto;/s);
-  assert.match(style, /\.workflow-module-toggle-switch\.is-on\s*\{[^}]*background:\s*#667085;/s);
-  assert.doesNotMatch(style, /\.workflow-module-toggle-switch\.is-on\s*\{[^}]*background:\s*#175cd3;/s);
+  assert.match(style, /\.workflow-module-toggle-switch\.is-on\s*\{[^}]*background:\s*var\(--workflow-module-toggle-on-color\);/s);
+  assert.match(style, /--workflow-module-toggle-on-color:\s*#2b4fc7;/);
+  assert.match(index, /ocr-extract-toggle-btn[\s\S]*toggleOcrExtract\(item\.type, !item\.enabled\)[\s\S]*workflow-module-toggle-switch/);
+  const ocrPanelStart = index.indexOf("inspectorPanel === 'ocr'");
+  const ocrPanelEnd = index.indexOf('<!-- データマッピング -->', ocrPanelStart);
+  const ocrPanel = index.slice(ocrPanelStart, ocrPanelEnd);
+  assert.doesNotMatch(ocrPanel, /<el-switch/);
+  assert.match(workflowCore, /id: 'elif-error',[\s\S]*label: '異常'/);
+  assert.match(workflowCore, /branch: 'elif-error', label: '異常'/);
 });
 
 test('does not render forward edges as backflow inside a cycle', async () => {
@@ -343,7 +352,9 @@ test('keeps status outputs but removes them from condition choices', async () =>
   assert.match(workflowCore, /if \(isDecisionStatusVariable\(cond\.variable\)\) return;/);
   assert.match(mockData, /typeof buildCodeVariableOptions === 'function'[\s\S]*buildCodeVariableOptions\(wf, node\.id, varSceneCtx\)/);
   assert.match(mockData, /status は条件に使用できません/);
-  assert.doesNotMatch(workflowCore, /cond\(`\$\{(?:ppVar|ocrVar|aiVar)\}\.case\.(?:preprocess|ocr|verify)Status`/);
+  assert.doesNotMatch(workflowCore, /cond\(`\$\{ppVar\}\.case\.preprocessStatus`/);
+  assert.doesNotMatch(workflowCore, /cond\(`\$\{ocrVar\}\.case\.ocrStatus`/);
+  assert.match(workflowCore, /id: 'elif-error'[\s\S]*verifyStatus[\s\S]*failed/);
 });
 
 test('keeps only rotation, correction, and image alignment preprocessing', async () => {
@@ -374,6 +385,8 @@ test('does not revalidate rules already enforced by configuration controls', asy
   assert.doesNotMatch(mockData, /審査ロールを選択してください/);
   assert.doesNotMatch(mockData, /データマッピングの上流に前処理\/OCR がありません/);
   assert.doesNotMatch(mockData, /AI検証の上流に OCR\/前処理結果がありません/);
+  assert.match(mockData, /ocr: \['ocr'\]/);
+  assert.match(mockData, /ocr: 'OCR'/);
 });
 
 test('keeps draft and published workflow history separate', async () => {

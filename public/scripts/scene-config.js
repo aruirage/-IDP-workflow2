@@ -2,8 +2,23 @@ function getInputChannelLabel(channelId) {
   return INPUT_CHANNELS.find((ch) => ch.id === channelId)?.label || channelId;
 }
 
-function normalizeImageConfig(image, documents) {
+function normalizeImageConfig(image, documents, legacy = {}) {
   const allowedTypes = (documents || []).map((d) => d.type);
+  const piiEligibleTypes = filterDocTypesWithMaskEnabled(allowedTypes);
+  const legacyFraud = legacy.fraudDetect || {};
+  const legacyPii = legacy.piiMask || {};
+  const fraudDetect = image?.fraudDetect !== undefined
+    ? image.fraudDetect !== false
+    : (legacyFraud.enabledTypes ? legacyFraud.enabledTypes.length !== 0 : true);
+  const piiDetect = image?.piiDetect !== undefined
+    ? image.piiDetect !== false
+    : (legacyPii.enabledTypes ? legacyPii.enabledTypes.length !== 0 : true);
+  const fraudDocTypesRaw = image?.fraudDetectDocTypes?.length
+    ? image.fraudDetectDocTypes
+    : (legacyFraud.enabledTypes?.length ? legacyFraud.enabledTypes : []);
+  const piiDocTypesRaw = image?.piiDetectDocTypes?.length
+    ? image.piiDetectDocTypes
+    : (legacyPii.enabledTypes?.length ? legacyPii.enabledTypes : []);
   const rotate = image?.rotate !== false;
   const perspective = image?.perspective !== false;
   const sortEnabled = image?.sort !== undefined
@@ -13,6 +28,10 @@ function normalizeImageConfig(image, documents) {
     ?? image?.classifyDocTypes
     ?? [];
   return {
+    fraudDetect,
+    fraudDetectDocTypes: defaultImageDocTypes(fraudDetect, fraudDocTypesRaw, allowedTypes),
+    piiDetect,
+    piiDetectDocTypes: defaultImageDocTypes(piiDetect, piiDocTypesRaw, piiEligibleTypes),
     rotate,
     rotateDocTypes: defaultImageDocTypes(rotate, image?.rotateDocTypes, allowedTypes),
     perspective,
@@ -1285,7 +1304,10 @@ function sceneForm(sceneOrId) {
   delete data.scene.fileSplit;
   applySceneAggregate(data.scene, data.scene.documents, data.output);
   applySceneDocFieldLinks(data.scene, data.scene.documents);
-  data.processing.image = normalizeImageConfig(data.processing?.image, data.scene.documents);
+  data.processing.image = normalizeImageConfig(data.processing?.image, data.scene.documents, {
+    fraudDetect: data.processing?.fraudDetect,
+    piiMask: data.processing?.piiMask,
+  });
   data.processing.hitl = normalizeHitlConfig(data.processing?.hitl);
   data.master = normalizeMasterConfig(data.master, data.verify);
   data.verify = normalizeVerifyConfig(data.verify);
@@ -1317,7 +1339,10 @@ function sceneFormByScene(scene) {
   delete data.scene.fileSplit;
   applySceneAggregate(data.scene, data.scene.documents, data.output);
   applySceneDocFieldLinks(data.scene, data.scene.documents);
-  data.processing.image = normalizeImageConfig(data.processing?.image, data.scene.documents);
+  data.processing.image = normalizeImageConfig(data.processing?.image, data.scene.documents, {
+    fraudDetect: data.processing?.fraudDetect,
+    piiMask: data.processing?.piiMask,
+  });
   data.processing.hitl = normalizeHitlConfig(data.processing?.hitl);
   data.master = normalizeMasterConfig(data.master, data.verify);
   data.verify = normalizeVerifyConfig(data.verify);
@@ -1365,7 +1390,10 @@ function normalizeLoadedForm(form) {
   form.processing.externalApi = normalizeExternalApiConfig(form.processing.externalApi);
   delete form.processing.rag;
   form.knowledgeSources = (form.knowledgeSources || []).map(normalizeKnowledgeSourceItem);
-  form.processing.image = normalizeImageConfig(form.processing?.image, form.scene.documents);
+  form.processing.image = normalizeImageConfig(form.processing?.image, form.scene.documents, {
+    fraudDetect: form.processing?.fraudDetect,
+    piiMask: form.processing?.piiMask,
+  });
   form.processing.hitl = normalizeHitlConfig(form.processing?.hitl);
   form.master = normalizeMasterConfig(form.master, form.verify);
   form.verify = normalizeVerifyConfig(form.verify);

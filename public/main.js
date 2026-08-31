@@ -1,4 +1,4 @@
-const MAIN_BUILD = '664-hitl-gate-no-case-owner';
+const MAIN_BUILD = '671-default-workflow-fraud-code';
 const WF_CANONICAL_LAYOUT_KEY = 'neosai-idp-wf-canonical-layout-v27';
 
 const appOptions = {
@@ -1422,13 +1422,22 @@ const appOptions = {
       && fixedDocHasStep1Template.value
       && !fixedDocQrScanActive.value
     ));
-    const fixedDocPreviewQrHotspots = computed(() => (
-      fixedDocPreviewShowQrHotspots.value
-        ? fixedDocQrSourceCatalog.filter((src) => src.rect)
-        : []
-    ));
+    const fixedDocPreviewQrHotspots = computed(() => {
+      if (!fixedDocPreviewShowQrHotspots.value || !fixedDocActiveQrSourceId.value) return [];
+      const src = fixedDocQrSourceCatalog.find((item) => item.id === fixedDocActiveQrSourceId.value);
+      return src?.rect ? [src] : [];
+    });
+    const fixedDocCanAddQrSource = computed(() => fixedDocQrIgnoredDetections.length > 0);
+    function focusFixedDocQrSource(sourceId) {
+      if (!sourceId) return;
+      fixedDocActiveQrSourceId.value = sourceId;
+    }
     function selectFixedDocPreviewQrSource(sourceId) {
       fixedDocActiveQrSourceId.value = fixedDocActiveQrSourceId.value === sourceId ? '' : sourceId;
+    }
+    function onFixedDocQrMappingRowClick(row, event) {
+      if (event.target.closest('input, textarea, button, .el-select, .el-switch')) return;
+      if (row.qrSourceId) focusFixedDocQrSource(row.qrSourceId);
     }
     function toggleFixedDocQrSourceEnabled(sourceId) {
       const src = fixedDocQrSourceCatalog.find((item) => item.id === sourceId);
@@ -1516,12 +1525,14 @@ const appOptions = {
         });
       });
     }
-    function pushFixedDocQrIgnoredDetection(label, rect, idPrefix = 'DET', sourceId = '') {
+    function pushFixedDocQrIgnoredDetection(label, rect, idPrefix = 'DET', sourceKey = '') {
       if (!rect) return;
-      if (sourceId && fixedDocQrIgnoredDetections.some((item) => item.sourceId === sourceId)) return;
+      const key = String(sourceKey || '').trim();
+      if (key && fixedDocQrIgnoredDetections.some((item) => (item.sourceKey || item.sourceId) === key)) return;
       fixedDocQrIgnoredDetections.push({
         id: `${idPrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        sourceId,
+        sourceKey: key,
+        sourceId: key,
         label: label || '未登録 QR',
         rect: { ...rect },
       });
@@ -1531,18 +1542,59 @@ const appOptions = {
       if (detectionIndex < 0) return null;
       const detection = fixedDocQrIgnoredDetections[detectionIndex];
       const sourceId = options.sourceId || getNextFixedDocQrSourceId();
+      const sourceKey = options.sourceKey || detection.sourceKey || detection.sourceId || '';
       const source = {
         id: sourceId,
-        sourceKey: options.sourceKey || detection.sourceId || sourceId,
+        sourceKey: sourceKey || sourceId,
         label: options.label || detection.label || '新規 QR',
         enabled: true,
         rect: { ...detection.rect },
+        manualRegion: false,
       };
       fixedDocQrSourceCatalog.push(source);
       fixedDocQrIgnoredDetections.splice(detectionIndex, 1);
       sortFixedDocQrSourceCatalog();
       reindexFixedDocQrSources();
       return source.id;
+    }
+    function removeFixedDocQrSource(sourceId) {
+      const index = fixedDocQrSourceCatalog.findIndex((item) => item.id === sourceId);
+      if (index < 0) return;
+      const removed = fixedDocQrSourceCatalog[index];
+      pushFixedDocQrIgnoredDetection(
+        removed.label,
+        removed.rect,
+        'EXC',
+        removed.sourceKey || removed.id,
+      );
+      fixedDocQrSourceCatalog.splice(index, 1);
+      reindexFixedDocQrSources(sourceId);
+      if (fixedDocActiveQrSourceId.value === sourceId) {
+        fixedDocActiveQrSourceId.value = '';
+      }
+      ElementPlus.ElMessage.success(`${sourceId} を QRソースから除外しました`);
+    }
+    function listFixedDocQrIgnoredDetectionsOrdered() {
+      return [...fixedDocQrIgnoredDetections].sort((a, b) => {
+        const ax = a.rect?.x ?? 999;
+        const bx = b.rect?.x ?? 999;
+        if (ax !== bx) return ax - bx;
+        return (a.rect?.y ?? 0) - (b.rect?.y ?? 0);
+      });
+    }
+    function appendNextFixedDocQrSourceFromIgnored() {
+      const next = listFixedDocQrIgnoredDetectionsOrdered()[0];
+      if (!next) {
+        ElementPlus.ElMessage.info('追加できる QR ソースがありません');
+        return;
+      }
+      addFixedDocQrSourceFromIgnored(next.id);
+    }
+    function addFixedDocQrSourceFromIgnored(detectionId) {
+      const sourceId = registerFixedDocQrSourceFromDetection(detectionId);
+      if (!sourceId) return;
+      fixedDocActiveQrSourceId.value = sourceId;
+      ElementPlus.ElMessage.success(`${sourceId} を追加しました`);
     }
     function assignFixedDocQrRegionRect(sourceId, rect) {
       const source = fixedDocQrSourceCatalog.find((item) => item.id === sourceId);
@@ -1736,7 +1788,44 @@ const appOptions = {
       },
     ]);
     const fixedDocMaskDefaultPattern = /氏名|生年月日|住所|電話|証券|口座|患者|被保険者|フリガナ|マイナンバー/;
-    const fixedDocFieldMasks = reactive({});
+    const fixedDocFieldMasksByType = reactive({});
+    function getFixedDocMaskBucket(typeId = getFixedDocActiveTypeId()) {
+      const key = typeId || FIXED_DOC_DEFAULT_TYPE;
+      if (!fixedDocFieldMasksByType[key]) {
+        fixedDocFieldMasksByType[key] = {};
+      }
+      return fixedDocFieldMasksByType[key];
+    }
+    function getFixedDocFieldNamesForDocType(typeId) {
+      const activeType = fixedDocTypeItems.value.find((item) => item.id === typeId);
+      const fields = activeType?.fields || getDocSchema(typeId).fields || getDocSchema('診断書').fields || [];
+      const preferred = ['請求番号', '患者氏名', '被保険者氏名', '生年月日', '傷病名', '診断名', 'ICD10コード', '通院日数', '治療期間', '先進医療の有無', '通院日', '医療機関名', '医療機関住所', '医師名', '発行日'];
+      const ordered = [...preferred.filter((f) => fields.includes(f)), ...fields.filter((f) => !preferred.includes(f))];
+      return ordered.slice(0, 13);
+    }
+    function getFixedDocStableFieldIdForType(fieldName, typeId) {
+      const names = getFixedDocFieldNamesForDocType(typeId);
+      const baseIndex = names.indexOf(fieldName);
+      return getFixedDocFieldId(fieldName, baseIndex);
+    }
+    function ensureFixedDocFieldMasksForType(typeId = getFixedDocActiveTypeId()) {
+      const bucket = getFixedDocMaskBucket(typeId);
+      getFixedDocFieldNamesForDocType(typeId).forEach((name) => {
+        const fieldId = getFixedDocStableFieldIdForType(name, typeId);
+        if (!Object.prototype.hasOwnProperty.call(bucket, fieldId)) {
+          bucket[fieldId] = fixedDocMaskDefaultPattern.test(name);
+        }
+      });
+    }
+    function docTypeHasMaskEnabled(typeId) {
+      if (!typeId) return false;
+      ensureFixedDocFieldMasksForType(typeId);
+      const bucket = getFixedDocMaskBucket(typeId);
+      return getFixedDocFieldNamesForDocType(typeId).some((name) => {
+        const fieldId = getFixedDocStableFieldIdForType(name, typeId);
+        return !!bucket[fieldId];
+      });
+    }
     const fixedDocFieldTypes = reactive({});
     const fixedDocFieldOrder = ref([]);
     const fixedDocDeletedFieldNames = reactive(new Set());
@@ -1783,17 +1872,13 @@ const appOptions = {
       return fixedDocMaskDefaultPattern.test(fieldName);
     }
     function ensureFixedDocFieldMasks() {
-      getFixedDocFieldNameList().forEach((name) => {
-        const fieldId = getFixedDocStableFieldId(name);
-        if (!Object.prototype.hasOwnProperty.call(fixedDocFieldMasks, fieldId)) {
-          fixedDocFieldMasks[fieldId] = getDefaultFixedDocFieldMask(name);
-        }
-      });
+      ensureFixedDocFieldMasksForType(getFixedDocActiveTypeId());
     }
     function toggleFixedDocFieldMask(fieldRef, masked) {
       ensureFixedDocFieldMasks();
       const fieldId = getFixedDocFieldMeta(fieldRef)?.fieldId || fieldRef;
-      fixedDocFieldMasks[fieldId] = !!masked;
+      getFixedDocMaskBucket()[fieldId] = !!masked;
+      syncPiiDetectDocTypesOnForm();
     }
     function setFixedDocFieldType(fieldRef, type) {
       const fieldId = getFixedDocFieldMeta(fieldRef)?.fieldId || fieldRef;
@@ -1861,7 +1946,8 @@ const appOptions = {
     const fixedDocMaskStats = computed(() => {
       ensureFixedDocFieldMasks();
       const ids = getFixedDocFieldIds();
-      const masked = ids.filter((fieldId) => fixedDocFieldMasks[fieldId]).length;
+      const bucket = getFixedDocMaskBucket();
+      const masked = ids.filter((fieldId) => bucket[fieldId]).length;
       return { total: ids.length, masked };
     });
     const fixedDocTextRows = computed(() => {
@@ -1897,7 +1983,7 @@ const appOptions = {
         prompt: idx === 0 ? '**ページ左下角の番号のうち' : `${name}欄の値を原文のまま抽出`,
         sample: samples[name] || EXPORT_FIELD_SAMPLE_VALUES[name] || '',
         required: false,
-        mask: !!fixedDocFieldMasks[getFixedDocStableFieldId(name)],
+        mask: !!getFixedDocMaskBucket()[getFixedDocStableFieldId(name)],
       }));
     });
     const fixedDocProcessRuleOptions = [
@@ -1941,7 +2027,6 @@ const appOptions = {
       templateId: 'LIAJ045-A01-202104',
       templateLabel: '生命保険診断書（LIAJ045）',
     });
-    const FIXED_DOC_QR_SOURCE_LIMIT = 6;
     const FIXED_DOC_QR_SOURCE_RECTS = {
       QR1: { x: 5.8, y: 85.2, w: 13.3, h: 9.3 },
       QR2: { x: 21.1, y: 85.2, w: 13.3, h: 9.4 },
@@ -2120,6 +2205,19 @@ const appOptions = {
       while (used.has(index)) index += 1;
       return index;
     }
+    function getFixedDocQrFetchIndexOneBased(row, fieldId = row?.fieldId) {
+      if (!fieldId) return null;
+      if (fieldId && fixedDocQrFetchIndexDrafts[fieldId] !== undefined) {
+        const trimmed = String(fixedDocQrFetchIndexDrafts[fieldId]).trim();
+        if (!trimmed) return null;
+        const parsed = Number(trimmed);
+        return Number.isInteger(parsed) ? parsed : null;
+      }
+      ensureFixedDocFieldRules();
+      const rule = fixedDocFieldRules[fieldId] || row || {};
+      if (!Number.isFinite(Number(rule.fetchIndex))) return null;
+      return Number(rule.fetchIndex) + 1;
+    }
     function validateFixedDocQrFetchIndex(sourceId, fieldId, rawValue) {
       const trimmed = String(rawValue ?? '').trim();
       if (!trimmed) return { ok: false, message: '順序を入力してください' };
@@ -2127,14 +2225,42 @@ const appOptions = {
       if (!Number.isInteger(oneBased) || oneBased < 1) {
         return { ok: false, message: '1以上の整数を入力してください' };
       }
+      const rows = getFixedDocQrSourceFieldRows(sourceId);
+      const total = rows.length;
+      if (oneBased > total) {
+        return { ok: false, message: `1〜${total}の範囲で入力してください` };
+      }
       const zeroBased = oneBased - 1;
-      const duplicate = getFixedDocQrSourceFieldRows(sourceId).some((row) => {
+      const duplicate = rows.some((row) => {
         if (row.fieldId === fieldId) return false;
-        const rule = fixedDocFieldRules[row.fieldId] || {};
-        return Number.isFinite(Number(rule.fetchIndex)) && Number(rule.fetchIndex) === zeroBased;
+        const otherOneBased = getFixedDocQrFetchIndexOneBased(row, row.fieldId);
+        return otherOneBased === oneBased;
       });
       if (duplicate) return { ok: false, message: '同一QRソース内で順序が重複しています' };
+      const assigned = rows
+        .map((row) => (row.fieldId === fieldId ? oneBased : getFixedDocQrFetchIndexOneBased(row, row.fieldId)))
+        .filter((value) => Number.isInteger(value));
+      if (assigned.length === total) {
+        const sorted = [...assigned].sort((a, b) => a - b);
+        const isConsecutive = sorted.every((value, index) => value === index + 1);
+        if (!isConsecutive) {
+          return { ok: false, message: `同一QRソース内で順序は1から${total}まで連番で指定してください` };
+        }
+      }
       return { ok: true, value: zeroBased };
+    }
+    function revalidateFixedDocQrSourceFetchIndexes(sourceId) {
+      if (!sourceId) return;
+      getFixedDocQrSourceFieldRows(sourceId).forEach((row) => {
+        const display = getFixedDocQrFetchIndexStoredDisplay(row);
+        if (!display) {
+          delete fixedDocQrFetchIndexErrors[row.fieldId];
+          return;
+        }
+        const result = validateFixedDocQrFetchIndex(sourceId, row.fieldId, display);
+        if (!result.ok) fixedDocQrFetchIndexErrors[row.fieldId] = result.message;
+        else delete fixedDocQrFetchIndexErrors[row.fieldId];
+      });
     }
     function getFixedDocQrFetchIndexStoredDisplay(row) {
       if (!row?.fieldId) return '';
@@ -2176,6 +2302,7 @@ const appOptions = {
       }
       delete fixedDocQrFetchIndexErrors[fieldId];
       setFixedDocFieldRule(fieldId, { fetchIndex: result.value, fetchIndexManual: true });
+      revalidateFixedDocQrSourceFetchIndexes(sourceId);
     }
     function getFixedDocQrFetchIndexError(fieldId) {
       return fixedDocQrFetchIndexErrors[fieldId] || '';
@@ -2605,6 +2732,7 @@ const appOptions = {
           fixedDocFieldRules[fieldId].qrExtractMethod = FIXED_DOC_QR_EXTRACT_SPLIT;
           fixedDocFieldRules[fieldId].qrDelimiter = fixedDocFieldRules[fieldId].qrDelimiter || '$';
         }
+        focusFixedDocQrSource(patch.qrSourceId);
       }
       if (patch.qrExtractMethod) {
         fixedDocFieldRules[fieldId].qrDetail = {
@@ -2682,48 +2810,65 @@ const appOptions = {
         return na - nb;
       });
     }
-    function applyFixedDocQrSourcesFromTemplate() {
-      const retainedSourceIds = new Set();
-      const fixedQrIds = new Set(
-        FIXED_DOC_QR_SOURCE_DEFAULTS.slice(0, FIXED_DOC_QR_SOURCE_LIMIT).map((def) => def.id),
+    function listFixedDocQrTemplateDetections() {
+      return Object.keys(FIXED_DOC_QR_SOURCE_RECTS)
+        .map((key) => {
+          const def = FIXED_DOC_QR_SOURCE_DEFAULTS.find((item) => item.id === key) || {
+            id: key,
+            label: key,
+            enabled: true,
+          };
+          return {
+            sourceKey: key,
+            label: def.label,
+            rect: { ...FIXED_DOC_QR_SOURCE_RECTS[key] },
+          };
+        })
+        .sort((a, b) => a.rect.x - b.rect.x || a.rect.y - b.rect.y);
+    }
+    function getFixedDocQrExcludedSourceKeys() {
+      return new Set(
+        fixedDocQrIgnoredDetections
+          .map((item) => item.sourceKey || item.sourceId)
+          .filter(Boolean),
       );
-      for (let index = fixedDocQrSourceCatalog.length - 1; index >= 0; index -= 1) {
-        const src = fixedDocQrSourceCatalog[index];
-        const key = src.sourceKey || src.id;
-        if (!fixedQrIds.has(key)) fixedDocQrSourceCatalog.splice(index, 1);
-      }
-      FIXED_DOC_QR_SOURCE_DEFAULTS.slice(0, FIXED_DOC_QR_SOURCE_LIMIT).forEach((def) => {
-        const rect = FIXED_DOC_QR_SOURCE_RECTS[def.id];
-        if (!rect) return;
-        const current = fixedDocQrSourceCatalog.find((item) => item.id === def.id);
-        if (current) {
-          retainedSourceIds.add(def.id);
-          current.label = def.label;
-          current.sourceKey = current.sourceKey || def.id;
-          current.rect = { ...rect };
-          current.manualRegion = false;
-          current.enabled = true;
-        } else {
-          retainedSourceIds.add(def.id);
-          fixedDocQrSourceCatalog.push({
-            ...def,
-            sourceKey: def.id,
-            rect: { ...rect },
-          });
-        }
-      });
-      fixedDocQrSourceCatalog.forEach((src) => {
-        const rect = FIXED_DOC_QR_SOURCE_RECTS[src.sourceKey || src.id];
-        if (rect) {
-          src.rect = { ...rect };
-          src.manualRegion = false;
-        }
-      });
-      sortFixedDocQrSourceCatalog();
+    }
+    function applyFixedDocQrSourcesFromTemplate() {
+      const detections = listFixedDocQrTemplateDetections();
+      const excludedKeys = getFixedDocQrExcludedSourceKeys();
+      const scanKeys = new Set(detections.map((detection) => detection.sourceKey));
+
       for (let index = fixedDocQrIgnoredDetections.length - 1; index >= 0; index -= 1) {
-        const sourceId = fixedDocQrIgnoredDetections[index].sourceId;
-        if (sourceId && retainedSourceIds.has(sourceId)) fixedDocQrIgnoredDetections.splice(index, 1);
+        const key = fixedDocQrIgnoredDetections[index].sourceKey || fixedDocQrIgnoredDetections[index].sourceId;
+        if (key && !scanKeys.has(key)) fixedDocQrIgnoredDetections.splice(index, 1);
       }
+
+      fixedDocQrSourceCatalog.splice(0, fixedDocQrSourceCatalog.length);
+      detections.forEach((detection) => {
+        if (excludedKeys.has(detection.sourceKey)) {
+          const existing = fixedDocQrIgnoredDetections.find(
+            (item) => (item.sourceKey || item.sourceId) === detection.sourceKey,
+          );
+          if (existing) {
+            existing.rect = { ...detection.rect };
+            existing.label = detection.label;
+            existing.sourceKey = detection.sourceKey;
+            existing.sourceId = detection.sourceKey;
+          } else {
+            pushFixedDocQrIgnoredDetection(detection.label, detection.rect, 'EXC', detection.sourceKey);
+          }
+          return;
+        }
+        fixedDocQrSourceCatalog.push({
+          id: `QR${fixedDocQrSourceCatalog.length + 1}`,
+          sourceKey: detection.sourceKey,
+          label: detection.label,
+          enabled: true,
+          rect: { ...detection.rect },
+          manualRegion: false,
+        });
+      });
+      reindexFixedDocQrSources();
       return true;
     }
     function waitFixedDocQrScan(ms) {
@@ -2757,6 +2902,20 @@ const appOptions = {
       return runFixedDocQrSourcesScan(options);
     }
     function parseFixedDocQrSourcesFromTemplate() {
+      if (fixedDocHasQrMapping.value) {
+        ElementPlus.ElMessageBox.confirm(
+          'QR解析を再実行すると、現在の QRソースとフィールドマッピングが上書きされます。続行しますか？',
+          'QR解析',
+          {
+            confirmButtonText: '続行',
+            cancelButtonText: 'キャンセル',
+            type: 'warning',
+          },
+        ).then(() => {
+          runFixedDocQrSourcesScan();
+        }).catch(() => {});
+        return;
+      }
       runFixedDocQrSourcesScan();
     }
     function runFixedDocOcrAiGenerate() {
@@ -2771,12 +2930,12 @@ const appOptions = {
     function maskFixedDocPreviewValue(fieldRef, value) {
       const text = String(value ?? '');
       const fieldId = getFixedDocFieldMeta(fieldRef)?.fieldId || fieldRef;
-      if (!text || !fixedDocFieldMasks[fieldId]) return text;
+      if (!text || !getFixedDocMaskBucket()[fieldId]) return text;
       if (text.length <= 1) return '*';
       if (text.length === 2) return `${text[0]}*`;
       return `${text[0]}${'＊'.repeat(Math.max(1, text.length - 2))}${text[text.length - 1]}`;
     }
-    // Step5 试读 mock：配置端只展示「要確認」统一文案（信頼度閾値未満）。
+    // Step5 test mock：配置端只展示「要確認」统一文案（信頼度閾値未満）。
     // 运行时：QR 成功写入的字段不产生 OCR 置信度；OCR/兜底路径才参与 low_confidence。
     // 正常值越界、Master 照合等仍由读取模型设置中各自 HITL 规则独立判定（见 readModelHitlRules）。
     const FIXED_DOC_TEST_REVIEW_MESSAGE = '自信度が閾値未満である';
@@ -3700,7 +3859,6 @@ const appOptions = {
 
     const WORKFLOW_NOTIFICATION_NODE_OPTIONS = [
       { value: 'preprocess', label: '前処理' },
-      { value: 'fraud_detect', label: '画像不正検知' },
       { value: 'ocr', label: 'OCR抽出' },
       { value: 'data_mapping', label: 'データマッピング' },
       { value: 'ai_verify', label: 'AI検証' },
@@ -3710,8 +3868,10 @@ const appOptions = {
     const WORKFLOW_NOTIFICATION_STATUS_VALUES = ['processing', 'success', 'failed'];
     const WORKFLOW_NOTIFICATION_RESULT_VALUES = ['passed', 'reviewRequired'];
     const WORKFLOW_NOTIFICATION_NODE_VARIABLES = {
-      preprocess: { status: 'preprocessStatus', result: 'preprocessResult' },
-      fraud_detect: { status: 'fraudDetectStatus', result: 'fraudDetectResult' },
+      preprocess: {
+        status: 'preprocessStatus',
+        result: 'preprocessResult',
+      },
       ocr: { status: 'ocrStatus', result: 'ocrResult' },
       data_mapping: { status: 'mappingStatus' },
       ai_verify: { status: 'verifyStatus', result: 'verifyResult' },
@@ -3752,18 +3912,18 @@ const appOptions = {
     function getWorkflowNotificationEventOptions(nodeType) {
       if (nodeType === 'hitl_gate') return WORKFLOW_NOTIFICATION_HITL_EVENTS;
       const vars = WORKFLOW_NOTIFICATION_NODE_VARIABLES[nodeType] || WORKFLOW_NOTIFICATION_NODE_VARIABLES.preprocess;
-      const statusOptions = vars.status
-        ? WORKFLOW_NOTIFICATION_STATUS_VALUES.map((value) => ({
-            value: `${vars.status}:${value}`,
-            label: `${vars.status} = ${value}`,
-          }))
-        : [];
-      const resultOptions = vars.result
-        ? WORKFLOW_NOTIFICATION_RESULT_VALUES.map((value) => ({
-            value: `${vars.result}:${value}`,
-            label: `${vars.result} = ${value}`,
-          }))
-        : [];
+      const statusKeys = [vars.status].filter(Boolean);
+      const statusOptions = statusKeys.flatMap((key) =>
+        WORKFLOW_NOTIFICATION_STATUS_VALUES.map((value) => ({
+          value: `${key}:${value}`,
+          label: `${key} = ${value}`,
+        })));
+      const resultKeys = [vars.result].filter(Boolean);
+      const resultOptions = resultKeys.flatMap((key) =>
+        WORKFLOW_NOTIFICATION_RESULT_VALUES.map((value) => ({
+          value: `${key}:${value}`,
+          label: `${key} = ${value}`,
+        })));
       return [...statusOptions, ...resultOptions];
     }
 
@@ -3922,8 +4082,6 @@ const appOptions = {
       const nodeOptions = [
         { value: 'preprocessStatus', label: 'preprocessStatus', desc: 'ノード出力定義 · 前処理 status' },
         { value: 'preprocessResult', label: 'preprocessResult', desc: 'ノード出力定義 · 前処理 result' },
-        { value: 'fraudDetectStatus', label: 'fraudDetectStatus', desc: 'ノード出力定義 · 画像不正検知 status' },
-        { value: 'fraudDetectResult', label: 'fraudDetectResult', desc: 'ノード出力定義 · 画像不正検知 result' },
         { value: 'ocrStatus', label: 'ocrStatus', desc: 'ノード出力定義 · OCR抽出 status' },
         { value: 'ocrResult', label: 'ocrResult', desc: 'ノード出力定義 · OCR抽出 result' },
         { value: 'mappingStatus', label: 'mappingStatus', desc: 'ノード出力定義 · データマッピング status' },
@@ -5122,6 +5280,43 @@ const appOptions = {
 
     const sceneDocTypes = computed(() => form.scene.documents.map((d) => d.type));
 
+    const piiDetectEligibleDocTypes = computed(() =>
+      sceneDocTypes.value.filter((typeId) => docTypeHasMaskEnabled(typeId)),
+    );
+
+    function syncPiiDetectDocTypesOnForm() {
+      const image = processingForm.value?.image;
+      if (!image) return;
+      const eligible = piiDetectEligibleDocTypes.value;
+      let selected = Array.isArray(image.piiDetectDocTypes)
+        ? image.piiDetectDocTypes.filter((t) => eligible.includes(t))
+        : [];
+      if (image.piiDetect && !selected.length && eligible.length) {
+        selected = [...eligible];
+      }
+      image.piiDetectDocTypes = selected;
+    }
+
+    function getPreprocessSettingDocTypes(item) {
+      if (item?.key === 'piiDetect') return piiDetectEligibleDocTypes.value;
+      return sceneDocTypes.value;
+    }
+
+    function getPreprocessDocTypePlaceholder(item) {
+      if (item?.key === 'piiDetect') {
+        return piiDetectEligibleDocTypes.value.length
+          ? '脱敏対象帳票（未指定時はマスク ON の帳票すべて）'
+          : 'Step2 でマスク ON の帳票がありません';
+      }
+      return '対象帳票（未指定時は全帳票）';
+    }
+
+    watch(
+      [sceneDocTypes, fixedDocFieldMasksByType, () => processingForm.value?.image?.piiDetect],
+      () => { syncPiiDetectDocTypesOnForm(); },
+      { deep: true },
+    );
+
     const selectedWorkflowNode = computed(() =>
       (getActiveWf()?.nodes || []).find((n) => n.id === selectedWorkflowNodeId.value) || null
     );
@@ -5144,8 +5339,7 @@ const appOptions = {
       if (inspectorPanel.value === 'scene_completeness') return '完全性検査';
       if (inspectorPanel.value === 'data_mapping') return 'データマッピング';
       if (inspectorPanel.value === 'ocr') return 'OCR抽出';
-      if (inspectorPanel.value === 'fraud_detect') return '画像不正検知';
-      if (inspectorPanel.value === 'pii_mask') return '個人情報マスク';
+      if (inspectorPanel.value === 'image') return '前処理';
       if (inspectorPanel.value === 'decision') return 'IF/ELSE';
       if (inspectorPanel.value === 'hitl_gate') return '人工確認';
       if (inspectorPanel.value === 'notify') return '通知';
@@ -5230,7 +5424,7 @@ const appOptions = {
         hitlStatus: '人工確認状態',
         fraudDetectStatus: '画像不正検知状態',
         fraudDetectResult: '画像不正検知結果',
-        piiMaskStatus: '個人情報マスク状態',
+        piiMaskStatus: '敏感情報脱敏状態',
         codeStatus: 'カスタム関数状態',
       };
       return t(byBare[bare] || item.label || bare || '変数');
@@ -9356,9 +9550,17 @@ const appOptions = {
       return !!processingForm.value?.image?.[item.switchKey];
     }
 
+    function togglePreprocessModule(item) {
+      if (item.alwaysOn || !item.switchKey) return;
+      const image = processingForm.value?.image;
+      if (!image) return;
+      image[item.switchKey] = !image[item.switchKey];
+      if (item.key === 'piiDetect') syncPiiDetectDocTypesOnForm();
+    }
+
     function showPreprocessSettingDetail(item) {
       if (item.alwaysOn) return true;
-      if (!item.detailType) return false;
+      if (!item.docTypesKey) return false;
       return isPreprocessSettingOn(item);
     }
 
@@ -12186,6 +12388,10 @@ const appOptions = {
       removeDataRule,
       aiAssistDataRule,
       sceneDocTypes,
+      piiDetectEligibleDocTypes,
+      getPreprocessSettingDocTypes,
+      getPreprocessDocTypePlaceholder,
+      syncPiiDetectDocTypesOnForm,
       dataRuleCount,
       currentModule,
       inspectorExpanded,
@@ -12222,8 +12428,14 @@ const appOptions = {
       onFixedDocPreviewPointerUp,
       fixedDocPreviewShowQrHotspots,
       fixedDocPreviewQrHotspots,
+      focusFixedDocQrSource,
+      onFixedDocQrMappingRowClick,
+      fixedDocCanAddQrSource,
       fixedDocActiveQrSourceId,
       selectFixedDocPreviewQrSource,
+      removeFixedDocQrSource,
+      addFixedDocQrSourceFromIgnored,
+      appendNextFixedDocQrSourceFromIgnored,
       renameFixedDocQrSource,
       fixedDocQrSourceDisplayLabel,
       onFixedDocIgnoredQrDetectionClick,
@@ -12263,6 +12475,7 @@ const appOptions = {
       fixedDocRangeModeOptions,
       fixedDocQrTemplate,
       fixedDocQrSourceCatalog,
+      fixedDocQrIgnoredDetections,
       fixedDocQrScanActive,
       fixedDocQrDelimiterOptions,
       fixedDocQrEmptyTokenOptions,
@@ -12509,6 +12722,7 @@ const appOptions = {
       getWorkflowNodeActiveTasks,
       PREPROCESS_SETTING_ITEMS,
       isPreprocessSettingOn,
+      togglePreprocessModule,
       showPreprocessSettingDetail,
       DECISION_CONDITION_TYPES,
       DECISION_RESULT_VALUES,

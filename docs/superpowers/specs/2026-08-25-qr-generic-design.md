@@ -78,7 +78,7 @@ Step2  AI读取
 | OCR 列 | QR 等价列 | 说明 |
 | ------ | --------- | ---- |
 | プロンプト | QR源 + 抽出方式 + 区切り + 分割索引 | 怎么从 QR 取值 |
-| 正解サンプル | **解析样例** | 从 Step1 样张 QR 解析出的预期值，供 Step5 试读对照 |
+| 正解サンプル | **解析样例** | 从 Step1 样张 QR 解析出的预期值，供 Step5 test对照 |
 
 QR 工具区（QR 模式 Tab 栏旁，与 OCR 的 ⚙/▣ 同级）：
 
@@ -165,7 +165,7 @@ qrMapping?
 ├── extractMethod   // 全文 | 分隔符分割
 ├── delimiter       // 分割符，如 $
 ├── segmentIndex    // 分割后第几段（0 起）
-└── parsedSample?   // 解析样例（对标 OCR 正解サンプル，Step5 试读对照）
+└── parsedSample?   // 解析样例（对标 OCR 正解サンプル，Step5 test对照）
 ```
 
 字段 QR 开关：表示「该字段是否配置了 QR 取值规则」，不是「本案是否扫描」。
@@ -308,6 +308,6 @@ perDocTypeEnabled: Record<docTypeId, boolean>
 | ---- | ---- |
 | Step2 | OCR/QR 段切换；QR 模式与 OCR 同节奏（导出 template → 填清单 → AI自動生成） |
 | Step3 | 移除 QR 列；仅 処理ルール + 范围 |
-| Step5 效果测试 | QR + OCR + 范围联合试读 |
+| Step5 效果测试 | QR + OCR + 范围联合test |
 | 工作流 QR 节点 | 快链 → Step2 QR 模式 |
 | PRD | 第 1、3、5、6 章同步 |
