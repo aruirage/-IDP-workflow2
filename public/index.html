@@ -560,14 +560,12 @@
                                   </td>
                                   <td class="fixed-doc-qr-no-col">
                                     <el-select
-                                      :model-value="row.qrSourceId || ''"
-                                      placeholder="未設定（OCR）"
+                                      :model-value="row.qrSourceId"
+                                      placeholder="選択してください"
                                       size="small"
-                                      clearable
                                       class="fixed-doc-qr-source-select"
-                                      @change="setFixedDocFieldRule(row.fieldId, { qrSourceId: $event || '' })"
+                                      @change="setFixedDocFieldRule(row.fieldId, { qrSourceId: $event })"
                                     >
-                                      <el-option label="未設定（OCR）" value=""></el-option>
                                       <el-option
                                         v-for="opt in fixedDocQrNumberOptions"
                                         :key="'qr-read-' + row.fieldId + opt.value"

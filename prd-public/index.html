@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeosAI IDP — PRD 评审稿</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sidebar-w: 280px;
+      --bg: #f5f7fa;
+      --paper: #fff;
+      --border: #e4e7ec;
+      --text: #101828;
+      --muted: #667085;
+      --primary: #2563eb;
+      --primary-soft: #eff4ff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: 'Noto Sans SC', 'Noto Sans JP', sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      overflow: auto;
+      padding: 20px 16px 32px;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-right: 1px solid #1e293b;
+    }
+    .sidebar__brand {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+    .sidebar__group + .sidebar__group { margin-top: 18px; }
+    .sidebar__label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+    .sidebar__list { list-style: none; margin: 0; padding: 0; }
+    .sidebar__list li + li { margin-top: 4px; }
+    .sidebar a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 13px;
+      line-height: 1.45;
+      display: block;
+      padding: 6px 8px;
+      border-radius: 6px;
+    }
+    .sidebar a:hover { background: #1e293b; color: #fff; }
+    .toc-chapter { font-weight: 500; }
+    .toc-fn-num {
+      display: inline-block;
+      min-width: 1.6em;
+      color: #64748b;
+      font-variant-numeric: tabular-nums;
+    }
+    .toc-sec { font-size: 12px; padding-left: 12px; }
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-width: 0;
+      padding: 28px 40px 80px;
+    }
+    .main__meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .paper {
+      max-width: 1080px;
+      margin: 0 auto;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 40px 48px 56px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+    }
+    .paper > h1 {
+      margin: 0 0 28px;
+      font-size: 28px;
+      line-height: 1.3;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 16px;
+    }
+    .chapter-heading {
+      margin: 40px 0 20px;
+      padding-top: 8px;
+      font-size: 22px;
+      border-top: 3px solid var(--primary);
+    }
+    .paper > h2:first-of-type,
+    .chapter-heading:first-of-type { margin-top: 0; border-top: none; padding-top: 0; }
+    .section-heading {
+      margin: 28px 0 12px;
+      font-size: 18px;
+      color: #1d2939;
+    }
+    .subsection-heading {
+      margin: 22px 0 10px;
+      font-size: 15px;
+      color: #344054;
+    }
+    .back-to-list {
+      margin: 0 0 8px;
+      font-size: 13px;
+    }
+    .back-to-list a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-to-list a:hover { text-decoration: underline; }
+    .paper p { margin: 0 0 12px; }
+    .paper ul, .paper ol { margin: 0 0 14px; padding-left: 1.4em; }
+    .paper li { margin: 4px 0; }
+    .paper table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 20px;
+      font-size: 14px;
+    }
+    .paper th, .paper td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .paper th { background: #f9fafb; font-weight: 600; }
+    .paper a.fn-link { color: var(--primary); font-weight: 500; text-decoration: none; }
+    .paper a.fn-link:hover { text-decoration: underline; }
+    .change-added {
+      color: #175cd3;
+      background: #eff8ff;
+      text-decoration: none;
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+    .change-modified {
+      color: #b54708;
+      background: #fffaeb;
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+    .change-deleted {
+      color: #b42318;
+      background: #fef3f2;
+      text-decoration: line-through;
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+    .paper code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.9em;
+      background: #f2f4f7;
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+    }
+    .paper pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 14px 16px;
+      border-radius: 8px;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .paper pre code { background: none; padding: 0; color: inherit; }
+    .mermaid {
+      margin: 16px 0 24px;
+      padding: 16px;
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: auto;
+    }
+    .paper hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 28px 0;
+    }
+    .figure-row {
+      margin: 16px 0 24px;
+    }
+    .figure-row--single {
+      max-width: 960px;
+    }
+    .figure-carousel {
+      margin: 16px 0 24px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fafbfc;
+    }
+    .figure-carousel__stage {
+      position: relative;
+      min-height: 200px;
+      background: #fff;
+    }
+    .figure-carousel__stage .screenshot-figure {
+      display: none;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+    }
+    .figure-carousel__stage .screenshot-figure.is-active {
+      display: block;
+    }
+    .figure-carousel__bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      background: #fafbfc;
+    }
+    .figure-carousel__btn {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .figure-carousel__btn:hover { background: #f2f4f7; }
+    .figure-carousel__counter {
+      font-size: 13px;
+      color: var(--muted);
+      min-width: 4em;
+      text-align: center;
+    }
+    .screenshot-figure {
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fafbfc;
+    }
+    .screenshot-trigger {
+      display: block;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: zoom-in;
+    }
+    .screenshot-figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 420px;
+      object-fit: contain;
+      object-position: top center;
+      background: #fff;
+    }
+    .screenshot-figure figcaption {
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      line-height: 1.5;
+    }
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.78);
+      padding: 24px;
+    }
+    .lightbox.is-open { display: flex; }
+    body.lightbox-open { overflow: hidden; }
+    .lightbox-figure {
+      max-width: min(1200px, 96vw);
+      max-height: 92vh;
+      margin: 0;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    .lightbox-figure img {
+      display: block;
+      max-width: 100%;
+      max-height: calc(92vh - 56px);
+      margin: 0 auto;
+    }
+    .lightbox-caption {
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #344054;
+      border-top: 1px solid var(--border);
+    }
+    .lightbox-close,
+    .lightbox-nav {
+      position: fixed;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.95);
+      color: #101828;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    }
+    .lightbox-close {
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      font-size: 22px;
+    }
+    .lightbox-nav {
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      font-size: 24px;
+    }
+    .lightbox-prev { left: 20px; }
+    .lightbox-next { right: 20px; }
+    @media (max-width: 900px) {
+      .sidebar { position: static; width: 100%; height: auto; }
+      .main { margin-left: 0; padding: 16px; }
+      .layout { flex-direction: column; }
+    }
+    @media print {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 0; }
+      .paper { box-shadow: none; border: none; }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__brand">PRD 评审稿</div>
+      <div class="sidebar__group">
+        <div class="sidebar__label">章节</div>
+        <ul class="sidebar__list"><li><a href="#chapter-1" class="toc-chapter">第 1 章｜文档基础与范围</a></li>
+<li><a href="#chapter-2" class="toc-chapter">第 2 章｜术语与词汇表</a></li>
+<li><a href="#chapter-3" class="toc-chapter">第 3 章｜数据结构与状态（第二期增量）</a></li>
+<li><a href="#chapter-4" class="toc-chapter">第 4 章｜用户交互流程</a></li>
+<li><a href="#chapter-6" class="toc-chapter">第 6 章｜功能详细说明</a></li></ul>
+      </div>
+<div class="sidebar__group">
+        <div class="sidebar__label">功能清单快链</div>
+        <ul class="sidebar__list sidebar__list--fn"><li><a href="#sec-6-01" class="toc-fn"><span class="toc-fn-num">1</span>业务场景设置</a></li>
+<li><a href="#sec-6-03" class="toc-fn"><span class="toc-fn-num">3</span>账票类型设置</a></li>
+<li><a href="#sec-6-04" class="toc-fn"><span class="toc-fn-num">4</span>我的任务</a></li></ul>
+      </div>
+<div class="sidebar__group">
+        <div class="sidebar__label">第 6 章小节</div>
+        <ul class="sidebar__list sidebar__list--sec"><li><a href="#sec-6-01" class="toc-sec">6.01 业务场景设置</a></li>
+<li><a href="#sec-6-03" class="toc-sec">6.03 账票类型设置</a></li>
+<li><a href="#sec-6-04" class="toc-sec">6.04 我的任务</a></li></ul>
+      </div>
+    </aside>
+    <main class="main">
+      <div class="main__meta">由 PRD.zh-CN.md 生成 · 2026/9/1 00:16:00</div>
+      <article class="paper">
+<h1>NeosAI 日本保险 IDP — 产品需求文档（PRD · Phase2）</h1>
+<h2 id="chapter-1" class="chapter-heading">第 1 章｜文档基础与范围</h2>
+<h3 class="section-heading">1.1 文档定位</h3>
+<p>本 PRD 为第二期增量，面向 Z 客户保险金请求场景。未重写部分见第一期 PRD。</p>
+<table><thead><tr><th>文档</th><th>链接</th><th>覆盖范围</th></tr></thead><tbody><tr><td>第一期总 PRD</td><td><a href="https://neosai-idp-prd.vercel.app/">neosai-idp-prd.vercel.app</a></td><td>平台背景、操作端、账票类型、实体状态、角色权限等</td></tr><tr><td>第一期业务场景与工作流 PRD</td><td><a href="https://idp-workflow-nwxh.vercel.app/">idp-workflow-nwxh.vercel.app</a></td><td>业务场景四步向导、工作流画布与节点</td></tr></tbody></table>
+<p>第 6 章写本期增量：业务场景设置、账票类型、我的任务。HTML 评审稿：<code>npm run build:prd:full</code> → <code>prd-public/index.html</code>。</p>
+<h3 class="section-heading">1.2 第二期交付范围</h3>
+<p>本期在 Z 客户保险金请求场景下，补齐前处理节点内的画像不正検知、敏感情报检出，以及账票类型侧的 QR 字段读取与正常值校验。QR 字段映射、读取模式、正常值范围均在账票类型设置（Step2/Step3）维护；OCR 抽出节点配置面板沿用 P1（开关 + 对象账票），运行时引擎读取账票配置执行抽取。</p>
+<h4 class="subsection-heading" id="fig-工作流">工作流</h4>
+<table><thead><tr><th>能力</th><th>说明</th></tr></thead><tbody><tr><td>前处理节点（增量）</td><td>在 P1 前处理节点内新增画像不正検知、敏感情报检出；各模块可独立 ON/OFF，并按对象账票指定执行范围</td></tr><tr><td>业务场景通知扩展</td><td>Step3 通知规则在前处理、OCR 等对象节点下配置处理状态/处理结果触发；站内信与邮件双渠道投递</td></tr></tbody></table>
+<p>推荐主链：开始 → 前处理 → 条件判断 → 人工确认 → OCR 抽出 → 条件判断 → 人工确认 → 数据映射 → AI 检证 → 条件判断 → 人工确认 → 自定义函数 → 终了。</p>
+<h4 class="subsection-heading" id="fig-业务场景设置增量">业务场景设置（增量）</h4>
+<table><thead><tr><th>步骤</th><th>本期追加</th></tr></thead><tbody><tr><td>Step2 工作流</td><td>前处理两子模块（画像不正検知、敏感情报检出）</td></tr><tr><td>Step3 通知</td><td>邮件渠道 + 多个邮件地址</td></tr><tr><td>Step4 输出</td><td>勾选 UI 不变；运行时已脱敏则导出脱敏后值</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-账票类型设置增量">账票类型设置（增量）</h4>
+<table><thead><tr><th>步骤</th><th>本期追加</th></tr></thead><tbody><tr><td>Step1 AI 分类</td><td>分類信頼度閾値（必填）</td></tr><tr><td>Step2 AI 读取</td><td>字段读取 tab 下新增 OCR/QR 模式切换；OCR：字段定义 + prompt + 正解 + マスク（新增列）；QR：QR 源扫描与字段映射（取值方法、分割符、字段排序）</td></tr><tr><td>Step3 处理规则</td><td>正常值范围（正常条件列）；读取模型弹窗新增第六项「正常值范围超出」</td></tr><tr><td>Step5 效果测试</td><td>QR/OCR 读取、后处理、正常值范围、マスク対象综合 test</td></tr></tbody></table>
+<p>Step1 其余字段、Step4 图像处理及 Step2 读取模型弹窗主体沿用第一期。</p>
+<h4 class="subsection-heading" id="fig-引擎与运行时">引擎与运行时</h4>
+<table><thead><tr><th>能力</th><th>说明</th></tr></thead><tbody><tr><td>通用 QR 解析</td><td>配置端在 Step1 样张扫描 QR 源；运行时 OCR 节点执行时读取账票 Step2 配置，调用工具扫描/解码</td></tr><tr><td>正常值范围校验</td><td>账票 Step3 配置；OCR 节点执行时后处理完成后逐字段校验；超出正常值触发 OCR 抽出确认待办</td></tr><tr><td>QR 与 OCR 协同</td><td>账票 Step2 读取设定判定路由：OCR設定 全字段 OCR；QR設定 字段级 QR 优先、失败 OCR 兜底（细则见 6.03 · 运行时）</td></tr><tr><td>画像不正検知</td><td>PS 加工、AI 生成、模板特征等检测；模型二值输出（是/否）；判「是」→ preprocessResult=reviewRequired → 人工确认</td></tr><tr><td>敏感情报检出</td><td>对 Step2 マスク=ON 字段实例脱敏；脱敏在 OCR 前（P-304）</td></tr><tr><td>邮件分发</td><td>Step3 规则命中且勾选邮件时投递；与站内信并行</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-范围边界">范围边界</h4>
+<table><thead><tr><th>类别</th><th>第二期</th></tr></thead><tbody><tr><td>配置端</td><td>前处理两子模块；账票 Step1～3、Step5 增量；业务场景 Step3 邮件、Step4 导出取值规则</td></tr><tr><td>操作端</td><td>不新增菜单；我的任务 OCR 确认规则扩展；前处理确认页脱敏预览</td></tr><tr><td>引擎</td><td>画像不正検知、敏感情报检出、QR 工具、正常值校验、邮件分发</td></tr></tbody></table>
+<p>画布建模定稿见 1.3；工作流与通知增量见 6.01。</p>
+<h3 class="section-heading">1.3 工作流架构（前处理模块化）</h3>
+<p>画像不正検知、敏感情报检出作为前处理节点内子模块交付，不新增独立画布节点。运行时均在 OCR 抽出之前；模块顺序固定为：</p>
+<pre><code>画像不正検知 → 敏感情报检出 → 画像回転 → 画像補正 → 画像整列</code></pre>
+<p>（P-304：脱敏先于几何处理；回転先于補正。）</p>
+<pre><code>开始 → 前处理 → 条件判断 → … → OCR 抽出 → …
+         ↑
+    单一节点，内含 5 个子模块（各：模块开关 + 对象账票）</code></pre>
+<table><thead><tr><th>项</th><th>定稿规则</th></tr></thead><tbody><tr><td>节点库</td><td>不出现独立画像不正検知、敏感情报检出类型</td></tr><tr><td>配置 UI</td><td>前处理节点配置面板「前処理設定」；五模块均为开关 + 对象账票多选；敏感情报检出对象账票仅限 Step1 关联且 Step2 有マスク=ON 的账票</td></tr><tr><td>节点输出</td><td>preprocessStatus、preprocessResult（各子模块结果集約至节点级）</td></tr><tr><td>OCR 抽出节点</td><td>配置面板沿用 P1（开关 + 对象账票）；QR/正常值/后处理规则来自账票类型 Step2/Step3，运行时消费</td></tr><tr><td>ファイルステータス</td><td>沿用 P1 四段（前処理 / 前処理確認 / OCR抽出 / OCR抽出確認）；子模块不单独占段</td></tr></tbody></table>
+<h3 class="section-heading">1.4 本期里程碑</h3>
+<p>交付范围见 1.2；假设与待客户确认见 1.7。</p>
+<table><thead><tr><th>域</th><th>模块</th><th>里程碑</th></tr></thead><tbody><tr><td>配置端</td><td>业务场景 · Step2 前处理</td><td>前处理节点含画像不正検知、敏感情报检出模块；OCR 抽出节点无配置变更</td></tr><tr><td>配置端</td><td>业务场景 · Step3 通知</td><td>前处理/OCR 等对象节点触发；站内信 + 邮件双渠道；邮件宛先必填</td></tr><tr><td>配置端</td><td>业务场景 · Step4 输出</td><td>输出字段勾选 UI 不变；运行时已脱敏则导出脱敏后值；QR/OCR 写入值经后处理后正常导出</td></tr><tr><td>配置端</td><td>账票类型 · Step1</td><td>分類信頼度閾値必填；template 样张供 QR 扫描</td></tr><tr><td>配置端</td><td>账票类型 · Step2</td><td>OCR/QR 读取模式切换；OCR 模式维护字段主数据 + マスク；QR 模式配 QR 源与字段映射</td></tr><tr><td>配置端</td><td>账票类型 · Step3</td><td>正常值范围（正常条件列）；读取模型弹窗六项确认规则</td></tr><tr><td>配置端</td><td>账票类型 · Step5</td><td>综合 test：QR/OCR 结果、正常值结论、マスク対象、读取来源标签</td></tr><tr><td>运行时</td><td>前处理链</td><td>不正検知 → 脱敏 → 回転 → 補正 → 整列；脱敏在 OCR 前</td></tr><tr><td>运行时</td><td>OCR 抽出</td><td>节点开关同 P1；引擎读账票 Step2/Step3 执行 QR/OCR 路由、后处理与正常值校验</td></tr><tr><td>运行时</td><td><a href="#sec-6-04" class="fn-link">我的任务</a></td><td>六项确认规则 → OCR 抽出确认；画像不正 → 人工确认；前处理确认页脱敏预览</td></tr><tr><td>验收</td><td>原型</td><td>上述配置与运行时路径可在 workflow-ph2 原型演示</td></tr></tbody></table>
+<h3 class="section-heading">1.5 假设与依赖</h3>
+<p>平台假设见 1.1；待客户确认项见 1.7。</p>
+<h3 class="section-heading">1.6 跨模块影响</h3>
+<p>通知与待办独立：通知仅提醒，待办须办结。</p>
+<table><thead><tr><th>模块</th><th>画像不正 / 正常值 / QR</th><th>敏感情报检出</th><th>通知（Step3）</th></tr></thead><tbody><tr><td>我的任务</td><td>六项确认规则任一命中 → OCR 抽出确认；QR 与 OCR 路径汇合后统一判定；前处理确认页增加遮挡预览与字段打码</td><td>不新增脱敏专用待办</td><td>通知不生成待办；可与待办并行</td></tr><tr><td>案件详情</td><td>展示 QR/OCR 写入并经后处理的字段值</td><td>已脱敏时展示脱敏后字段/文件</td><td>案件状态随节点失败信号汇聚</td></tr><tr><td>导出</td><td>导出 OCR 字段含 QR 写入值</td><td>已脱敏则导出脱敏后值</td><td>—</td></tr><tr><td>业务场景 Step2</td><td>前处理面板新增两子模块</td><td>敏感情报检出对象账票受 Step2 マスク约束</td><td>Step3 新增邮件渠道</td></tr><tr><td>业务场景 Step4</td><td>导出字段含 QR 写入并经后处理的值</td><td>已脱敏则导出脱敏后值</td><td>—</td></tr><tr><td>账票类型</td><td>Step1 阈值；Step2 OCR/QR/マスク；Step3 正常范围</td><td>Step2 マスク定义脱敏对象</td><td>—</td></tr></tbody></table>
+<h3 class="section-heading">1.7 假设与待客户确认</h3>
+<p>本期正文按下列假设编写，研发与原型可据此推进。正文中以 <code>〔假设 P-xxx〕</code> 标注尚未经客户确认的规则；客户确认后更新对应章节并修订本表。</p>
+<table><thead><tr><th>编号</th><th>能力模块</th><th>当前假设</th><th>状态</th></tr></thead><tbody><tr><td>P-301</td><td>敏感情报检出</td><td>脱敏范围按 Step2 マスク=ON 及前处理模块对象账票；验收样张与效果图由客户提供</td><td>待客户确认</td></tr><tr><td>P-302</td><td>敏感情报检出</td><td>脱敏方式为黑块填充</td><td>待客户确认</td></tr><tr><td>P-303</td><td>敏感情报检出</td><td>脱敏后保留并可导出原图，同时保留脱敏后文件</td><td>待客户确认</td></tr><tr><td>P-304</td><td>敏感情报检出</td><td>OCR 前实例脱敏；OCR 抽出读取脱敏后实例</td><td>待客户确认</td></tr><tr><td>P-305</td><td>敏感情报检出</td><td>敏感情报检出由本地部署大模型完成</td><td>待客户确认</td></tr><tr><td>P-401</td><td>正常值校验</td><td>Step3「正常条件」支持：範囲内、&lt;、≤、&gt;、≥、列挙（枚举）</td><td>待客户确认</td></tr><tr><td>P-402</td><td>正常值校验</td><td>字段超出正常值进 OCR 抽出确认；不设独立待办类型</td><td>待客户确认</td></tr><tr><td>P-201</td><td>QR Code 读取</td><td>账票 Step2 OCR設定 / QR設定；运行时 OCR 节点执行时 QR 优先 + 单字段 OCR 兜底（见 6.03 · 运行时）</td><td>待客户确认</td></tr><tr><td>P-203</td><td>QR Code 读取</td><td>本期 QR 解析与映射以 Z 客户诊断书 template 为主</td><td>待客户确认</td></tr><tr><td>P-204</td><td>QR Code 读取</td><td>QR 与 OCR 路径汇合后统一后处理与人工确认规则判定；不设 QR 专属人工确认规则</td><td>待客户确认</td></tr><tr><td>P-501</td><td>画像不正検知</td><td>前处理模块按业务场景 Step1 关联账票逐行开关；具体 ON 列表由客户指定</td><td>待客户确认</td></tr><tr><td>P-502</td><td>画像不正検知</td><td>模板特征检测依赖 Step1 template 与客户提供的正常样张库</td><td>待客户确认</td></tr><tr><td>P-503</td><td>画像不正検知</td><td>PS 加工、AI 生成、模板特征三类均纳入检测；UAT 试样集与客户共同定义</td><td>待客户确认</td></tr></tbody></table>
+<hr />
+<h2 id="chapter-2" class="chapter-heading">第 2 章｜术语与词汇表</h2>
+<h3 class="section-heading">2.1 术语表（本期新增）</h3>
+<table><thead><tr><th>中文</th><th>日语/界面</th><th>定义</th></tr></thead><tbody><tr><td>画像不正検知</td><td>画像不正検知</td><td>前处理节点内模块：整合 PS 加工、AI 生成图像、模板特征不一致等检测；模型输出二值（是/否）；模块开关 + 对象账票；无风险分数与阈值配置</td></tr><tr><td>QR 字段读取</td><td>QR読取</td><td>运行时能力：OCR 节点执行时读取账票 Step2 配置，工具扫描/解码并按字段映射写值；非独立工作流节点、非 OCR 节点新增配置项</td></tr><tr><td>QR 源</td><td>QRソース</td><td>账票级逻辑槽位（QR1、QR2…）；配置端在固定账票下方扫描区域内从左到右检出；检出几个生成几个；可删除移入追加候选池或从候选池追加回目录</td></tr><tr><td>追加候选池</td><td>追加候補</td><td>扫描检出但用户从 QR 源目录删除的项；经源条「追加」加回目录；未在目录内时不参与字段映射与运行时写值</td></tr><tr><td>取值方法</td><td>取値方法</td><td>字段级 QR 分割开关：关闭时全文取值，开启时按分割符与字段排序取值</td></tr><tr><td>分割符</td><td>区切り文字</td><td>分割模式下用于 split QR 解码串的 delimiter；连续分隔符之间视为空字段；段内空串或空值占位亦视为空</td></tr><tr><td>字段排序</td><td>順序</td><td>分割模式下，从 QR 解码串中取第几个片段（1 起）；同一 QR 源内 N=该源分割映射字段总数，順序须为 1～N 连号且不重复</td></tr><tr><td>正常范围</td><td>正常範囲</td><td>Step3 与后处理同表配置的可选校验规则；支持最小值、最大值等</td></tr><tr><td>AI マッチング</td><td>AIマッチング</td><td>Step3 工具栏：为 Step2 已有字段自动生成并反映处理规则；不生成【正常条件】</td></tr><tr><td>敏感情报检出</td><td>敏感情報検出</td><td>前处理节点内模块：对 Step2 脱敏=ON 的字段检测 PII 并输出脱敏结果；模块开关 + 对象账票</td></tr><tr><td>分類信頼度閾値</td><td>分類信頼度閾値</td><td>Step1 必填项：案件集约识别分类阶段的账票分类置信度下限（百分比）</td></tr><tr><td>账票类型设置</td><td>帳票タイプ設定</td><td>配置端账票主数据模块；Step2 含 OCR/QR 双模式与脱敏；Step3 含処理ルール（P1）与正常范围（P2 增量）</td></tr></tbody></table>
+<h3 class="section-heading">2.2 易混术语（精选）</h3>
+<table><thead><tr><th>中文</th><th>区分要点</th></tr></thead><tbody><tr><td>OCR 模式 vs QR 模式</td><td>共用字段清单；字段主数据在 OCR 模式维护，QR 模式只配 QR 源与取值</td></tr><tr><td>账票读取模式 vs 字段 OCR 兜底</td><td>OCR設定 整票 OCR；QR設定 整票 QR 优先，单字段失败时 OCR 兜底</td></tr><tr><td>前处理模块 vs 独立节点</td><td>画像不正检测、敏感信息检出在画布前处理节点内配置</td></tr><tr><td>正常范围 vs AI 检证</td><td>正常范围在账票 Step3 配置、OCR 节点执行时校验；AI 检证在独立节点跨字段</td></tr><tr><td>配置 test vs 前处理确认预览</td><td>Step5 标记脱敏对象；遮挡预览与打码在前处理确认页</td></tr><tr><td>OCR 抽出确认 vs 人工确认</td><td>OCR 字段复核 vs 画像不正复核，分属不同待办</td></tr><tr><td>Step4 导出 vs マスク</td><td>Step4 只勾选输出字段；マスク 在账票 Step2 定义；运行时已脱敏则导出脱敏后值</td></tr></tbody></table>
+<h2 id="chapter-3" class="chapter-heading">第 3 章｜数据结构与状态（第二期增量）</h2>
+<h3 class="section-heading">3.1 账票类型实体增量</h3>
+<table><thead><tr><th>属性</th><th>说明</th></tr></thead><tbody><tr><td>分類信頼度閾値</td><td>Step1 必填；0～100 整数百分比；识别分类阶段消费</td></tr><tr><td>QR 源目录</td><td>qrSources[]：id（QR1、QR2…）、检测框、解码文本；Step1 样张经工具在下方区域从左到右扫描写入；可删至追加候选池或从候选池加回</td></tr><tr><td>追加候选池</td><td>qrIgnored[]：扫描检出但不在目录内的 QR；重扫时保留用户排除状态</td></tr><tr><td>账票读取模式</td><td>Step2 读取设定：OCR設定（整票纯 OCR）或 QR設定（整票 QR 优先 + 字段失败 OCR 兜底）；表格字段固定 OCR</td></tr><tr><td>字段 QR 映射</td><td>QR設定 下各文本字段：qrSourceId、extractMethod、delimiter（分割符）、segmentIndex（字段排序）；type/必須/マスク等继承 OCR 模式，不在 QR 模式编辑</td></tr><tr><td>字段正常值范围</td><td>Step3 与后处理同表：启用、最小、最大</td></tr><tr><td>脱敏标记</td><td>Step2 OCR 模式 · 字段行マスク开关</td></tr></tbody></table>
+<p>同一诊断书账票类型可覆盖有 QR 与无 QR 物理件；运行时按 Step2 读取设定选择整票 OCR 或 QR 优先 + 字段 OCR 兜底。</p>
+<h3 class="section-heading">3.2 前处理子模块顺序与文件状态</h3>
+<p>在 <a href="https://idp-workflow-nwxh.vercel.app/">第一期 · 前处理节点</a>（画像回転 / 画像補正 / 画像整列）之前，新增并固定插入：</p>
+<pre><code>画像不正検知 → 敏感情报检出 → （P1 三项子模块）</code></pre>
+<table><thead><tr><th>步骤</th><th>模块</th><th>理由</th></tr></thead><tbody><tr><td>1</td><td>画像不正検知</td><td>优先在原实例上判定篡改/伪造风险</td></tr><tr><td>2</td><td>敏感情报检出</td><td>P-304：OCR 读脱敏后实例；几何变换前先遮罩个人信息</td></tr><tr><td>3～5</td><td>回転 → 補正 → 整列</td><td>沿用 P1</td></tr></tbody></table>
+<p>文件状态 四段枚举不变；五个子模块进度汇总至 preprocessStatus / preprocessResult，不在案件一覧展示子模块名。</p>
+<table><thead><tr><th>处理节点</th><th>界面组合示例</th><th>触发条件（P2）</th></tr></thead><tbody><tr><td>前処理</td><td>前処理等待 / 前処理中 / 前処理成功 / 前処理失敗</td><td>含节点内全部已启用子模块（不正検知、脱敏、回転→補正→整列）</td></tr><tr><td>前処理確認</td><td>前処理確認待ち</td><td>前处理 HITL 待办未办结（沿用 P1）</td></tr><tr><td>OCR抽出</td><td>OCR抽出待ち / OCR抽出中 / OCR抽出成功 / OCR抽出失敗</td><td>读取前处理输出实例（含脱敏后）</td></tr><tr><td>OCR抽出確認</td><td>OCR抽出確認待ち</td><td>OCR 抽出确认待办未办结</td></tr></tbody></table>
+<h3 class="section-heading">3.3 联级关系</h3>
+<p>画像不正检测、敏感信息检出的失败与待办信号参与案件状态汇总；八种案件状态枚举不变。</p>
+<hr />
+<h2 id="chapter-4" class="chapter-heading">第 4 章｜用户交互流程</h2>
+<p>本章按第二期五项增量能力组织用户故事：正常值校验、マスク（敏感情报检出）、画像不正検知、通知（邮件）、QR 读取。操作端入口分工、待办类型、案件状态均沿用 <a href="https://neosai-idp-prd.vercel.app/">第一期总 PRD</a>。</p>
+<p>原则：待办在「我的任务」办结；整体进度在「案件列表」检索；字段修正发生在待办执行页。</p>
+<table><thead><tr><th>入口</th><th>谁常用</th><th>用户要做什么</th></tr></thead><tbody><tr><td>账票类型设置</td><td>admin</td><td>Step2 マスク/QR；Step3 正常值；Step5 test</td></tr><tr><td>业务场景设置</td><td>admin</td><td>Step2 前処理設定（不正検知、脱敏）；Step3 通知（含邮件）</td></tr><tr><td>新增上传 / 案件列表 / 我的任务</td><td>操作员</td><td>上传集约、跟踪进度、办结待办</td></tr><tr><td>站内信</td><td>操作员、操作管理者</td><td>查阅通知（可与邮件并行；不生成待办）</td></tr></tbody></table>
+<hr />
+<h3 class="section-heading">4.2 故事：正常值校验</h3>
+<p>角色：admin（配置正常条件）；操作员（办结 OCR 抽出确认）</p>
+<p>目标：在账票类型 Step3 为数值/枚举字段配置正常范围；运行时 OCR 节点执行后处理时校验，超出则进 OCR 抽出确认，经办修正后继续流程。</p>
+<p>配置流程：</p>
+<pre><code>账票类型 Step3 → 字段行启用正常条件 → 读取模型弹窗勾选「正常値範囲を超えています」→ Step5 test 查看范围结论</code></pre>
+<ol><li>admin 在 Step3 処理ルール表为字段选择正常条件（範囲内、&lt;、≤、&gt;、≥、列挙）并填写阈值或枚举值。</li><li>在读取模型设置弹窗确认六项确认规则中包含第六项「正常値範囲を超えています」。</li><li>Step5 效果 test：字段卡片展示範囲OK / 範囲越界标签；越界样张用于验收配置。</li><li>发布业务场景后，运行时引擎在 OCR 节点执行时读取 Step3 配置校验（OCR 节点配置面板无新增项）。</li></ol>
+<p>运行流程：</p>
+<pre><code>OCR 抽出（后处理完成）→ 正常值校验 → 超出 → ocrResult=reviewRequired → 我的任务 · OCR 抽出确认</code></pre>
+<ol><li>案件集约完成后工作流推进至 OCR 抽出；引擎读取账票 Step3 对已写入字段逐条校验。</li><li>某字段超出正常值（如通院日数 20，配置 1～15）→ 该账票合并一条 OCR 抽出确认待办；理由含「正常値範囲を超えています」。</li><li>操作员在 my 任务打开待办，对照实例修正字段值；要確認字段高亮 + 可编辑，不展示越界区间说明。</li><li>修正后仍超出或必填仍空 → 阻断办结；通过后工作流继续。</li></ol>
+<hr />
+<h3 class="section-heading">4.3 故事：マスク（敏感情报检出）</h3>
+<p>角色：admin（定义脱敏对象与启用模块）；操作员（查看脱敏结果；无专用待办）</p>
+<p>目标：在账票 Step2 标记需脱敏字段，在业务场景前处理启用敏感情报检出；运行时在 OCR 前对实例脱敏，导出与详情展示脱敏后值。</p>
+<p>配置流程：</p>
+<pre><code>账票 Step2 OCR 模式 · 字段マスク=ON → 业务场景 Step2 前処理設定 · 敏感情报检出 ON + 对象账票</code></pre>
+<ol><li>admin 在账票类型 Step2 OCR 模式，对需脱敏字段开启マスク列（如患者氏名、住所）。</li><li>在业务场景 Step2 前処理設定 开启「敏感情报检出」，选择对象账票（可选范围 = Step1 关联且存在マスク=ON 字段的账票）。</li><li>Step5 test 标记マスク対象；不展示脱敏后像素预览（遮挡预览在前处理确认页，见运行流程）。</li><li>业务场景 Step4 输出字段勾选 UI 不变；运行时若已脱敏则导出脱敏后值。</li></ol>
+<p>运行流程：</p>
+<pre><code>前处理：画像不正検知 → 敏感情报检出（PII 检测 + 黑块填充）→ 回転 → 補正 → 整列 → OCR 抽出读脱敏后实例</code></pre>
+<ol><li>工作流进入前处理节点；敏感情报检出对マスク=ON 字段所在实例执行脱敏〔P-301～305、P-304〕。</li><li>脱敏成功 → 后续 OCR 抽出读取脱敏后实例；案件详情与导出字段值为脱敏后值。</li><li>前处理确认页（已脱敏场景）：原图 / 遮挡后 Tab 切换预览，默认遮挡后；マスク=ON 字段值统一打码展示。</li><li>脱敏 Agent 失败 → preprocessStatus=failed，走案件异常；不新增脱敏专用待办；可并行收到 Step3 通知。</li></ol>
+<hr />
+<h3 class="section-heading">4.4 故事：画像不正検知</h3>
+<p>角色：admin（启用模块）；操作员（人工确认待办）</p>
+<p>目标：在前处理节点启用画像不正検知，对指定账票检测 PS 加工/AI 生成/模板特征异常；判「是」时进人工确认（非 OCR 抽出确认）。</p>
+<p>配置流程：</p>
+<pre><code>业务场景 Step2 → 前処理設定 → 画像不正検知 ON + 对象账票 → Step3 可选配置 preprocessResult=reviewRequired 通知</code></pre>
+<ol><li>admin 在业务场景 Step2 前処理設定 开启「画像不正検知」，按 Step1 关联账票逐行指定对象（未指定则视为全部关联账票）〔P-501〕。</li><li>依赖账票 Step1 template 与客户正常样张库做模板特征比对〔P-502、P-503〕。</li><li>可选：Step3 为前处理对象配置 preprocessResult=reviewRequired 或 preprocessStatus=failed 的通知规则。</li><li>画布节点库不出现独立「画像不正検知」节点类型。</li></ol>
+<p>运行流程：</p>
+<pre><code>前处理 · 画像不正検知 → 模型输出「是」→ preprocessResult=reviewRequired → 我的任务 · 人工确认</code></pre>
+<ol><li>前处理串行执行时，画像不正検知在脱敏与几何处理之前运行。</li><li>模型二值输出「是」→ 生成人工确认待办；操作员在人工确认页选择完了/补件/案件中止。</li><li>输出「否」→ 继续后续子模块与 OCR 抽出。</li><li>检测服务异常 → preprocessStatus=failed；可走案件异常与 Step3 告警，不进 OCR 抽出确认。</li></ol>
+<hr />
+<h3 class="section-heading">4.5 故事：通知（站内信 + 邮件）</h3>
+<p>角色：admin（配置规则）；操作员、操作管理者（收件人）</p>
+<p>目标：在业务场景 Step3 扩展邮件渠道；前处理/OCR 等节点事件命中规则时并行投递站内信与邮件；通知仅告知，不替代待办。</p>
+<p>配置流程：</p>
+<pre><code>业务场景 Step3 → 通知ルール追加 → 对象节点 + 触发事件 + 渠道（站内信/邮件）+ 宛先 + 件名/正文</code></pre>
+<ol><li>admin 选择对象节点（如前处理、OCR 抽出）与触发事件（如 preprocessStatus=failed、preprocessResult=reviewRequired、ocrResult=reviewRequired）。</li><li>通知渠道多选站内信、邮件，至少选一；勾选邮件时填写邮件宛先（多地址分隔，格式校验）。</li><li>编辑件名/正文，可插入通知变量池 token；保存规则。</li><li>典型配置：前处理 failed → 邮件告警运维；OCR failed → 站内信 + 邮件通知操作管理者。</li></ol>
+<p>运行流程：</p>
+<pre><code>节点输出事件 → 匹配 Step3 开启规则 → 并行发送站内信 / 邮件 → 用户查阅（工作流继续；待办独立生成）</code></pre>
+<ol><li>运行时引擎按节点类型与变量取值匹配 Step3 规则；命中多条则全部发送。</li><li>操作员从顶栏站内信查阅；勾选邮件的规则同步投递至配置邮箱。</li><li>变量缺值按空渲染，不阻断流程；邮件投递失败记日志。</li><li>同一事件可同时触发通知与待办（如 OCR 失败：邮件告警 + OCR 抽出确认待办）。</li></ol>
+<hr />
+<h3 class="section-heading">4.6 故事：QR 读取</h3>
+<p>角色：admin（QR 映射与读取模式）；操作员（OCR 抽出确认，无 QR 专用待办）</p>
+<p>目标：在账票 Step2 配置 QR 源与字段映射；运行时 OCR 节点执行时 QR 优先、单字段失败 OCR 兜底；与 OCR 路径汇合后统一六项确认规则。</p>
+<p>配置流程：</p>
+<div class="mermaid">flowchart LR
+  step1[&quot;Step1 上传 template&quot;]
+  scan[&quot;Step2 QR解析&quot;]
+  catalog[&quot;QR 源目录&quot;]
+  pool[&quot;追加候选池&quot;]
+  map[&quot;Step2 QR設定 · 字段映射&quot;]
+  test[&quot;Step5 test 验收&quot;]
+
+  step1 --&gt; scan --&gt; catalog
+  catalog --&gt;|&quot;削除&quot;| pool
+  pool --&gt;|追加| catalog
+  catalog --&gt; map --&gt; test</div>
+<ol><li>admin 在 Step1 上传 template 样张；Step2 テキスト読取 内点击 QR解析，在账票下方区域从左到右扫描生成 QR 源目录。</li><li>切换读取设定为 QR設定；为各字段绑定 QR 源、取值方法、分割符、字段排序（界面列名：QRソース、取値方法、区切り文字、順序）；OCR 模式维护的項目名/タイプ/マスク 在 QR 模式只读。</li><li>Step5 test：QR 路径字段卡片右上角展示读取来源标签（QR読取 / QR→OCR兜底）；纯 OCR 字段不展示。</li><li>业务场景 OCR 抽出节点仍为开关 + 对象账票；引擎执行时读取上述账票配置，画布无 QR 专用节点。</li></ol>
+<p>运行流程：</p>
+<div class="mermaid">flowchart TD
+  start[&quot;OCR 节点执行（账票开关 ON）&quot;]
+  mode{&quot;Step2 读取设定&quot;}
+  ocrAll[&quot;全字段 OCR&quot;]
+  qrScan[&quot;工具扫描 QR&quot;]
+  noQR[&quot;整页无码&quot;]
+  ocrFallbackAll[&quot;全映射字段 OCR 兜底&quot;]
+  fieldLoop[&quot;逐字段按映射写值&quot;]
+  fieldOk{&quot;QR 取值有效?&quot;}
+  qrWrite[&quot;写入 QR 值 · 跳过该字段 OCR&quot;]
+  ocrField[&quot;该字段 OCR 兜底&quot;]
+  post[&quot;Step3 后处理&quot;]
+  range[&quot;正常值校验&quot;]
+  rules[&quot;六项确认规则&quot;]
+  hit{&quot;命中 reviewRequired?&quot;}
+  hitl[&quot;OCR 抽出确认待办&quot;]
+  pass[&quot;继续工作流&quot;]
+
+  start --&gt; mode
+  mode --&gt;|OCR設定| ocrAll
+  mode --&gt;|QR設定| qrScan
+  qrScan --&gt; noQR
+  noQR --&gt; ocrFallbackAll
+  qrScan --&gt; fieldLoop
+  fieldLoop --&gt; fieldOk
+  fieldOk --&gt;|是| qrWrite
+  fieldOk --&gt;|否| ocrField
+  ocrAll --&gt; post
+  ocrFallbackAll --&gt; post
+  qrWrite --&gt; post
+  ocrField --&gt; post
+  post --&gt; range --&gt; rules --&gt; hit
+  hit --&gt;|是| hitl
+  hit --&gt;|否| pass</div>
+<ol><li>QR設定：工具扫描实例 QR，按映射写值；单字段 QR 失败则该字段 OCR 兜底；整页无码则全映射字段 OCR 兜底。</li><li>OCR設定 或无有效 QR 映射：全字段 OCR（同 P1）。</li><li>QR 成功字段不走 OCR 置信度判定；Master 照合与正常值校验仍适用（见 6.04 适用矩阵）。</li><li>兜底后仍无法自动确认 → OCR 抽出确认待办；不单独设 QR 待办类型；确认页不展示读取来源。</li></ol>
+<hr />
+<h2 id="chapter-6" class="chapter-heading">第 6 章｜功能详细说明</h2>
+<h3 id="sec-6-01" class="section-heading">6.01 业务场景设置</h3>
+<p>四步向导框架、Step1 集约规则、发布门禁等沿用 <a href="https://idp-workflow-nwxh.vercel.app/">第一期 · 6.01</a>。工作流画布与 Step3 通知的主体规格亦在该文档 6.01.7～6.01.8，本节只写 P2 增量。</p>
+<h4 class="subsection-heading" id="fig-step2-工作流画布本期增量">Step2 工作流画布（本期增量）</h4>
+<p>节点库、画布编排、变量引用、设置检查及 OCR/条件/人工确认等节点面板规格见 <a href="https://idp-workflow-nwxh.vercel.app/">第一期 · 6.02</a>。</p>
+<ol><li>前处理面板新增画像不正检测、敏感信息检出（各：开关 + 对象账票）；插入在 P1 三项子模块（回転/補正/整列）之前。</li><li>敏感信息检出可选账票：Step1 关联且 Step2 有マスク=ON。</li><li>画像不正检测：输出是/否，判「是」→ preprocessResult=reviewRequired → 人工确认〔P-501～503〕。</li><li>敏感信息检出：对マスク=ON 字段实例脱敏〔P-301～305、P-304〕。</li><li>节点库移除独立「画像不正検知」「敏感情报检出」节点类型。</li><li>OCR 抽出节点：配置面板沿用 P1，按 Step1 关联账票逐行开关；不设 QR、正常值等新配置项。QR 读取、正常值校验、后处理规则均在账票类型 Step2/Step3 配置，由运行时引擎在该节点执行时读取（见 6.03 · 运行时）。</li></ol>
+<table><thead><tr><th>信号</th><th>新增或变化</th></tr></thead><tbody><tr><td>preprocessResult=reviewRequired</td><td>画像不正判「是」</td></tr></tbody></table>
+<table><thead><tr><th>场景</th><th>处理</th></tr></thead><tbody><tr><td>画像不正检测失败</td><td>preprocessStatus=failed</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-step3-通知设置本期增量">Step3 通知设置（本期增量）</h4>
+<p>通知规则框架、对象节点、触发事件、站内信投递沿用第一期 6.01.8。</p>
+<ol><li>通知渠道新增邮件：可多选站内信 + 邮件；勾选邮件须填宛先；共用件名/正文与变量渲染。</li><li>前处理对象节点可配置 preprocessStatus / preprocessResult 触发（含画像不正、脱敏 Agent 失败等）。</li></ol>
+<table><thead><tr><th>字段/参数</th><th>控件</th><th>必填</th><th>说明</th></tr></thead><tbody><tr><td>通知渠道</td><td>多选</td><td>是</td><td>站内信、邮件，至少选一</td></tr><tr><td>邮件宛先</td><td>文本</td><td>勾选邮件时</td><td>邮箱地址，格式校验</td></tr></tbody></table>
+<table><thead><tr><th>场景</th><th>处理</th></tr></thead><tbody><tr><td>勾选邮件未填宛先</td><td>保存报错</td></tr><tr><td>邮件投递失败</td><td>记日志，工作流继续</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-step4-输出字段与发布本期增量">Step4 输出字段与发布（本期增量）</h4>
+<p>输出字段勾选、排序、发布门禁 UI 与流程沿用 P1；Step4 仍只配置「导出哪些 OCR 字段」，不提供マスク列或导出格式选项。</p>
+<table><thead><tr><th>维度</th><th>P1</th><th>P2 变化</th></tr></thead><tbody><tr><td>配置端</td><td>从 Step2 已开启 OCR 的账票类型勾选字段</td><td>不变</td></tr><tr><td>运行时导出值</td><td>OCR 抽出并经后处理的字段值</td><td>若本案已执行敏感情报检出，导出值为脱敏后值</td></tr><tr><td>QR 路径</td><td>—</td><td>QR 写入并经 Step3 后处理的值正常进入导出候选</td></tr><tr><td>导出确认待办</td><td>经办确认并提交导出</td><td>展示与提交均为运行时最终值（含脱敏后值）</td></tr></tbody></table>
+<p>说明：マスク 对象在账票类型 Step2 定义；Step4 不参与脱敏配置，只消费工作流链路产出的字段终值。原图/脱敏后文件是否一并交付由导出引擎策略决定〔P-303〕；字段级导出始终跟随脱敏结果。</p>
+<table><thead><tr><th>场景</th><th>处理</th></tr></thead><tbody><tr><td>关联账票达 30 上限</td><td>阻断追加（Step1，沿用 P1）</td></tr><tr><td>未执行脱敏</td><td>导出 OCR/QR 后处理值（同 P1）</td></tr><tr><td>已执行脱敏</td><td>导出字段值为脱敏后值；案件详情同步展示脱敏后值</td></tr></tbody></table>
+<h3 id="sec-6-03" class="section-heading">6.03 账票类型设置</h3>
+<h4 class="subsection-heading" id="fig-功能点">功能点</h4>
+<p>Step1：新增分類信頼度閾値（0～100，必填）；template 样张供 QR 扫描。</p>
+<p>Step2：读取设定切换 OCR設定 / QR設定；OCR 模式维护字段主数据 + マスク；QR 模式配 QR 源、取值方法、分割符、字段排序；QR解析 扫描 Step1 样张生成 QR1、QR2…</p>
+<p>Step3：新增正常条件列（範囲内、&lt;、≤、&gt;、≥、列挙）〔P-401、402〕；读取模型弹窗六项确认规则（见 6.04）。</p>
+<p>Step5：test 展示 QR/OCR 结果、正常值结论、マスク対象标记；QR 路径字段卡片显示读取来源标签。</p>
+<h4 class="subsection-heading" id="fig-运行时ocr-抽出节点执行时">运行时（OCR 抽出节点执行时）</h4>
+<p>OCR 抽出节点开关与 P1 相同；引擎对该节点 ON 的账票，读取账票类型已保存的 Step2/Step3 配置执行抽取，不在画布上重复配置。</p>
+<div class="mermaid">flowchart TD
+  start[&quot;OCR 节点执行（账票开关 ON）&quot;]
+  mode{&quot;Step2 读取设定&quot;}
+  ocrAll[&quot;全字段 OCR&quot;]
+  qrScan[&quot;工具扫描 QR&quot;]
+  noQR[&quot;整页无码&quot;]
+  ocrFallbackAll[&quot;全映射字段 OCR 兜底&quot;]
+  fieldLoop[&quot;逐字段按映射写值&quot;]
+  fieldOk{&quot;QR 取值有效?&quot;}
+  qrWrite[&quot;写入 QR 值&quot;]
+  ocrField[&quot;该字段 OCR 兜底&quot;]
+  post[&quot;Step3 后处理&quot;]
+  range[&quot;正常值校验&quot;]
+  rules[&quot;六项确认规则&quot;]
+  hit{&quot;命中 reviewRequired?&quot;}
+  hitl[&quot;OCR 抽出确认待办&quot;]
+  pass[&quot;继续工作流&quot;]
+
+  start --&gt; mode
+  mode --&gt;|OCR設定| ocrAll
+  mode --&gt;|QR設定| qrScan
+  qrScan --&gt; noQR
+  noQR --&gt; ocrFallbackAll
+  qrScan --&gt; fieldLoop
+  fieldLoop --&gt; fieldOk
+  fieldOk --&gt;|是| qrWrite
+  fieldOk --&gt;|否| ocrField
+  ocrAll --&gt; post
+  ocrFallbackAll --&gt; post
+  qrWrite --&gt; post
+  ocrField --&gt; post
+  post --&gt; range --&gt; rules --&gt; hit
+  hit --&gt;|是| hitl
+  hit --&gt;|否| pass</div>
+<table><thead><tr><th>步骤</th><th>读取配置</th><th>行为</th></tr></thead><tbody><tr><td>路由</td><td>账票 Step2 读取设定</td><td>OCR設定：全字段 OCR；QR設定：工具扫描 QR → 逐字段写值，单字段失败 OCR 兜底，整页无码则全映射字段 OCR 兜底</td></tr><tr><td>后处理</td><td>账票 Step3 処理ルール</td><td>日期规范化、Master 照合等（P1）</td></tr><tr><td>正常值校验</td><td>账票 Step3 正常条件</td><td>超出正常值 → ocrResult=reviewRequired → OCR 抽出确认</td></tr><tr><td>确认规则</td><td>读取模型弹窗六项</td><td>OR 合并判定；适用矩阵见 6.04</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-qr-配置流程">QR 配置流程</h4>
+<div class="mermaid">flowchart LR
+  step1[&quot;Step1 template&quot;]
+  scan[&quot;QR解析&quot;]
+  catalog[&quot;QR 源目录 QR1 QR2…&quot;]
+  pool[&quot;追加候选池&quot;]
+  map[&quot;字段映射 · 取値方法 · 区切り文字 · 順序&quot;]
+  test[&quot;Step5 test&quot;]
+
+  step1 --&gt; scan --&gt; catalog
+  catalog --&gt;|&quot;削除&quot;| pool
+  pool --&gt;|追加| catalog
+  catalog --&gt; map --&gt; test</div>
+<p>扫描在 Step1 样张固定账票下方区域从左到右执行；误检可删至追加候选池，需要时经「追加」加回目录并重编号。</p>
+<table><thead><tr><th>场景</th><th>处理</th></tr></thead><tbody><tr><td>超出正常值</td><td>ocrResult=reviewRequired → OCR 抽出确认</td></tr><tr><td>字段 QR 失败</td><td>该字段 OCR 兜底；命中规则则 reviewRequired</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-step1-分类设定">Step1 分类设定</h4>
+<table><thead><tr><th>字段/参数</th><th>控件</th><th>必填</th><th>校验</th><th>下游消费</th></tr></thead><tbody><tr><td>分類信頼度閾値</td><td>数字输入</td><td>是</td><td>0～100 整数</td><td>识别分类</td></tr><tr><td>template 样张</td><td>文件上传</td><td>否</td><td>换样张后重新 QR解析</td><td>Step2 QR 扫描</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-step2-读取模式">Step2 读取模式</h4>
+<table><thead><tr><th>字段/参数</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th><th>下游消费</th></tr></thead><tbody><tr><td>读取设定</td><td>OCR設定 / QR設定</td><td>轻量切换</td><td>是</td><td>二选一</td><td>运行时路由</td></tr><tr><td>マスク</td><td>マスク</td><td>开关</td><td>否</td><td>OCR 模式字段行</td><td>前处理敏感信息检出</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-step2-qr-映射">Step2 QR 映射</h4>
+<table><thead><tr><th>字段/参数</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th></tr></thead><tbody><tr><td>QR 源目录</td><td>QRソース</td><td>来源条 + 削除</td><td>否</td><td>Step1 样张扫描，从左到右编号 QR1、QR2…</td></tr><tr><td>QR 源</td><td>QRソース</td><td>下拉</td><td>QR設定下必填</td><td>绑定目录内 QR 源；占位「選択してください」</td></tr><tr><td>取值方法</td><td>取値方法</td><td>开关</td><td>QR 源非空</td><td>OFF 全文 / ON 按分割符+字段排序取值</td></tr><tr><td>分割符</td><td>区切り文字</td><td>输入</td><td>分割开启</td><td>split 用 delimiter</td></tr><tr><td>字段排序</td><td>順序</td><td>数字</td><td>分割开启</td><td>1～N 连号，N=该源映射字段数；同一 QR 源内不可重复</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-step3-正常值范围">Step3 正常值范围</h4>
+<table><thead><tr><th>字段/参数</th><th>控件</th><th>枚举</th><th>下游消费</th></tr></thead><tbody><tr><td>正常条件</td><td>下拉+输入</td><td>範囲内、&lt;、≤、&gt;、≥、列挙</td><td>OCR 后处理判定</td></tr></tbody></table>
+<p>超出时 OCR 抽出确认理由：「正常値範囲を超えています」。</p>
+<h4 class="subsection-heading" id="fig-step5-效果测试">Step5 效果测试</h4>
+<p>test 输出：test摘要、读取来源标签（QR 路径）、范围结论、マスク対象标记。</p>
+<h4 class="subsection-heading" id="fig-step2-qr-界面文案日语">Step2 · QR 界面文案（日语）</h4>
+<p>Step2 读取 tab 与模式切换、QR 源条、映射表、提示与弹窗沿用原型日文文案。</p>
+<table><thead><tr><th>类型</th><th>界面文案（日语）</th><th>说明</th></tr></thead><tbody><tr><td>Tab</td><td>テキスト読取</td><td>Step2 文本读取 tab</td></tr><tr><td>Tab</td><td>テーブル情報読取</td><td>Step2 表格读取 tab</td></tr><tr><td>模式切换</td><td>OCR設定 / QR設定</td><td>テキスト読取 内轻量切换</td></tr><tr><td>区域标题</td><td>QRソース</td><td>QR 源条标题</td></tr><tr><td>空态</td><td>Step1 でテンプレートをアップロードしてください</td><td>无 Step1 template</td></tr><tr><td>空态</td><td>読取中…</td><td>QR 扫描进行中</td></tr><tr><td>空态</td><td>QR を検出できませんでした。「QR解析」で再試行できます</td><td>扫描无检出</td></tr><tr><td>表头</td><td>番号 / 項目名 / 必須 / タイプ / QRソース / 取値方法 / 区切り文字 / 順序</td><td>字段映射表列</td></tr><tr><td>下拉占位</td><td>選択してください</td><td>QR 源下拉</td></tr><tr><td>取値方法说明</td><td>OFF：QR 解码全文をそのままフィールドに書き込みます。ON：区切り文字と順序を入力し、指定した 1 段だけを取得します。</td><td>取値方法列 i 提示</td></tr><tr><td>分割符说明</td><td>区切り文字で split します。連続する区切り（例：$$）の間は空フィールドです。段内が空文字または空値占位の場合も空として扱います。</td><td>区切り文字列 i 提示</td></tr><tr><td>字段排序说明</td><td>分割時に QR 解码串から取る位置（1 起）。同一 QR ソース内で重複不可。</td><td>順序列 i 提示</td></tr><tr><td>タイプ说明</td><td>OCR設定で定義した項目タイプを表示します。QR読取では編集できません。</td><td>タイプ列 i 提示</td></tr><tr><td>QR源说明</td><td>QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1、QR2… と検出数に応じて割り当てます。不要な QR は削除、漏れた QR は追加できます。テンプレート変更後は「QR解析」で再実行できます。</td><td>QRソース区 i 提示</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-按钮step2-qr">按钮（Step2 · QR）</h4>
+<table><thead><tr><th>按钮</th><th>界面文案（日语）</th><th>启用条件</th><th>点击后</th></tr></thead><tbody><tr><td>QR解析</td><td>QR解析</td><td>Step1 有 template</td><td>重扫 QR 目录；已有映射时弹窗「QR解析を再実行すると、現在の QRソースとフィールドマッピングが上書きされます。続行しますか？」；按钮「続行」「キャンセル」</td></tr><tr><td>追加</td><td>追加</td><td>候选池非空</td><td>加回下一项 QR 源；无候选时提示「追加できる QR ソースがありません」</td></tr><tr><td>删除</td><td>削除</td><td>目录 ≥1 项</td><td>移入追加候选池并重编号；成功提示「{QRn} を QRソースから除外しました」</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-异常与边界">异常与边界</h4>
+<table><thead><tr><th>场景</th><th>处理</th></tr></thead><tbody><tr><td>分類信頼度閾値空</td><td>阻断保存 Step1</td></tr><tr><td>Step1 无 template 进 QR 模式</td><td>展示「Step1 でテンプレートをアップロードしてください」</td></tr><tr><td>正常条件不完整 / min&gt;max</td><td>阻断保存 Step3</td></tr><tr><td>QR 失败</td><td>该字段 OCR 兜底；命中规则 → OCR 抽出确认</td></tr></tbody></table>
+<h3 id="sec-6-04" class="section-heading">6.04 我的任务</h3>
+<p>待办列表、指派、办结沿用 <a href="https://neosai-idp-prd.vercel.app/">第一期总 PRD · 我的任务</a>。</p>
+<h4 class="subsection-heading" id="fig-功能点本期增量">功能点（本期增量）</h4>
+<ol><li>读取模型弹窗确认规则扩展为六项（前五项 P1，第六项 P2「正常值范围超出」）；六项任一命中 → OCR 抽出确认待办。</li><li>画像不正 preprocessResult=reviewRequired → 人工确认待办（非 OCR 抽出确认页）。</li><li>前处理确认页（已脱敏）：原图/遮挡后预览 + 敏感字段打码〔P-302、303〕。</li><li>读取来源标签仅 Step5 test、案件日志展示；OCR 抽出确认执行页不展示读取来源。</li><li>QR 不单独产生待办类型；QR 与 OCR 路径汇合后统一按六项规则判定。</li></ol>
+<h4 class="subsection-heading" id="fig-ocr-抽出确认规则六项">OCR 抽出确认规则（六项）</h4>
+<p>配置入口：业务规则配置 → モデル設定 → 读取模型设置弹窗（人工确认触发规则，多选 OR）。</p>
+<table><thead><tr><th>序号</th><th>规则</th><th>判定对象</th><th>典型场景</th></tr></thead><tbody><tr><td>1</td><td>信頼度が閾値未満</td><td>OCR 抽出字段置信度</td><td>诊断书手写区域 OCR 仅 62%，低于模型阈值</td></tr><tr><td>2</td><td>多モデル結果不一致</td><td>主模型与校验模型输出</td><td>主模型读「齊藤」、校验模型读「斎藤」</td></tr><tr><td>3</td><td>Master照合類似度が低い</td><td>Step3 Master 照合后相似度</td><td>伤病情报与 ICD-10 词典最佳匹配低于阈值</td></tr><tr><td>4</td><td>Master照合結果が空</td><td>Step3 Master 照合无命中</td><td>医疗机构名在 Master 中查无结果</td></tr><tr><td>5</td><td>Master照合信頼度が低い</td><td>Master 照合返回置信度</td><td>照合有候选但置信度不足</td></tr><tr><td>6</td><td>正常値範囲を超えています</td><td>Step3 正常条件（P2）</td><td>通院日数 OCR/QR 值为 20，配置范围为 1～15</td></tr></tbody></table>
+<p>六项为 OR 关系：账票级任一字段命中 → 该账票合并为一条 OCR 抽出确认待办。</p>
+<h4 class="subsection-heading" id="fig-ocr設定-与-qr設定-下的规则适用">OCR設定 与 QR設定 下的规则适用</h4>
+<table><thead><tr><th>读取模式</th><th>字段取值路径</th><th>具体场景</th><th>规则 1～2（OCR 置信）</th><th>规则 3～5（Master）</th><th>规则 6（正常值）</th><th>进 OCR 抽出确认</th></tr></thead><tbody><tr><td>OCR設定</td><td>全字段 OCR</td><td>Step2 选 OCR設定；或 QR設定 但无有效 QR 映射</td><td>适用</td><td>适用</td><td>适用</td><td>六项任一命中</td></tr><tr><td>QR設定</td><td>QR 成功写值</td><td>底部 6 码全扫到，split 正常，字段值写入</td><td>不适用（未走 OCR）</td><td>适用（后处理仍执行）</td><td>适用</td><td>规则 3～6 命中</td></tr><tr><td>QR設定</td><td>单字段 QR 失败 → OCR 兜底</td><td>某 QR 源解码空、split 后为空、映射源未检出</td><td>仅兜底字段适用</td><td>兜底字段适用</td><td>兜底字段适用</td><td>兜底字段六项 OR</td></tr><tr><td>QR設定</td><td>整页无 QR → 全映射字段 OCR 兜底</td><td>物理件无码、扫描 0 条、样张与实票不符</td><td>全映射字段适用</td><td>全映射字段适用</td><td>全映射字段适用</td><td>同 OCR設定</td></tr><tr><td>QR設定</td><td>QR 写值 + 后处理异常</td><td>QR 读出「2025/13/01」日期规范化失败</td><td>不适用</td><td>视后处理/Master 结果</td><td>视范围校验</td><td>对应规则命中</td></tr></tbody></table>
+<p>说明：</p>
+<ul><li>QR 成功字段不产生 OCR 置信度，故规则 1、2 不触发；Master 照合与正常值校验在 Step3 后处理阶段仍对该字段执行。</li><li>QR 失败触发单字段 OCR 兜底后，该字段与纯 OCR 路径相同，六项均适用。</li><li>画像不正検知 reviewRequired 不进本表，走人工确认待办（与 OCR 抽出确认分属不同待办类型）。</li></ul>
+<h4 class="subsection-heading" id="fig-前处理确认执行页p2">前处理确认执行页（P2）</h4>
+<table><thead><tr><th>元素</th><th>规格</th></tr></thead><tbody><tr><td>展示条件</td><td>敏感信息检出成功</td></tr><tr><td>实例预览</td><td>原图 / 遮挡后 Tab 切换，默认遮挡后〔P-302、303〕</td></tr><tr><td>敏感字段值</td><td>マスク=ON 字段，统一打码展示</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-异常与边界">异常与边界</h4>
+<table><thead><tr><th>场景</th><th>处理</th></tr></thead><tbody><tr><td>必填仍空或仍超出正常值</td><td>阻断办结</td></tr><tr><td>脱敏失败</td><td>preprocessStatus=failed，走案件异常</td></tr><tr><td>reviewRequired 无人工确认分支</td><td>可发布但运行时停止；设置检查警告（沿用 P1）</td></tr></tbody></table>
+<hr />
+      </article>
+    </main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      securityLevel: 'loose',
+      flowchart: { htmlLabels: true, curve: 'basis' }
+    });
+  </script>
+  <div id="prdLightbox" class="lightbox" aria-hidden="true">
+    <button type="button" class="lightbox-close" data-lightbox-close aria-label="关闭">×</button>
+    <button type="button" class="lightbox-nav lightbox-prev" data-lightbox-prev aria-label="上一张">‹</button>
+    <figure class="lightbox-figure">
+      <img id="lightboxImage" alt="" />
+      <figcaption id="lightboxCaption" class="lightbox-caption"></figcaption>
+    </figure>
+    <button type="button" class="lightbox-nav lightbox-next" data-lightbox-next aria-label="下一张">›</button>
+  </div>
+  <script>
+    (function () {
+      const box = document.getElementById('prdLightbox');
+      const img = document.getElementById('lightboxImage');
+      const caption = document.getElementById('lightboxCaption');
+      const triggers = Array.from(document.querySelectorAll('.screenshot-trigger'));
+      let index = 0;
+      function show(i) {
+        if (!triggers.length) return;
+        index = (i + triggers.length) % triggers.length;
+        const t = triggers[index];
+        img.src = t.dataset.src;
+        img.alt = t.dataset.caption || '';
+        caption.textContent = t.dataset.caption || '';
+        box.classList.add('is-open');
+        box.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('lightbox-open');
+      }
+      function close() {
+        box.classList.remove('is-open');
+        box.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('lightbox-open');
+      }
+      triggers.forEach((t, i) => t.addEventListener('click', () => show(i)));
+      box.querySelector('[data-lightbox-close]').addEventListener('click', close);
+      box.querySelector('[data-lightbox-prev]').addEventListener('click', () => show(index - 1));
+      box.querySelector('[data-lightbox-next]').addEventListener('click', () => show(index + 1));
+      box.addEventListener('click', (e) => { if (e.target === box) close(); });
+      document.addEventListener('keydown', (e) => {
+        if (!box.classList.contains('is-open')) return;
+        if (e.key === 'Escape') close();
+        if (e.key === 'ArrowLeft') show(index - 1);
+        if (e.key === 'ArrowRight') show(index + 1);
+      });
+    })();
+    (function () {
+      document.querySelectorAll('[data-figure-carousel]').forEach((root) => {
+        const slides = Array.from(root.querySelectorAll('[data-carousel-slide]'));
+        const counter = root.querySelector('[data-carousel-counter]');
+        const prev = root.querySelector('[data-carousel-prev]');
+        const next = root.querySelector('[data-carousel-next]');
+        if (slides.length < 2) return;
+        let current = 0;
+        function renderSlide(i) {
+          current = (i + slides.length) % slides.length;
+          slides.forEach((slide, idx) => slide.classList.toggle('is-active', idx === current));
+          if (counter) counter.textContent = (current + 1) + ' / ' + slides.length;
+        }
+        prev?.addEventListener('click', () => renderSlide(current - 1));
+        next?.addEventListener('click', () => renderSlide(current + 1));
+      });
+    })();
+  </script>
+</body>
+</html>

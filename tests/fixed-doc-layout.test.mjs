@@ -226,8 +226,13 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(html, /class="fixed-doc-qr-delim-select"[\s\S]*placeholder="\$"[\s\S]*@update:model-value="setFixedDocFieldRule\(row\.fieldId, \{ qrDelimiter: \$event \}\)"/);
   assert.doesNotMatch(step2QrHtml, /v-if="shouldShowFixedDocQrFieldDelimiter\(row\)"[\s\S]*<el-select/);
   assert.doesNotMatch(html, /v-if="row\.qrSourceId"[\s\S]*class="fixed-doc-qr-source-select"/);
-  assert.match(html, /:model-value="row\.qrSourceId \|\| ''"[\s\S]*placeholder="未設定（OCR）"[\s\S]*clearable[\s\S]*setFixedDocFieldRule\(row\.fieldId, \{ qrSourceId: \$event \|\| '' \}\)/);
-  assert.match(html, /<el-option label="未設定（OCR）" value=""><\/el-option>/);
+  assert.match(html, /:model-value="row\.qrSourceId"[\s\S]*placeholder="選択してください"[\s\S]*setFixedDocFieldRule\(row\.fieldId, \{ qrSourceId: \$event \}\)/);
+  assert.match(main, /const fixedDocQrReadRows = computed\(\(\) => \{[\s\S]*?return fixedDocTextRows\.value\.map/);
+  assert.doesNotMatch(
+    main.slice(main.indexOf('function ensureFixedDocFieldRules'), main.indexOf('function setFixedDocFieldRule')),
+    /ensureFixedDocQrSourceAssignments/,
+  );
+  assert.doesNotMatch(html, /未設定（OCR）/);
   assert.doesNotMatch(step2QrHtml, /正解サンプル/);
   assert.match(html, /fixedDocReadMode === 'ocr'[\s\S]*正解サンプル[\s\S]*content="この項目は自動ルールマッチングと読取に使用されます。"/);
   assert.match(html, /正解サンプル[\s\S]*content="この列は自動ルールマッチングと読取に使用されます。"/);

@@ -1479,8 +1479,9 @@ const appOptions = {
           rule.qrSourceId = nextId;
           rule.sourceQr = nextId;
         } else if (rule.qrSourceId === removedSourceId) {
-          rule.qrSourceId = '';
-          rule.sourceQr = '';
+          const fallback = getDefaultFixedDocQrSourceId();
+          rule.qrSourceId = fallback;
+          rule.sourceQr = fallback;
         }
       });
       fixedDocReadTables.forEach((table) => {
@@ -1490,8 +1491,9 @@ const appOptions = {
             column.qrSourceId = nextId;
             column.sourceQr = nextId;
           } else if (column.qrSourceId === removedSourceId) {
-            column.qrSourceId = '';
-            column.sourceQr = '';
+            const fallback = getDefaultFixedDocQrSourceId();
+            column.qrSourceId = fallback;
+            column.sourceQr = fallback;
           }
         });
       });
@@ -1512,16 +1514,18 @@ const appOptions = {
       Object.keys(fixedDocFieldRules).forEach((fieldRef) => {
         const rule = fixedDocFieldRules[fieldRef];
         if (!rule || rule.qrSourceId !== sourceId) return;
-        rule.qrSourceId = '';
-        rule.sourceQr = '';
+        const fallback = getDefaultFixedDocQrSourceId();
+        rule.qrSourceId = fallback;
+        rule.sourceQr = fallback;
       });
     }
     function clearFixedDocTableColumnQrSourceMappings(sourceId) {
       fixedDocReadTables.forEach((table) => {
         table.columns.forEach((column) => {
           if (column.qrSourceId !== sourceId) return;
-          column.qrSourceId = '';
-          column.sourceQr = '';
+          const fallback = getDefaultFixedDocQrSourceId();
+          column.qrSourceId = fallback;
+          column.sourceQr = fallback;
         });
       });
     }
@@ -2173,6 +2177,24 @@ const appOptions = {
     function getFixedDocFieldQrPreset(fieldName) {
       return FIXED_DOC_QR_FIELD_PRESET[fieldName] || null;
     }
+    function getDefaultFixedDocQrSourceId(fieldName = '') {
+      const preset = getFixedDocFieldQrPreset(fieldName);
+      return preset?.qrSourceId || fixedDocQrSourceCatalog[0]?.id || 'QR1';
+    }
+    function ensureFixedDocQrSourceAssignments() {
+      if (fixedDocReadMode.value !== 'qr') return;
+      ensureFixedDocFieldRules();
+      fixedDocTextRows.value.forEach((row) => {
+        if (fixedDocFieldRules[row.fieldId]?.qrSourceId) return;
+        const qrSourceId = getDefaultFixedDocQrSourceId(row.name);
+        setFixedDocFieldRule(row.fieldId, {
+          qrSourceId,
+          sourceQr: qrSourceId,
+          qrExtractMethod: FIXED_DOC_QR_EXTRACT_SPLIT,
+          qrDelimiter: '$',
+        });
+      });
+    }
     function shouldUseFixedDocQrPresetRule(fieldName) {
       return isFixedDocQrCapableDocType() && !!getFixedDocFieldQrPreset(fieldName);
     }
@@ -2801,8 +2823,14 @@ const appOptions = {
       label: slot.id,
     })));
     const fixedDocOcrProcessRuleOptions = computed(() => fixedDocProcessRuleOptions);
-    const fixedDocQrReadRows = computed(() => fixedDocProcessRows.value);
-    const fixedDocHasQrMapping = computed(() => fixedDocProcessRows.value.some((row) => !!row.qrSourceId));
+    const fixedDocQrReadRows = computed(() => {
+      if (fixedDocReadMode.value !== 'qr') return [];
+      return fixedDocTextRows.value.map((row) => ({
+        ...row,
+        ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)),
+      }));
+    });
+    const fixedDocHasQrMapping = computed(() => fixedDocReadMode.value === 'qr');
     function sortFixedDocQrSourceCatalog() {
       fixedDocQrSourceCatalog.sort((a, b) => {
         const na = Number(String(a.id).replace(/\D/g, '')) || 999;
@@ -2869,6 +2897,7 @@ const appOptions = {
         });
       });
       reindexFixedDocQrSources();
+      ensureFixedDocQrSourceAssignments();
       return true;
     }
     function waitFixedDocQrScan(ms) {
@@ -3396,13 +3425,19 @@ const appOptions = {
       if (readMode !== 'qr') {
         fixedDocQrScanRunToken += 1;
         fixedDocQrScanActive.value = false;
+        return;
       }
+      nextTick(() => ensureFixedDocQrSourceAssignments());
     });
     watch([fixedDocSetupStep, fixedDocReadMode, fixedDocHasStep1Template], ([step, readMode, hasTemplate]) => {
       if (step !== 2 || fixedDocReadTab.value !== 'text' || readMode !== 'qr' || !hasTemplate) return;
       nextTick(() => {
         runFixedDocQrSourcesScan({ silent: true });
       });
+    });
+    watch(fixedDocTextRows, () => {
+      if (fixedDocSetupStep.value !== 2 || fixedDocReadTab.value !== 'text' || fixedDocReadMode.value !== 'qr') return;
+      nextTick(() => ensureFixedDocQrSourceAssignments());
     });
 
     const textEditingId = ref(null);
@@ -13033,6 +13068,32 @@ async function bootstrapApp() {
   app.use(ElementPlus);
   try {
     app.mount('#app');
+    const state = app._instance?.setupState;
+    const proxy = app._instance?.proxy;
+    if (proxy || state) {
+      window.__NEOS_PRD_CAPTURE__ = {
+        openFixedDoc(typeId, step, options = {}) {
+          if (proxy?.openFixedDocSettings) proxy.openFixedDocSettings(typeId, step, options);
+          else state.openFixedDocSettings(typeId, step, options);
+        },
+        openWorkflowCanvas() {
+          if (proxy?.switchModule) proxy.switchModule('case-workflow');
+          else state.switchModule('case-workflow');
+          if (proxy?.enterWorkflowCanvasView) proxy.enterWorkflowCanvasView();
+          else state.enterWorkflowCanvasView();
+        },
+        selectNode(id) {
+          if (proxy?.selectWorkflowNode) proxy.selectWorkflowNode(id);
+          else state.selectWorkflowNode(id);
+        },
+        openWorkflowStep(step) {
+          if (proxy?.switchModule) proxy.switchModule('case-workflow');
+          else state.switchModule('case-workflow');
+          const go = proxy?.goToWorkflowSetupStep || state.goToWorkflowSetupStep;
+          go(step, { skipWorkflowStaticValidation: true });
+        },
+      };
+    }
   } catch (mountErr) {
     const appEl = document.getElementById('app');
     if (appEl) {

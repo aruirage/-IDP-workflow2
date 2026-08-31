@@ -6,6 +6,8 @@ const MD_PATH = path.join(ROOT, 'PRD.zh-CN.md');
 const OUT_DIR = path.join(ROOT, 'prd-public');
 const OUT_PATH = path.join(OUT_DIR, 'index.html');
 const HEADERS_PATH = path.join(ROOT, 'tools', '_headers');
+const FIGURES_PATH = path.join(ROOT, 'tools', 'prd-figures.json');
+const ASSETS_DIR = path.join(OUT_DIR, 'assets');
 
 function escapeHtml(text) {
   return text
@@ -46,6 +48,21 @@ function sectionNumber(title) {
   };
 }
 
+function subsectionSlug(title) {
+  return title
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\u4e00-\u9fff-]+/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function subsectionHeadingId(title) {
+  const slug = subsectionSlug(title);
+  return slug ? ` id="fig-${slug}"` : '';
+}
+
 function parseMarkdown(md) {
   const lines = md.replace(/\r\n/g, '\n').split('\n');
   const chapters = [];
@@ -69,8 +86,16 @@ function parseMarkdown(md) {
       continue;
     }
 
-    if (/^#{1,4}\s/.test(line)) {
-      const level = line.match(/^#+/)[0].length;
+    if (/^!\[([^\]]*)\]\(([^)]+)\)\s*$/.test(line)) {
+      const match = line.match(/^!\[([^\]]*)\]\(([^)]+)\)\s*$/);
+      blocks.push({ type: 'figure', alt: match[1], src: match[2] });
+      i += 1;
+      continue;
+    }
+
+    if (/^#{1,6}\s/.test(line)) {
+      const rawLevel = line.match(/^#+/)[0].length;
+      const level = Math.min(rawLevel, 4);
       const title = line.replace(/^#+\s*/, '').trim();
       const block = { type: 'heading', level, title };
       if (level === 2) {
@@ -129,7 +154,7 @@ function parseMarkdown(md) {
 
     const para = [line];
     i += 1;
-    while (i < lines.length && lines[i].trim() && !/^#{1,4}\s/.test(lines[i]) && !/^\|.+\|$/.test(lines[i]) && !/^---\s*$/.test(lines[i]) && !/^(\d+\.\s+|\-\s+|\*\s+)/.test(lines[i]) && !lines[i].startsWith('```')) {
+    while (i < lines.length && lines[i].trim() && !/^#{1,6}\s/.test(lines[i]) && !/^\|.+\|$/.test(lines[i]) && !/^---\s*$/.test(lines[i]) && !/^(\d+\.\s+|\-\s+|\*\s+)/.test(lines[i]) && !lines[i].startsWith('```')) {
       para.push(lines[i]);
       i += 1;
     }
@@ -137,6 +162,76 @@ function parseMarkdown(md) {
   }
 
   return { blocks, chapters, sections };
+}
+
+function renderFigureRow(items, { carouselId } = {}) {
+  if (!items?.length) return '';
+  if (items.length === 1) {
+    return `<div class="figure-row figure-row--single">\n${renderFigure(items[0], 0)}\n</div>`;
+  }
+  const cid = carouselId || `carousel-${Math.random().toString(36).slice(2, 9)}`;
+  const slides = items
+    .map(
+      (item, index) =>
+        `<figure class="screenshot-figure${index === 0 ? ' is-active' : ''}" data-carousel-slide="${index}">
+  ${renderFigureButton(item, index)}
+  <figcaption>${inlineMarkdown(item.caption || item.alt || '')}</figcaption>
+</figure>`,
+    )
+    .join('\n');
+  return `<div class="figure-carousel" data-figure-carousel="${cid}">
+  <div class="figure-carousel__stage">${slides}</div>
+  <div class="figure-carousel__bar">
+    <button type="button" class="figure-carousel__btn" data-carousel-prev aria-label="上一张">‹ 上一张</button>
+    <span class="figure-carousel__counter" data-carousel-counter>1 / ${items.length}</span>
+    <button type="button" class="figure-carousel__btn" data-carousel-next aria-label="下一张">下一张 ›</button>
+  </div>
+</div>`;
+}
+
+function renderFigureButton(item, index) {
+  const src = item.src || (item.file ? `assets/${item.file}` : '');
+  if (!src) return '';
+  const caption = item.caption || item.alt || '';
+  return `<button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="${index}" data-src="${escapeHtml(src)}" data-caption="${escapeHtml(caption)}">
+    <img src="${escapeHtml(src)}" alt="${escapeHtml(caption)}" loading="lazy" />
+  </button>`;
+}
+
+function renderFigure(item, index) {
+  const src = item.src || (item.file ? `assets/${item.file}` : '');
+  if (!src) return '';
+  const caption = item.caption || item.alt || '';
+  return `<figure class="screenshot-figure">
+  ${renderFigureButton(item, index)}
+  <figcaption>${inlineMarkdown(caption)}</figcaption>
+</figure>`;
+}
+
+function injectSectionFigures(html, figuresConfig) {
+  if (!figuresConfig?.sections) return html;
+  let out = html;
+  for (const [sectionId, items] of Object.entries(figuresConfig.sections)) {
+    if (!items?.length) continue;
+    const block = renderFigureRow(items, { carouselId: sectionId });
+    if (!block) continue;
+    const re = new RegExp(`(<h3 id="${sectionId}" class="section-heading">[\\s\\S]*?</h3>)`, 'i');
+    out = out.replace(re, `$1\n${block}`);
+  }
+  return out;
+}
+
+function injectAnchorFigures(html, figuresConfig) {
+  if (!figuresConfig?.anchors) return html;
+  let out = html;
+  for (const [anchorKey, items] of Object.entries(figuresConfig.anchors)) {
+    if (!items?.length) continue;
+    const block = renderFigureRow(items, { carouselId: `anchor-${anchorKey}` });
+    if (!block) continue;
+    const re = new RegExp(`(<h4 class="subsection-heading" id="fig-${anchorKey}">[\\s\\S]*?</h4>)`, 'i');
+    out = out.replace(re, `$1\n${block}`);
+  }
+  return out;
 }
 
 function renderTable(rows, sections) {
@@ -208,7 +303,7 @@ function renderBlocks(blocks, sections, hasChapter5) {
         html.push(`<h3${idAttr} class="section-heading">${inlineMarkdown(block.title)}</h3>`);
         continue;
       }
-      html.push(`<h4 class="subsection-heading">${inlineMarkdown(block.title)}</h4>`);
+      html.push(`<h4 class="subsection-heading"${subsectionHeadingId(block.title)}>${inlineMarkdown(block.title)}</h4>`);
       continue;
     }
 
@@ -229,6 +324,11 @@ function renderBlocks(blocks, sections, hasChapter5) {
 
     if (block.type === 'hr') {
       html.push('<hr />');
+      continue;
+    }
+
+    if (block.type === 'figure') {
+      html.push(renderFigureRow([{ alt: block.alt, src: block.src, caption: block.alt }]));
       continue;
     }
 
@@ -474,6 +574,148 @@ const STYLES = `
       border-top: 1px solid var(--border);
       margin: 28px 0;
     }
+    .figure-row {
+      margin: 16px 0 24px;
+    }
+    .figure-row--single {
+      max-width: 960px;
+    }
+    .figure-carousel {
+      margin: 16px 0 24px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fafbfc;
+    }
+    .figure-carousel__stage {
+      position: relative;
+      min-height: 200px;
+      background: #fff;
+    }
+    .figure-carousel__stage .screenshot-figure {
+      display: none;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+    }
+    .figure-carousel__stage .screenshot-figure.is-active {
+      display: block;
+    }
+    .figure-carousel__bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      background: #fafbfc;
+    }
+    .figure-carousel__btn {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .figure-carousel__btn:hover { background: #f2f4f7; }
+    .figure-carousel__counter {
+      font-size: 13px;
+      color: var(--muted);
+      min-width: 4em;
+      text-align: center;
+    }
+    .screenshot-figure {
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fafbfc;
+    }
+    .screenshot-trigger {
+      display: block;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: zoom-in;
+    }
+    .screenshot-figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 420px;
+      object-fit: contain;
+      object-position: top center;
+      background: #fff;
+    }
+    .screenshot-figure figcaption {
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      line-height: 1.5;
+    }
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.78);
+      padding: 24px;
+    }
+    .lightbox.is-open { display: flex; }
+    body.lightbox-open { overflow: hidden; }
+    .lightbox-figure {
+      max-width: min(1200px, 96vw);
+      max-height: 92vh;
+      margin: 0;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    .lightbox-figure img {
+      display: block;
+      max-width: 100%;
+      max-height: calc(92vh - 56px);
+      margin: 0 auto;
+    }
+    .lightbox-caption {
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #344054;
+      border-top: 1px solid var(--border);
+    }
+    .lightbox-close,
+    .lightbox-nav {
+      position: fixed;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.95);
+      color: #101828;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    }
+    .lightbox-close {
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      font-size: 22px;
+    }
+    .lightbox-nav {
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      font-size: 24px;
+    }
+    .lightbox-prev { left: 20px; }
+    .lightbox-next { right: 20px; }
     @media (max-width: 900px) {
       .sidebar { position: static; width: 100%; height: auto; }
       .main { margin-left: 0; padding: 16px; }
@@ -486,11 +728,13 @@ const STYLES = `
     }
 `;
 
-function buildHtml(md) {
+function buildHtml(md, figuresConfig) {
   const { blocks, chapters, sections } = parseMarkdown(md);
   const hasChapter5 = chapters.some((chapter) => chapter.id === 'chapter-5');
   const generatedAt = new Date().toLocaleString('zh-CN', { hour12: false });
-  const content = renderBlocks(blocks, sections, hasChapter5);
+  let content = renderBlocks(blocks, sections, hasChapter5);
+  content = injectSectionFigures(content, figuresConfig);
+  content = injectAnchorFigures(content, figuresConfig);
   const sidebar = renderSidebar(chapters, sections);
 
   return `<!DOCTYPE html>
@@ -527,13 +771,89 @@ ${content}
       flowchart: { htmlLabels: true, curve: 'basis' }
     });
   </script>
+  <div id="prdLightbox" class="lightbox" aria-hidden="true">
+    <button type="button" class="lightbox-close" data-lightbox-close aria-label="关闭">×</button>
+    <button type="button" class="lightbox-nav lightbox-prev" data-lightbox-prev aria-label="上一张">‹</button>
+    <figure class="lightbox-figure">
+      <img id="lightboxImage" alt="" />
+      <figcaption id="lightboxCaption" class="lightbox-caption"></figcaption>
+    </figure>
+    <button type="button" class="lightbox-nav lightbox-next" data-lightbox-next aria-label="下一张">›</button>
+  </div>
+  <script>
+    (function () {
+      const box = document.getElementById('prdLightbox');
+      const img = document.getElementById('lightboxImage');
+      const caption = document.getElementById('lightboxCaption');
+      const triggers = Array.from(document.querySelectorAll('.screenshot-trigger'));
+      let index = 0;
+      function show(i) {
+        if (!triggers.length) return;
+        index = (i + triggers.length) % triggers.length;
+        const t = triggers[index];
+        img.src = t.dataset.src;
+        img.alt = t.dataset.caption || '';
+        caption.textContent = t.dataset.caption || '';
+        box.classList.add('is-open');
+        box.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('lightbox-open');
+      }
+      function close() {
+        box.classList.remove('is-open');
+        box.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('lightbox-open');
+      }
+      triggers.forEach((t, i) => t.addEventListener('click', () => show(i)));
+      box.querySelector('[data-lightbox-close]').addEventListener('click', close);
+      box.querySelector('[data-lightbox-prev]').addEventListener('click', () => show(index - 1));
+      box.querySelector('[data-lightbox-next]').addEventListener('click', () => show(index + 1));
+      box.addEventListener('click', (e) => { if (e.target === box) close(); });
+      document.addEventListener('keydown', (e) => {
+        if (!box.classList.contains('is-open')) return;
+        if (e.key === 'Escape') close();
+        if (e.key === 'ArrowLeft') show(index - 1);
+        if (e.key === 'ArrowRight') show(index + 1);
+      });
+    })();
+    (function () {
+      document.querySelectorAll('[data-figure-carousel]').forEach((root) => {
+        const slides = Array.from(root.querySelectorAll('[data-carousel-slide]'));
+        const counter = root.querySelector('[data-carousel-counter]');
+        const prev = root.querySelector('[data-carousel-prev]');
+        const next = root.querySelector('[data-carousel-next]');
+        if (slides.length < 2) return;
+        let current = 0;
+        function renderSlide(i) {
+          current = (i + slides.length) % slides.length;
+          slides.forEach((slide, idx) => slide.classList.toggle('is-active', idx === current));
+          if (counter) counter.textContent = (current + 1) + ' / ' + slides.length;
+        }
+        prev?.addEventListener('click', () => renderSlide(current - 1));
+        next?.addEventListener('click', () => renderSlide(current + 1));
+      });
+    })();
+  </script>
 </body>
 </html>
 `;
 }
 
+async function loadFiguresConfig() {
+  try {
+    return JSON.parse(await readFile(FIGURES_PATH, 'utf8'));
+  } catch {
+    return { sections: {} };
+  }
+}
+
+async function ensureAssetsDir() {
+  await mkdir(ASSETS_DIR, { recursive: true });
+}
+
 const md = await readFile(MD_PATH, 'utf8');
+const figuresConfig = await loadFiguresConfig();
 await mkdir(OUT_DIR, { recursive: true });
-await writeFile(OUT_PATH, buildHtml(md), 'utf8');
+await ensureAssetsDir();
+await writeFile(OUT_PATH, buildHtml(md, figuresConfig), 'utf8');
 await copyFile(HEADERS_PATH, path.join(OUT_DIR, '_headers'));
 console.log(`PRD site written to ${OUT_PATH}`);
