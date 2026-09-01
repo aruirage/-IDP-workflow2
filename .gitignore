@@ -6,3 +6,4 @@ hatch-runs/
 .tmp-*
 .venv-qr/
 node_modules/
+assets/prd-screenshots/.capture-error.txt

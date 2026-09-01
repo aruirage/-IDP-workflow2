@@ -255,13 +255,16 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.doesNotMatch(html, /fixed-doc-test-source-label/);
   assert.doesNotMatch(html, /読取元：/);
   assert.match(html, /class="fixed-doc-test-card-head"[\s\S]*?<span v-if="row\.sourceLabel" class="fixed-doc-test-source-tag">\{\{ row\.sourceLabel \}\}<\/span>/);
-  assert.doesNotMatch(html, /正常条件：\{\{ row\.rangeDetail \}\}/);
-  assert.doesNotMatch(html, /正常条件：\{\{ row\.normalRange \}\}/);
-  assert.match(main, /const sourceLabel = useQrPreview \? 'QR読取' : '';/);
-  assert.match(main, /const FIXED_DOC_TEST_REVIEW_MESSAGE = '自信度が閾値未満である'/);
-  assert.match(main, /function needsFixedDocTestReview\(/);
-  assert.doesNotMatch(main, /normalRange: '0～300'/);
-  assert.doesNotMatch(main, /errorMessage = '正常値範囲を超えています'/);
+  const step5TestHtml = html.slice(html.indexOf('class="fixed-doc-panel fixed-doc-test-panel"'), html.indexOf('class="fixed-doc-test-table-list"'));
+  assert.doesNotMatch(step5TestHtml, /row\.confidence/);
+  assert.doesNotMatch(step5TestHtml, /row\.rangeLabel/);
+  assert.doesNotMatch(step5TestHtml, /row\.maskLabel/);
+  assert.doesNotMatch(html, /class="fixed-doc-test-summary"/);
+  assert.match(html, /fixed-doc-test-error">\{\{ row\.errorMessage \}\}/);
+  assert.match(main, /const FIXED_DOC_TEST_READ_SCENARIOS =/);
+  assert.match(main, /function resolveFixedDocTestReadContext\(/);
+  assert.match(main, /path: 'fallback', confidence: '62\.0 %'/);
+  assert.match(main, /const FIXED_DOC_TEST_OCR_REVIEW_MESSAGE = '自信度が閾値未満である'/);
   assert.match(main, /function getFixedDocFieldId\(fieldName, index = -1\)/);
   assert.match(main, /function renameFixedDocQrSource\(sourceId, label\)/);
   assert.match(main, /const fixedDocQrSourceCatalog = reactive\(\[\]\);/);
@@ -391,7 +394,6 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.doesNotMatch(main, /const exportValue = masked \? maskFixedDocPreviewValue/);
   assert.doesNotMatch(main, /readSourceKind/);
   assert.match(main, /value: processedValue,/);
-  assert.match(main, /maskLabel: row\.mask \? 'マスク対象' : '—'/);
   const step3TableRulesHtml = html.slice(
     html.indexOf('<div v-if="fixedDocRuleTab === \'table\'"'),
     html.indexOf('<section v-show="fixedDocSetupStep === 4"'),

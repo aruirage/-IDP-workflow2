@@ -1028,7 +1028,7 @@
                     </div>
                   </section>
 
-                  <section v-show="fixedDocSetupStep === 5" class="fixed-doc-panel fixed-doc-test-panel">
+                  <section v-if="fixedDocSetupStep === 5" class="fixed-doc-panel fixed-doc-test-panel">
                     <div class="fixed-doc-tabs fixed-doc-tabs--local fixed-doc-tabs--test">
                       <div class="fixed-doc-tabs-nav">
                       <button type="button" :class="{ 'is-active': fixedDocTestTab === 'text' }" @click="fixedDocTestTab = 'text'">テキスト読取</button>
@@ -1048,7 +1048,7 @@
                         </header>
                         <label>{{ row.name }}</label>
                         <el-input :model-value="row.value" readonly></el-input>
-                        <p v-if="row.error" class="fixed-doc-test-error">{{ row.errorMessage }}</p>
+                        <p v-if="row.errorMessage" class="fixed-doc-test-error">{{ row.errorMessage }}</p>
                       </article>
                     </div>
                     <div v-else class="fixed-doc-test-table-list">

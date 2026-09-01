@@ -3,7 +3,8 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const OUT_DIR = path.join(ROOT, 'prd-public', 'assets');
+const OUT_DIR = path.join(ROOT, 'assets', 'prd-screenshots');
+const PRD_PUBLIC_ASSETS = path.join(ROOT, 'prd-public', 'assets');
 const BASE_URL = process.env.PRD_CAPTURE_URL || 'http://127.0.0.1:4175';
 const PORT = Number(new URL(BASE_URL).port || 4175);
 
@@ -54,14 +55,18 @@ async function openWorkflowScene(page) {
 
 async function goWorkflowStep(page, step) {
   await openWorkflowScene(page);
-  if (step === 2) {
-    await page.waitForSelector('.wf-setup-step.is-active .wf-setup-step-index', { timeout: 10000 });
-    return;
-  }
-  await page.locator('.wf-setup-step').filter({
+  const targetStep = page.locator('.wf-setup-step').filter({
     has: page.locator('.wf-setup-step-index', { hasText: String(step) }),
-  }).click();
-  await sleep(800);
+  });
+  await targetStep.waitFor({ state: 'visible', timeout: 10000 });
+  const isActive = await targetStep.evaluate((el) => el.classList.contains('is-active')).catch(() => false);
+  if (!isActive) {
+    await targetStep.click();
+    await sleep(800);
+  }
+  if (step === 2) {
+    await page.waitForSelector('[data-node-id="wf-pp"], .wf-node-name', { timeout: 15000 });
+  }
 }
 
 async function clickWorkflowNode(page, nodeId) {
@@ -70,15 +75,23 @@ async function clickWorkflowNode(page, nodeId) {
   if (await node.isVisible().catch(() => false)) {
     await node.click();
     await sleep(600);
-    return;
+    return true;
   }
-  const byLabel = page.locator('.wf-node-name', {
-    hasText: nodeId === 'wf-pp' ? '前処理' : 'OCR抽出',
-  }).first();
+  const label = nodeId === 'wf-pp' ? '前処理' : 'OCR抽出';
+  const byLabel = page.locator('.wf-node-name', { hasText: label }).first();
   if (await byLabel.isVisible().catch(() => false)) {
     await byLabel.click();
     await sleep(600);
+    return true;
   }
+  return false;
+}
+
+async function captureElementShot(page, locator, filePath) {
+  const target = typeof locator === 'string' ? page.locator(locator).first() : locator;
+  await target.waitFor({ state: 'visible', timeout: 15000 });
+  await sleep(300);
+  await target.screenshot({ path: filePath });
 }
 
 async function runCapture(page) {
@@ -88,7 +101,7 @@ async function runCapture(page) {
 
   const shots = [
     {
-      file: 'fixed-doc-step1-threshold.png',
+      file: 'fixed-doc-step1-classification-threshold.png',
       run: async () => {
         await openFixedDocType(page);
         await goFixedDocStep(page, 1);
@@ -133,27 +146,30 @@ async function runCapture(page) {
     {
       file: 'wf-preprocess-inspector.png',
       run: async () => {
-        await clickWorkflowNode(page, 'wf-pp');
+        const clicked = await clickWorkflowNode(page, 'wf-pp');
+        if (!clicked) {
+          throw new Error('前処理 node not found on workflow canvas');
+        }
+        await page.locator('.idp-workflow-module').scrollIntoViewIfNeeded();
+        await sleep(400);
       },
     },
     {
-      file: 'wf-ocr-inspector.png',
+      file: 'scene-step3-notify-add.png',
       run: async () => {
-        await clickWorkflowNode(page, 'wf-oc');
+        await goWorkflowStep(page, 3);
+        await page.locator('.workflow-notification-section-title', { hasText: '通知ルール追加' }).scrollIntoViewIfNeeded();
+        await sleep(400);
       },
-    },
-    {
-      file: 'scene-step3-notify.png',
-      run: async () => goWorkflowStep(page, 3),
-    },
-    {
-      file: 'scene-step4-export.png',
-      run: async () => goWorkflowStep(page, 4),
     },
   ];
 
   for (const shot of shots) {
     await shot.run();
+    if (shot.skipPageShot) {
+      console.log(`Captured ${shot.file}`);
+      continue;
+    }
     await sleep(500);
     await page.screenshot({
       path: path.join(OUT_DIR, shot.file),

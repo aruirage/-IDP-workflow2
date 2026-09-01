@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -7,7 +7,11 @@ const OUT_DIR = path.join(ROOT, 'prd-public');
 const OUT_PATH = path.join(OUT_DIR, 'index.html');
 const HEADERS_PATH = path.join(ROOT, 'tools', '_headers');
 const FIGURES_PATH = path.join(ROOT, 'tools', 'prd-figures.json');
+const PRD_SCREENSHOTS_DIR = path.join(ROOT, 'assets', 'prd-screenshots');
 const ASSETS_DIR = path.join(OUT_DIR, 'assets');
+
+/** filename → mtimeMs，用于 img src 缓存破坏 */
+const assetVersions = new Map();
 
 function escapeHtml(text) {
   return text
@@ -189,8 +193,16 @@ function renderFigureRow(items, { carouselId } = {}) {
 </div>`;
 }
 
+function publicAssetSrc(rawSrc) {
+  if (!rawSrc) return '';
+  const normalized = rawSrc.replace(/^assets\/prd-screenshots\//, 'assets/');
+  const file = normalized.replace(/^assets\//, '');
+  const version = assetVersions.get(file);
+  return version ? `${normalized}?v=${Math.floor(version)}` : normalized;
+}
+
 function renderFigureButton(item, index) {
-  const src = item.src || (item.file ? `assets/${item.file}` : '');
+  const src = publicAssetSrc(item.src || (item.file ? `assets/${item.file}` : ''));
   if (!src) return '';
   const caption = item.caption || item.alt || '';
   return `<button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="${index}" data-src="${escapeHtml(src)}" data-caption="${escapeHtml(caption)}">
@@ -199,7 +211,7 @@ function renderFigureButton(item, index) {
 }
 
 function renderFigure(item, index) {
-  const src = item.src || (item.file ? `assets/${item.file}` : '');
+  const src = publicAssetSrc(item.src || (item.file ? `assets/${item.file}` : ''));
   if (!src) return '';
   const caption = item.caption || item.alt || '';
   return `<figure class="screenshot-figure">
@@ -850,10 +862,39 @@ async function ensureAssetsDir() {
   await mkdir(ASSETS_DIR, { recursive: true });
 }
 
+/** 将 assets/prd-screenshots/ 同步到 prd-public/assets/，供 PRD HTML 引用 */
+async function syncPrdScreenshotAssets(figuresConfig) {
+  await ensureAssetsDir();
+  let files = [];
+  try {
+    files = (await readdir(PRD_SCREENSHOTS_DIR)).filter((name) => name.endsWith('.png'));
+    for (const file of files) {
+      const sourcePath = path.join(PRD_SCREENSHOTS_DIR, file);
+      await copyFile(sourcePath, path.join(ASSETS_DIR, file));
+      const { mtimeMs } = await stat(sourcePath);
+      assetVersions.set(file, mtimeMs);
+    }
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
+
+  const required = new Set();
+  for (const items of Object.values(figuresConfig?.sections || {})) {
+    for (const item of items || []) if (item.file) required.add(item.file);
+  }
+  for (const items of Object.values(figuresConfig?.anchors || {})) {
+    for (const item of items || []) if (item.file) required.add(item.file);
+  }
+  const missing = [...required].filter((file) => !files.includes(file));
+  if (missing.length) {
+    console.warn(`PRD screenshots missing in assets/prd-screenshots/: ${missing.join(', ')}`);
+  }
+}
+
 const md = await readFile(MD_PATH, 'utf8');
 const figuresConfig = await loadFiguresConfig();
 await mkdir(OUT_DIR, { recursive: true });
-await ensureAssetsDir();
+await syncPrdScreenshotAssets(figuresConfig);
 await writeFile(OUT_PATH, buildHtml(md, figuresConfig), 'utf8');
 await copyFile(HEADERS_PATH, path.join(OUT_DIR, '_headers'));
 console.log(`PRD site written to ${OUT_PATH}`);

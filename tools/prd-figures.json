@@ -1,4 +1,47 @@
 {
   "sections": {},
-  "anchors": {}
+  "anchors": {
+    "step1-分类设定": [
+      {
+        "file": "fixed-doc-step1-classification-threshold.png",
+        "caption": "账票类型 Step1 · 分類信頼度閾値（案件集约时的画像分类置信度）"
+      }
+    ],
+    "step2-脱敏列": [
+      {
+        "file": "fixed-doc-step2-ocr-mask.png",
+        "caption": "账票类型 Step2 · 字段读取 マスク列（表格读取列定义表亦有同列）"
+      }
+    ],
+    "step2-字段读取-qr-映射": [
+      {
+        "file": "fixed-doc-step2-qr.png",
+        "caption": "账票类型 Step2 · 字段读取 tab · QR設定 与字段映射"
+      }
+    ],
+    "step3-正常值范围": [
+      {
+        "file": "fixed-doc-step3-range.png",
+        "caption": "账票类型 Step3 · 正常条件（字段读取 + 表格读取）"
+      }
+    ],
+    "step3-通知设置本期增量": [
+      {
+        "file": "scene-step3-notify-add.png",
+        "caption": "业务场景 Step3 · 通知ルール追加（メール渠道、メール宛先、前処理触发事件）"
+      }
+    ],
+    "step2-工作流画布本期增量": [
+      {
+        "file": "wf-preprocess-inspector.png",
+        "caption": "业务场景 Step2 · 前処理节点右侧配置（画像不正検知、敏感情報脱敏及 P1 三项子模块）"
+      }
+    ],
+    "ocr-抽出确认规则六项": [
+      {
+        "file": "read-model-hitl-rules.png",
+        "caption": "业务规则配置 · 読取モデル設定 · 人工確認ルール（六项 OR，含 P2「正常値範囲を超えています」）"
+      }
+    ]
+  }
 }

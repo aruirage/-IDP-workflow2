@@ -1778,7 +1778,7 @@ function getWorkflowNodePickerSummary(type) {
 }
 
 const WORKFLOW_NODE_PICKER_DESCRIPTIONS = {
-  preprocess: '画像回転、画像補正、画像整列などの前処理を実行します。',
+  preprocess: '画像不正検知、敏感情報脱敏、画像回転、画像補正、画像整列などの前処理を実行します。',
   fraud_detect: '帳票画像の改ざん・偽造リスクを判定します。帳票タイプごとに実行有無を切り替えます。',
   ocr: '帳票タイプごとに OCR テンプレートを実行し、抽出項目を出力します。',
   data_mapping: 'OCR 抽出項目を標準項目へ変換します。',

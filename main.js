@@ -1079,6 +1079,7 @@ const appOptions = {
     let uiTranslationOriginals = new WeakMap();
     let uiTranslationObserver = null;
     let uiTranslationScheduled = false;
+    let uiTranslationApplying = false;
 
     function translateUiString(value) {
       let result = String(value || '');
@@ -1129,7 +1130,10 @@ const appOptions = {
     }
 
     function applyUiLanguage(root = document.body) {
-      if (!root) return;
+      if (!root || uiTranslationApplying) return;
+      uiTranslationApplying = true;
+      uiTranslationObserver?.disconnect();
+      try {
       document.documentElement.setAttribute('lang', uiLanguage.value === 'zh' ? 'zh-CN' : 'ja');
       const textNodes = [];
       const walker = document.createTreeWalker(root, 4);
@@ -1154,7 +1158,17 @@ const appOptions = {
         if (shouldSkipUiAttributeTranslation(el)) return;
         ['placeholder', 'title', 'aria-label', 'alt', 'data-title', 'data-label'].forEach((attr) =>
           translateUiAttribute(el, attr));
-      });
+        });
+      } finally {
+        uiTranslationApplying = false;
+        if (uiTranslationObserver) {
+          uiTranslationObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+          });
+        }
+      }
     }
 
     function scheduleApplyUiLanguage() {
@@ -1852,11 +1866,18 @@ const appOptions = {
       const ordered = [...preferred.filter((f) => fields.includes(f)), ...fields.filter((f) => !preferred.includes(f))];
       return ordered.slice(0, 13);
     }
+    function fixedDocFieldListsEqual(a, b) {
+      if (a.length !== b.length) return false;
+      return a.every((name, index) => name === b[index]);
+    }
     function getFixedDocFieldNameList() {
       const base = getFixedDocBaseFieldNameList();
       const retained = fixedDocFieldOrder.value.filter((name) => base.includes(name) && !fixedDocDeletedFieldNames.has(name));
       const appended = base.filter((name) => !retained.includes(name) && !fixedDocDeletedFieldNames.has(name));
-      fixedDocFieldOrder.value = [...retained, ...appended];
+      const next = [...retained, ...appended];
+      if (!fixedDocFieldListsEqual(fixedDocFieldOrder.value, next)) {
+        fixedDocFieldOrder.value = next;
+      }
       return fixedDocFieldOrder.value;
     }
     function getFixedDocStableFieldId(fieldName) {
@@ -1948,7 +1969,6 @@ const appOptions = {
       fixedDocTextFieldDropTargetId.value = '';
     }
     const fixedDocMaskStats = computed(() => {
-      ensureFixedDocFieldMasks();
       const ids = getFixedDocFieldIds();
       const bucket = getFixedDocMaskBucket();
       const masked = ids.filter((fieldId) => bucket[fieldId]).length;
@@ -1975,7 +1995,6 @@ const appOptions = {
         診療科: '外科',
         医師名: '村田 光隆',
       };
-      ensureFixedDocFieldMasks();
       const fieldNames = getFixedDocFieldNameList();
       return fieldNames.map((name, idx) => ({
         fieldId: getFixedDocStableFieldId(name),
@@ -2964,17 +2983,42 @@ const appOptions = {
       if (text.length === 2) return `${text[0]}*`;
       return `${text[0]}${'＊'.repeat(Math.max(1, text.length - 2))}${text[text.length - 1]}`;
     }
-    // Step5 test mock：配置端只展示「要確認」统一文案（信頼度閾値未満）。
-    // 运行时：QR 成功写入的字段不产生 OCR 置信度；OCR/兜底路径才参与 low_confidence。
-    // 正常值越界、Master 照合等仍由读取模型设置中各自 HITL 规则独立判定（见 readModelHitlRules）。
-    const FIXED_DOC_TEST_REVIEW_MESSAGE = '自信度が閾値未満である';
-    function needsFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue) {
-      if (hasQrMapping && !qrValue && !ocrValue) return true;
+    const FIXED_DOC_TEST_OCR_REVIEW_MESSAGE = '自信度が閾値未満である';
+    function getFixedDocTestErrorMessage(needsReview, sourceLabel) {
+      if (!needsReview || sourceLabel === 'QR読取') return '';
+      return FIXED_DOC_TEST_OCR_REVIEW_MESSAGE;
+    }
+    function parseFixedDocConfidencePercent(value) {
+      const num = Number.parseFloat(String(value ?? '').replace(/[^\d.]/g, ''));
+      return Number.isFinite(num) ? num : null;
+    }
+    function getFixedDocTestConfidenceThreshold() {
+      const threshold = form?.processing?.ocrExtract?.confidenceThreshold;
+      if (threshold == null) return 75;
+      return threshold > 1 ? threshold : threshold * 100;
+    }
+    function getFixedDocTestSourceLabel(useQrPreview, hasQrMapping) {
+      if (useQrPreview) return 'QR読取';
+      if (hasQrMapping && fixedDocReadMode.value === 'qr') return 'QR→OCR兜底';
+      return '';
+    }
+    function evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue) {
       const range = evaluateFixedDocTestRange(fieldRule, readValue);
-      if (range.status === 'fail' && canFixedDocFieldHaveRange()) {
-        return true;
+      if (hasQrMapping && !qrValue && !ocrValue) {
+        return { needsReview: true, reason: 'empty', range };
       }
-      return false;
+      const hitlRules = readModelSettings.hitlRules || [];
+      if (hitlRules.includes('normal_range_exceeded') && range.status === 'fail' && canFixedDocFieldHaveRange()) {
+        return { needsReview: true, reason: 'range', range };
+      }
+      if (hitlRules.includes('low_confidence')) {
+        const confidence = parseFixedDocConfidencePercent(fieldRule.confidence);
+        const threshold = getFixedDocTestConfidenceThreshold();
+        if (confidence != null && confidence < threshold) {
+          return { needsReview: true, reason: 'low_confidence', range };
+        }
+      }
+      return { needsReview: false, reason: '', range };
     }
     function evaluateFixedDocTestRange(row, value) {
       const canRange = canFixedDocFieldHaveRange();
@@ -3048,47 +3092,60 @@ const appOptions = {
       '通院日数',
       '医療機関名',
     ];
+    /** Step5 mock：覆盖部分字段的读取路径，便于展示 QR / 兜底 / 纯 OCR 与要確認 */
+    const FIXED_DOC_TEST_READ_SCENARIOS = {
+      ICD10コード: { path: 'ocr' },
+      医療機関名: { path: 'fallback', confidence: '62.0 %' },
+    };
+    function resolveFixedDocTestReadContext(fieldName, fieldRule, row) {
+      const scenario = FIXED_DOC_TEST_READ_SCENARIOS[fieldName];
+      let rule = fieldRule;
+      let hasQrMapping = !!fieldRule.qrSourceId;
+      if (scenario?.confidence) {
+        rule = { ...rule, confidence: scenario.confidence };
+      }
+      if (scenario?.path === 'ocr') {
+        hasQrMapping = false;
+      }
+      let qrValue = hasQrMapping ? getFixedDocQrFieldPreviewValue(rule) : '';
+      if (scenario?.path === 'fallback') {
+        qrValue = '';
+      }
+      const useQrPreview = hasQrMapping && !!qrValue;
+      const ocrValue = row.sample;
+      const readValue = useQrPreview ? qrValue : ocrValue;
+      return { rule, hasQrMapping, qrValue, ocrValue, useQrPreview, readValue };
+    }
     const fixedDocTestRows = computed(() => {
       const rowMap = Object.fromEntries(fixedDocTextRows.value.map((row) => [row.name, row]));
       return FIXED_DOC_TEST_FIELD_NAMES.map((fieldName, idx) => {
         const row = rowMap[fieldName];
         if (!row) return null;
-        ensureFixedDocFieldRules();
-        const fieldRule = { ...row, ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)) };
-        const hasQrMapping = !!fieldRule.qrSourceId;
-        const qrValue = hasQrMapping ? getFixedDocQrFieldPreviewValue(fieldRule) : '';
-        const useQrPreview = hasQrMapping && !!qrValue;
-        const ocrValue = row.sample;
-        const readValue = useQrPreview ? qrValue : ocrValue;
+        const baseRule = { ...row, ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)) };
+        const {
+          rule: fieldRule,
+          hasQrMapping,
+          qrValue,
+          ocrValue,
+          useQrPreview,
+          readValue,
+        } = resolveFixedDocTestReadContext(fieldName, baseRule, row);
         const postProcess = fieldRule.rule || 'OCR読取';
         const processedValue = readValue || '—';
-        const needsReview = needsFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue);
-        const sourceLabel = useQrPreview ? 'QR読取' : '';
-        const errorMessage = needsReview ? FIXED_DOC_TEST_REVIEW_MESSAGE : '';
+        const review = evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue);
+        const sourceLabel = getFixedDocTestSourceLabel(useQrPreview, hasQrMapping);
+        const errorMessage = getFixedDocTestErrorMessage(review.needsReview, sourceLabel);
         return {
-          no: idx + 1,
-          name: row.name,
+      no: idx + 1,
+      name: row.name,
           value: processedValue,
           postProcess,
           sourceLabel,
-          masked: !!row.mask,
-          maskLabel: row.mask ? 'マスク対象' : '—',
-          error: needsReview,
+          error: review.needsReview,
           errorMessage,
           fieldRule,
         };
       }).filter(Boolean);
-    });
-    const fixedDocTestSummary = computed(() => {
-      const rows = fixedDocTestRows.value;
-      const detectedSources = fixedDocHasQrMapping.value ? fixedDocQrSourceCatalog.length : 0;
-      return {
-        qrSources: fixedDocHasQrMapping.value
-          ? `${detectedSources}/${fixedDocQrSourceCatalog.length}`
-          : '—',
-        masked: fixedDocMaskStats.value.masked,
-        review: rows.filter((row) => row.error).length,
-      };
     });
     const fixedDocTableTestRows = FIXED_DOC_TABLE_TEST_ROWS;
     const selectedMasterDataSourceId = ref('dict:icd10');
@@ -3376,6 +3433,7 @@ const appOptions = {
       fixedDocReadMode.value = options.readMode || (step === 2 && docLabel.includes('診断書') ? 'qr' : 'ocr');
       fixedDocRuleTab.value = 'text';
       fixedDocTestTab.value = 'text';
+      ensureFixedDocFieldMasks();
       switchModule('fixed-doc');
       nextTick(() => {
         if (step === 3) autoApplyFixedDocAiMatchingIfNeeded();
@@ -12529,7 +12587,6 @@ const appOptions = {
       runFixedDocQrSourcesScan,
       parseFixedDocQrSourcesFromTemplate,
       exportFixedDocFieldTemplate,
-      fixedDocTestSummary,
       fixedDocQrEffectTestSourceId,
       fixedDocQrEffectSplitPreview,
       fixedDocQrEffectPlainPreview,
