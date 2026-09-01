@@ -453,13 +453,13 @@
                                 :show-after="200"
                               >
                                 <template #content>
-                                  QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1、QR2… と検出数に応じて割り当てます。テンプレート変更後は「QR解析」で再実行できます。
+                                  QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1、QR2… と検出数に応じて割り当てます。テンプレート変更後は「QRスキャン」で再実行できます。
                                 </template>
                                 <span class="fixed-doc-info" tabindex="0">i</span>
                               </el-tooltip>
                               <span v-if="!fixedDocHasStep1Template" class="fixed-doc-qr-source-empty">Step1 でテンプレートをアップロードしてください</span>
                               <span v-else-if="fixedDocQrScanActive" class="fixed-doc-qr-source-empty">読取中…</span>
-                              <span v-else-if="!fixedDocQrSourceCatalog.length" class="fixed-doc-qr-source-empty">QR を検出できませんでした。「QR解析」で再試行できます</span>
+                              <span v-else-if="!fixedDocQrSourceCatalog.length" class="fixed-doc-qr-source-empty">QR を検出できませんでした。「QRスキャン」で再試行できます</span>
                       </div>
                             <div v-if="fixedDocHasStep1Template" class="fixed-doc-qr-source-list-wrap">
                               <div v-if="fixedDocQrSourceCatalog.length" class="fixed-doc-qr-source-scroll">
@@ -484,7 +484,7 @@
                                   :disabled="fixedDocQrScanActive"
                                   @click="parseFixedDocQrSourcesFromTemplate"
                                 >
-                                  QR解析
+                                  QRスキャン
                                 </el-button>
                               </div>
                             </div>
@@ -759,7 +759,7 @@
                             <th v-if="fixedDocShowNormalConditionColumn" class="fixed-doc-normal-condition-col">
                               <span class="fixed-doc-th-label">
                                 正常条件
-                                <el-tooltip placement="top" :show-after="200" content="抽出値を標準化して判定します。">
+                                <el-tooltip placement="top" :show-after="200" content="処理ルール後の正常値範囲を判定。">
                                   <span class="fixed-doc-info" tabindex="0">i</span>
                                 </el-tooltip>
                               </span>
@@ -939,7 +939,7 @@
                                 <th v-if="shouldShowFixedDocTableNormalConditionColumn(table)" class="fixed-doc-normal-condition-col">
                                   <span class="fixed-doc-th-label">
                                     正常条件
-                                    <el-tooltip placement="top" :show-after="200" content="抽出値を標準化して判定します。">
+                                    <el-tooltip placement="top" :show-after="200" content="処理ルール後の正常値範囲を判定。">
                                       <span class="fixed-doc-info" tabindex="0">i</span>
                                     </el-tooltip>
                                   </span>

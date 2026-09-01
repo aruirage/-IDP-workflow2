@@ -3193,6 +3193,11 @@ const appOptions = {
       }));
     });
     const fixedDocHasQrMapping = computed(() => fixedDocReadMode.value === 'qr');
+    const fixedDocHasQrSourceCatalog = computed(() => fixedDocQrSourceCatalog.length > 0);
+    const fixedDocHasConfiguredFieldQrMapping = computed(() => {
+      ensureFixedDocFieldRules();
+      return fixedDocTextRows.value.some((row) => !!fixedDocFieldRules[row.fieldId]?.qrSourceId);
+    });
     function sortFixedDocQrSourceCatalog() {
       fixedDocQrSourceCatalog.sort((a, b) => {
         const na = Number(String(a.id).replace(/\D/g, '')) || 999;
@@ -3293,10 +3298,10 @@ const appOptions = {
       return runFixedDocQrSourcesScan(options);
     }
     function parseFixedDocQrSourcesFromTemplate() {
-      if (fixedDocHasQrMapping.value) {
+      if (fixedDocHasQrSourceCatalog.value) {
         ElementPlus.ElMessageBox.confirm(
-          'QR解析を再実行すると、現在の QRソースとフィールドマッピングが上書きされます。続行しますか？',
-          'QR解析',
+          'QRスキャンを再実行すると、現在の QRソース目録が上書きされます。続行しますか？',
+          'QRスキャン',
           {
             confirmButtonText: '続行',
             cancelButtonText: 'キャンセル',
@@ -3338,7 +3343,7 @@ const appOptions = {
       if (threshold == null) return 75;
       return threshold > 1 ? threshold : threshold * 100;
     }
-    function evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue) {
+    function evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue, isQrReadPath = false) {
       const range = evaluateFixedDocTestRange(fieldRule, readValue);
       if (hasQrMapping && !qrValue && !ocrValue) {
         return { needsReview: true, reason: 'empty', range };
@@ -3347,14 +3352,14 @@ const appOptions = {
       const confidence = parseFixedDocConfidencePercent(fieldRule.confidence);
       const threshold = getFixedDocTestConfidenceThreshold();
       const isLowConfidence = confidence != null && confidence < threshold;
-      if (hitlRules.includes('low_confidence') && isLowConfidence) {
+      if (!isQrReadPath && hitlRules.includes('low_confidence') && isLowConfidence) {
         return { needsReview: true, reason: 'low_confidence', range };
       }
       if (
         hitlRules.includes('low_confidence_and_range_exceeded')
-        && isLowConfidence
         && range.status === 'fail'
         && canFixedDocFieldHaveRange(fieldRule)
+        && (isQrReadPath || isLowConfidence)
       ) {
         return { needsReview: true, reason: 'low_confidence_and_range', range };
       }
@@ -3374,7 +3379,7 @@ const appOptions = {
           rangeMax: row.rangeMax || '15',
         }) || '1～15';
         if (Number(value) > 15) {
-          return { status: 'fail', label: '範囲越界', detail };
+          return { status: 'fail', label: '正常値範囲超過', detail };
         }
         return { status: 'pass', label: '範囲OK', detail };
       }
@@ -3386,7 +3391,7 @@ const appOptions = {
         const allowed = parseFixedDocNormalEnumValues(row.normalValues);
         const normalized = normalizeFixedDocEnumCompareValue(value);
         if (allowed.length && normalized && !allowed.some((item) => normalizeFixedDocEnumCompareValue(item) === normalized)) {
-          return { status: 'fail', label: '範囲越界', detail };
+          return { status: 'fail', label: '正常値範囲超過', detail };
         }
         if (!value && row.required) {
           return { status: 'fail', label: '必須未入力', detail };
@@ -3484,7 +3489,7 @@ const appOptions = {
         } = resolveFixedDocTestReadContext(fieldName, baseRule, row);
         const postProcess = fieldRule.rule || 'OCR読取';
         const processedValue = readValue || '—';
-        const review = evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue);
+        const review = evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue, useQrPreview);
         const sourceLabel = getFixedDocTestSourceLabel(useQrPreview);
         return {
           no: idx + 1,
@@ -12947,6 +12952,8 @@ const appOptions = {
       fixedDocQrNumberOptions,
       fixedDocOcrProcessRuleOptions,
       fixedDocHasQrMapping,
+      fixedDocHasQrSourceCatalog,
+      fixedDocHasConfiguredFieldQrMapping,
       isFixedDocQrCapableDocType,
       fixedDocFieldNameOptions,
       fixedDocShowQrReadMode,

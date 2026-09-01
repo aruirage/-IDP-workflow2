@@ -103,7 +103,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(html, /class="fixed-doc-qr-source-scroll"/);
   assert.match(html, /class="fixed-doc-qr-source-actions"/);
   assert.match(html, /class="fixed-doc-qr-source-parse"/);
-  assert.match(html, /@click="parseFixedDocQrSourcesFromTemplate"[\s\S]*>\s*QR解析\s*</);
+  assert.match(html, /@click="parseFixedDocQrSourcesFromTemplate"[\s\S]*>\s*QRスキャン\s*</);
   assert.doesNotMatch(html, /class="fixed-doc-qr-source-parse"[\s\S]*>\s*再読取\s*</);
   assert.doesNotMatch(html, /class="fixed-doc-qr-source-parse"[\s\S]*>\s*解析\s*</);
   assert.doesNotMatch(html, /再解析/);
@@ -113,7 +113,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.doesNotMatch(html, /class="fixed-doc-qr-scan-overlay"/);
   assert.doesNotMatch(html, /fixedDocQrScanStepLabels/);
   assert.doesNotMatch(css, /\.fixed-doc-qr-scan-step-index/);
-  assert.match(html, /QR を検出できませんでした。「QR解析」で再試行できます/);
+  assert.match(html, /QR を検出できませんでした。「QRスキャン」で再試行できます/);
   assert.match(html, /fixedDocQrSourceDisplayLabel\(src\)/);
   assert.doesNotMatch(html, /class="fixed-doc-qr-source-name"/);
   assert.doesNotMatch(html, /@input="renameFixedDocQrSource\(src\.id, \$event\.target\.value\)"/);
@@ -131,7 +131,8 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(html, /@click="onFixedDocQrMappingRowClick\(row, \$event\)"/);
   assert.match(main, /function focusFixedDocQrSource\(sourceId\)/);
   assert.match(main, /fixedDocActiveQrSourceId\.value[\s\S]*fixedDocQrSourceCatalog\.find/);
-  assert.match(main, /fixedDocHasQrMapping\.value[\s\S]*ElMessageBox\.confirm/);
+  assert.match(main, /fixedDocHasQrSourceCatalog\.value[\s\S]*ElMessageBox\.confirm/);
+  assert.match(main, /QRスキャンを再実行すると、現在の QRソース目録が上書きされます。続行しますか？/);
   assert.match(html, /class="fixed-doc-ai-generate"[\s\S]*@click="runFixedDocAiGenerate"[\s\S]*>AI自動生成/);
   assert.match(html, /<el-dropdown trigger="click" placement="bottom-end" popper-class="fixed-doc-action-dropdown" @command="handleFixedDocTemplateAction">[\s\S]*テンプレートをダウンロード[\s\S]*一括ダウンロード[\s\S]*一括インポート[\s\S]*<\/el-dropdown>/);
   assert.match(html, /<el-dropdown trigger="click" placement="bottom-end" popper-class="fixed-doc-action-dropdown" @command="handleFixedDocSettingsAction">[\s\S]*エクスポート設定[\s\S]*読取モデル設定[\s\S]*<\/el-dropdown>/);
@@ -402,7 +403,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.doesNotMatch(html, /<th class="fixed-doc-range-col">判定条件<\/th>/);
   assert.doesNotMatch(html, /class="fixed-doc-range-unit"/);
   assert.doesNotMatch(html, /placeholder="基準単位"/);
-  assert.match(html, /content="抽出値を標準化して判定します。"/);
+  assert.match(html, /content="処理ルール後の正常値範囲を判定。"/);
   assert.match(html, /class="fixed-doc-range-mode-select"[\s\S]*?clearable/);
   assert.doesNotMatch(html, /class="fixed-doc-rule-unit-help"/);
   assert.doesNotMatch(html, /fixed-doc-normal-condition-row/);
