@@ -346,7 +346,8 @@ function renderBlocks(blocks, sections, hasChapter5) {
 
     if (block.type === 'code') {
       if (block.lang === 'mermaid') {
-        html.push(`<div class="mermaid">${escapeHtml(block.code)}</div>`);
+        // Mermaid 须保留引号与箭头语法，不可 escapeHtml
+        html.push(`<div class="mermaid">${block.code.replace(/<\/div>/gi, '&lt;/div&gt;')}</div>`);
       } else {
         html.push(`<pre><code>${escapeHtml(block.code)}</code></pre>`);
       }
@@ -777,11 +778,12 @@ ${content}
   <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
     mermaid.initialize({
-      startOnLoad: true,
+      startOnLoad: false,
       theme: 'neutral',
       securityLevel: 'loose',
       flowchart: { htmlLabels: true, curve: 'basis' }
     });
+    await mermaid.run({ querySelector: '.mermaid' });
   </script>
   <div id="prdLightbox" class="lightbox" aria-hidden="true">
     <button type="button" class="lightbox-close" data-lightbox-close aria-label="关闭">×</button>

@@ -6,4 +6,5 @@ hatch-runs/
 .tmp-*
 .venv-qr/
 node_modules/
+.deploy-idp-ph2-prd/
 assets/prd-screenshots/.capture-error.txt

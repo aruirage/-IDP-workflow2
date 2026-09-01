@@ -2,6 +2,7 @@
   "scripts": {
     "build": "node tools/sync-public.mjs",
     "build:prd": "node tools/build-prd.mjs",
+    "deploy:prd-site": "node tools/deploy-prd-site.mjs",
     "capture:prd-shots": "node tools/capture-prd-screenshots.mjs",
     "build:prd:full": "npm run capture:prd-shots && npm run build:prd",
     "serve": "node server/local-server.mjs",
