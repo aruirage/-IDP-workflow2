@@ -61,7 +61,7 @@ const INSPECTOR_HINTS = {
   nodeOutputEnd: '終了ノードは出力変数なし。設定項目なし。',
   nodeOutputHitl: '人工確認の処理状態（hitlStatus）のみ。分岐は画布三出口で直接接続。',
   nodeOutputQrRead: 'QR 読取の処理状態（qrReadStatus）のみ。解析結果は OCR フィールドへ反映し、要確認は OCR と同様 HITL へ進みます。',
-  nodeOutputFraudDetect: '処理状態（fraudDetectStatus）と処理結果（fraudDetectResult）を出力します。\n\n・処理状態：ノード実行の成否（processing / success / failed）。対象外帳票は success。\n・処理結果：業務結論（passed / reviewRequired）。モデルは二値判定（是/否）のみを返し、リスクスコアや閾値はありません。不正疑い「是」のとき reviewRequired となり、条件分岐または人工確認へ進めます。',
+  nodeOutputFraudDetect: '処理状態（fraudDetectStatus）と処理結果（fraudDetectResult）を出力します。\n\n・処理状態：ノード実行の成否（processing / success / failed）。対象外帳票は success。\n・処理結果：業務結論（passed / reviewRequired）。モデルは二値判定（通過/不通過）のみを返し、リスクスコアや閾値はありません。「不通過」のとき reviewRequired となり、条件分岐または人工確認へ進めます。',
   nodeOutputPiiMask: '敏感情報検出の処理状態（piiMaskStatus）のみ。検出・マスク結果はファイル／フィールド内容へ反映します。',
   dataMappingOutput: '処理状態と標準変数を出力します。標準フィールドは条件選択時に葉項目として参照します。',
   externalApiIo: '前工程から自動連携される入力です。',
@@ -994,10 +994,10 @@ const WORKFLOW_NODE_OUTPUT_VAR_DEFS = {
   ],
   fraud_detect: [
     { id: 'case.fraudDetectStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.nodeStatus, description: '本ノードの実行進捗。対象帳票 OFF または検知対象外の場合も success とし、skip は別値として出力しない。業務上通過したかは「処理結果」を見る。' },
-    { id: 'case.fraudDetectResult', label: '処理結果', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.processResult, description: '業務結論。モデル二値判定「否」→ passed、「是」→ reviewRequired で人工確認へ進む。スコア・閾値は出力しない。' },
+    { id: 'case.fraudDetectResult', label: '処理結果', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.processResult, description: '業務結論。モデル二値判定「通過」→ passed、「不通過」→ reviewRequired で人工確認へ進む。スコア・閾値は出力しない。' },
   ],
   pii_mask: [
-    { id: 'case.piiMaskStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.nodeStatus, description: '本ノードの実行進捗。マスク対象なしまたは OFF の場合も success。Agent 実行失敗は failed。' },
+    { id: 'case.piiMaskStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.nodeStatus, description: '敏感情報脱敏モジュールの実行進捗。マスク対象なしまたは OFF の場合も success。モジュール実行失敗は failed（業務 Agent ではない）。' },
   ],
   data_mapping: [
     { id: 'case.mappingStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.nodeStatus, description: '本ノードの実行進捗。対象ルールなし、または設定 OFF の場合も success とし、skip は別値として出力しない。' },
@@ -1783,7 +1783,7 @@ const WORKFLOW_NODE_PICKER_DESCRIPTIONS = {
   ocr: '帳票タイプごとに OCR テンプレートを実行し、抽出項目を出力します。',
   data_mapping: 'OCR 抽出項目を標準項目へ変換します。',
   ai_verify: '必須フィールド、必要書類、テキスト検証、データ検証、標準データ整合性、署名・印鑑検証を実行します。',
-  pii_mask: 'Step2 マスク ON フィールドを Agent が検出し、实例画像を黒塗り等で脱敏してから OCR へ渡します。',
+  pii_mask: 'Step2 マスク ON フィールドを対象に PII を検出し、实例画像を黒塗り等で脱敏してから OCR へ渡します。固定前処理モジュール（実行成否のみ；二値判定・待办なし）。',
   decision: '条件式と入力値に基づいて後続処理を分岐します。',
   hitl_gate: '人工確認タスクを作成し、指定ロールの処理を待ちます。',
   code: '入力変数を参照し、JavaScript を実行します。',
@@ -2176,11 +2176,9 @@ function serializeNotifySystemRecipients(values) {
     .join(',');
 }
 
-const NOTIFY_EMAIL_RECIPIENT_SPLIT_RE = /[,;，；、/\n|｜]/;
+const MULTI_VALUE_DELIMITER_SPLIT_RE = /[,，]+/;
 
-const NOTIFY_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function parseNotifyEmailRecipients(value) {
+function splitMultiValueDelimitedList(value) {
   if (Array.isArray(value)) {
     return value
       .map((part) => String(part || '').trim())
@@ -2190,10 +2188,21 @@ function parseNotifyEmailRecipients(value) {
   const raw = String(value || '').trim();
   if (!raw) return [];
   return raw
-    .split(NOTIFY_EMAIL_RECIPIENT_SPLIT_RE)
+    .split(MULTI_VALUE_DELIMITER_SPLIT_RE)
     .map((part) => part.trim())
     .filter(Boolean)
     .filter((part, index, arr) => arr.indexOf(part) === index);
+}
+
+const NOTIFY_EMAIL_RECIPIENT_SPLIT_RE = MULTI_VALUE_DELIMITER_SPLIT_RE;
+
+const NOTIFY_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function parseNotifyEmailRecipients(value) {
+  if (Array.isArray(value)) {
+    return splitMultiValueDelimitedList(value);
+  }
+  return splitMultiValueDelimitedList(value);
 }
 
 function serializeNotifyEmailRecipients(values) {

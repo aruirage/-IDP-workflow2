@@ -10,13 +10,13 @@
     "step2-脱敏列": [
       {
         "file": "fixed-doc-step2-ocr-mask.png",
-        "caption": "账票类型 Step2 · 字段读取 マスク列（表格读取列定义表亦有同列）"
+        "caption": "账票类型 Step2 · 字段读取 tab · OCR設定（タイプ：string / number / enum、マスク列）"
       }
     ],
     "step2-字段读取-qr-映射": [
       {
         "file": "fixed-doc-step2-qr.png",
-        "caption": "账票类型 Step2 · 字段读取 tab · QR設定 与字段映射"
+        "caption": "账票类型 Step2 · 字段读取 tab · QR設定 与字段映射（タイプ：string / number / enum）"
       }
     ],
     "step3-正常值范围": [
@@ -40,7 +40,7 @@
     "ocr-抽出确认规则六项": [
       {
         "file": "read-model-hitl-rules.png",
-        "caption": "业务规则配置 · 読取モデル設定 · 人工確認ルール（六项 OR，含 P2「正常値範囲を超えています」）"
+        "caption": "业务规则配置 · 読取モデル設定 · 人工確認ルール（六项 OR 多选，含「低信頼度かつ正常値範囲を超えています」）"
       }
     ]
   }

@@ -249,6 +249,29 @@
                       <el-input :model-value="fixedDocPreviewTitle"></el-input>
                     </div>
                     <div class="fixed-doc-form-row">
+                      <label>
+                        分類信頼度閾値
+                        <el-tooltip placement="top" :show-after="200">
+                          <template #content>
+                            案件集約時の画像分類信頼度
+                          </template>
+                          <span class="fixed-doc-info" tabindex="0">i</span>
+                        </el-tooltip>
+                        <span class="fixed-doc-required">必須</span>
+                      </label>
+                      <div class="fixed-doc-threshold-field">
+                        <el-input-number
+                          v-model="fixedDocClassificationConfidenceThreshold"
+                          :min="0"
+                          :max="100"
+                          :step="1"
+                          controls-position="right"
+                          class="fixed-doc-image-control fixed-doc-image-number"
+                        ></el-input-number>
+                        <span class="fixed-doc-threshold-unit">%</span>
+                      </div>
+                    </div>
+                    <div class="fixed-doc-form-row">
                       <label>説明文 <span class="fixed-doc-info">i</span> <span class="fixed-doc-required">必須</span></label>
                       <div class="fixed-doc-textarea-wrap">
                         <el-input
@@ -278,29 +301,6 @@
                           <el-button type="primary">AI</el-button>
                           <el-button>⌫</el-button>
                         </div>
-                      </div>
-                    </div>
-                    <div class="fixed-doc-form-row">
-                      <label>
-                        分類信頼度閾値
-                        <el-tooltip placement="top" :show-after="200">
-                          <template #content>
-                            案件集約時の画像分類信頼度
-                          </template>
-                          <span class="fixed-doc-info" tabindex="0">i</span>
-                        </el-tooltip>
-                        <span class="fixed-doc-required">必須</span>
-                      </label>
-                      <div class="fixed-doc-threshold-field">
-                        <el-input-number
-                          v-model="fixedDocClassificationConfidenceThreshold"
-                          :min="0"
-                          :max="100"
-                          :step="1"
-                          controls-position="right"
-                          class="fixed-doc-image-control fixed-doc-image-number"
-                        ></el-input-number>
-                        <span class="fixed-doc-threshold-unit">%</span>
                       </div>
                     </div>
                   </section>
@@ -369,7 +369,7 @@
                                 <th>
                                   <span class="fixed-doc-th-label">
                                     タイプ
-                                    <el-tooltip placement="top" :show-after="200" content="string：文字列、number：数値">
+                                    <el-tooltip placement="top" :show-after="200" content="string：文字列、number：数値、enum：列挙">
                                       <span class="fixed-doc-info" tabindex="0">i</span>
                                     </el-tooltip>
                                   </span>
@@ -416,6 +416,7 @@
                                   <el-select :model-value="row.type" @change="setFixedDocFieldType(row.fieldId, $event)">
                                     <el-option label="string" value="string"></el-option>
                                     <el-option label="number" value="number"></el-option>
+                                    <el-option label="enum" value="enum"></el-option>
                                   </el-select>
                                 </td>
                             <td><el-input :model-value="row.prompt"></el-input></td>
@@ -452,7 +453,7 @@
                                 :show-after="200"
                               >
                                 <template #content>
-                                  QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1、QR2… と検出数に応じて割り当てます。不要な QR は削除、漏れた QR は追加できます。テンプレート変更後は「QR解析」で再実行できます。
+                                  QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1、QR2… と検出数に応じて割り当てます。テンプレート変更後は「QR解析」で再実行できます。
                                 </template>
                                 <span class="fixed-doc-info" tabindex="0">i</span>
                               </el-tooltip>
@@ -470,28 +471,10 @@
                                     @click="selectFixedDocPreviewQrSource(src.id)"
                                   >
                                     <code>{{ fixedDocQrSourceDisplayLabel(src) }}</code>
-                                    <div class="fixed-doc-qr-source-item-actions">
-                                      <button
-                                        type="button"
-                                        class="fixed-doc-qr-source-icon-btn fixed-doc-qr-source-remove"
-                                        aria-label="削除"
-                                        title="削除"
-                                        @click.stop="removeFixedDocQrSource(src.id)"
-                                      >×</button>
-                    </div>
                                   </li>
                                 </ul>
                     </div>
                               <div class="fixed-doc-qr-source-actions">
-                                <el-button
-                                  size="small"
-                                  plain
-                                  class="fixed-doc-qr-source-add"
-                                  :disabled="!fixedDocCanAddQrSource || fixedDocQrScanActive"
-                                  @click="appendNextFixedDocQrSourceFromIgnored"
-                                >
-                                  追加
-                                </el-button>
                                 <el-button
                                   size="small"
                                   plain
@@ -560,11 +543,12 @@
                                   </td>
                                   <td class="fixed-doc-qr-no-col">
                                     <el-select
-                                      :model-value="row.qrSourceId"
-                                      placeholder="選択してください"
+                                      :model-value="row.qrSourceId || ''"
+                                      placeholder="未選択（OCR）"
+                                      clearable
                                       size="small"
                                       class="fixed-doc-qr-source-select"
-                                      @change="setFixedDocFieldRule(row.fieldId, { qrSourceId: $event })"
+                                      @change="setFixedDocFieldRule(row.fieldId, { qrSourceId: $event || '' })"
                                     >
                                       <el-option
                                         v-for="opt in fixedDocQrNumberOptions"
@@ -587,28 +571,46 @@
                                     <span v-else class="fixed-doc-range-summary is-muted">—</span>
                                   </td>
                                   <td class="fixed-doc-qr-delim-col">
-                                    <el-input
+                                    <el-tooltip
                                       v-if="shouldShowFixedDocQrFieldDelimiter(row)"
-                                      :model-value="row.qrDelimiter || row.qrDetail?.delimiter || '$'"
-                                      size="small"
-                                      class="fixed-doc-qr-delim-select"
-                                      placeholder="$"
-                                      @update:model-value="setFixedDocFieldRule(row.fieldId, { qrDelimiter: $event })"
-                                    ></el-input>
+                                      placement="top"
+                                      :show-after="200"
+                                      :disabled="!getFixedDocQrDelimiterError(row.fieldId)"
+                                      :content="getFixedDocQrDelimiterError(row.fieldId)"
+                                    >
+                                      <el-input
+                                        :model-value="getFixedDocQrDelimiterInput(row)"
+                                        size="small"
+                                        class="fixed-doc-qr-delim-select"
+                                        :class="{ 'is-error': !!getFixedDocQrDelimiterError(row.fieldId) }"
+                                        @focus="focusFixedDocQrDelimiterField(row.fieldId)"
+                                        @update:model-value="setFixedDocQrDelimiterDraft(row.fieldId, $event)"
+                                        @blur="commitFixedDocQrDelimiterDraft(row.fieldId)"
+                                      ></el-input>
+                                    </el-tooltip>
                                     <span v-else class="fixed-doc-range-summary is-muted">—</span>
                                   </td>
                                   <td class="fixed-doc-qr-index-col">
                                     <template v-if="shouldShowFixedDocQrFieldSplitIndex(row)">
-                                      <el-input
-                                        :model-value="getFixedDocQrFetchIndexInput(row)"
-                                        size="small"
-                                        class="fixed-doc-qr-index-input"
-                                        :class="{ 'is-error': !!getFixedDocQrFetchIndexError(row.fieldId) }"
-                                        @focus="beginFixedDocQrFetchIndexDraft(row.fieldId)"
-                                        @update:model-value="setFixedDocQrFetchIndexDraft(row.fieldId, $event)"
-                                        @blur="commitFixedDocQrFetchIndexDraft(row.fieldId)"
-                                      ></el-input>
-                                      <p v-if="getFixedDocQrFetchIndexError(row.fieldId)" class="fixed-doc-field-error">{{ getFixedDocQrFetchIndexError(row.fieldId) }}</p>
+                                      <div class="fixed-doc-qr-index-cell">
+                                        <el-tooltip
+                                          placement="top"
+                                          :show-after="200"
+                                          :disabled="!getFixedDocQrFetchIndexError(row.fieldId)"
+                                          :content="getFixedDocQrFetchIndexError(row.fieldId)"
+                                        >
+                                          <el-input
+                                            :model-value="getFixedDocQrFetchIndexInput(row)"
+                                            size="small"
+                                            class="fixed-doc-qr-index-input"
+                                            inputmode="numeric"
+                                            :class="{ 'is-error': !!getFixedDocQrFetchIndexError(row.fieldId) }"
+                                            @focus="focusFixedDocQrFetchIndexField(row.fieldId)"
+                                            @update:model-value="setFixedDocQrFetchIndexDraft(row.fieldId, $event)"
+                                            @blur="commitFixedDocQrFetchIndexDraft(row.fieldId)"
+                                          ></el-input>
+                                        </el-tooltip>
+                                      </div>
                                     </template>
                                     <span v-else class="fixed-doc-range-summary is-muted">—</span>
                                   </td>
@@ -664,7 +666,7 @@
                                     <th>
                                       <span class="fixed-doc-th-label">
                                         タイプ
-                                        <el-tooltip placement="top" :show-after="200" content="string：文字列、number：数値">
+                                        <el-tooltip placement="top" :show-after="200" content="string：文字列、number：数値、enum：列挙">
                                           <span class="fixed-doc-info" tabindex="0">i</span>
                                         </el-tooltip>
                                       </span>
@@ -705,6 +707,7 @@
                                       <el-select :model-value="col.type" size="small" @change="setFixedDocTableColumnType(table.id, col.columnId, $event)">
                                         <el-option label="string" value="string"></el-option>
                                         <el-option label="number" value="number"></el-option>
+                                        <el-option label="enum" value="enum"></el-option>
                               </el-select>
                                     </td>
                                     <td><el-input v-model="col.prompt" size="small"></el-input></td>
@@ -829,38 +832,78 @@
                                     ></el-option>
                                   </el-select>
                                   <template v-if="row.rangeEnabled">
-                                    <el-input
+                                    <el-tooltip
                                       v-if="(row.rangeMode || 'between') === 'enum'"
-                                      :model-value="row.normalValues"
-                                      size="small"
-                                      placeholder="列挙値をカンマ区切りで入力"
-                                      class="fixed-doc-normal-values-input"
-                                      @update:model-value="setFixedDocFieldRule(row.fieldId, { normalValues: $event })"
-                                    ></el-input>
+                                      placement="top"
+                                      :show-after="200"
+                                      :disabled="!getFixedDocNormalConditionError('text', row.fieldId, 'normalValues')"
+                                      :content="getFixedDocNormalConditionError('text', row.fieldId, 'normalValues')"
+                                    >
+                                      <el-input
+                                        :model-value="row.normalValues"
+                                        size="small"
+                                        :placeholder="getFixedDocNormalValuesPlaceholder()"
+                                        class="fixed-doc-normal-values-input"
+                                        :class="{ 'is-error': !!getFixedDocNormalConditionError('text', row.fieldId, 'normalValues') }"
+                                        @update:model-value="setFixedDocFieldRule(row.fieldId, { normalValues: $event })"
+                                        @blur="revalidateFixedDocTextNormalCondition(row.fieldId)"
+                                      ></el-input>
+                                    </el-tooltip>
                                     <template v-else-if="(row.rangeMode || 'between') === 'between'">
-                                      <el-input
-                                        :model-value="row.rangeMin"
-                                        size="small"
-                                        class="fixed-doc-range-input"
-                                        @update:model-value="setFixedDocFieldRule(row.fieldId, { rangeMin: $event })"
-                                      ></el-input>
+                                      <el-tooltip
+                                        placement="top"
+                                        :show-after="200"
+                                        :disabled="!getFixedDocNormalConditionError('text', row.fieldId, 'rangeMin')"
+                                        :content="getFixedDocNormalConditionError('text', row.fieldId, 'rangeMin')"
+                                      >
+                                        <el-input
+                                          :model-value="row.rangeMin"
+                                          size="small"
+                                          :placeholder="getFixedDocRangeInputPlaceholder(row.type)"
+                                          class="fixed-doc-range-input"
+                                          :class="{ 'is-error': !!getFixedDocNormalConditionError('text', row.fieldId, 'rangeMin') }"
+                                          @update:model-value="setFixedDocFieldRule(row.fieldId, { rangeMin: $event })"
+                                          @blur="revalidateFixedDocTextNormalCondition(row.fieldId)"
+                                        ></el-input>
+                                      </el-tooltip>
                                       <span class="fixed-doc-range-sep">～</span>
-                                      <el-input
-                                        :model-value="row.rangeMax"
-                                        size="small"
-                                        class="fixed-doc-range-input"
-                                        @update:model-value="setFixedDocFieldRule(row.fieldId, { rangeMax: $event })"
-                                      ></el-input>
+                                      <el-tooltip
+                                        placement="top"
+                                        :show-after="200"
+                                        :disabled="!getFixedDocNormalConditionError('text', row.fieldId, 'rangeMax')"
+                                        :content="getFixedDocNormalConditionError('text', row.fieldId, 'rangeMax')"
+                                      >
+                                        <el-input
+                                          :model-value="row.rangeMax"
+                                          size="small"
+                                          :placeholder="getFixedDocRangeInputPlaceholder(row.type)"
+                                          class="fixed-doc-range-input"
+                                          :class="{ 'is-error': !!getFixedDocNormalConditionError('text', row.fieldId, 'rangeMax') }"
+                                          @update:model-value="setFixedDocFieldRule(row.fieldId, { rangeMax: $event })"
+                                          @blur="revalidateFixedDocTextNormalCondition(row.fieldId)"
+                                        ></el-input>
+                                      </el-tooltip>
                                     </template>
-                                    <el-input
+                                    <el-tooltip
                                       v-else
-                                      :model-value="isFixedDocLowerBoundMode(row.rangeMode) ? row.rangeMin : row.rangeMax"
-                                      size="small"
-                                      class="fixed-doc-range-input"
-                                      @update:model-value="setFixedDocFieldRule(row.fieldId, isFixedDocLowerBoundMode(row.rangeMode) ? { rangeMin: $event } : { rangeMax: $event })"
-                                    ></el-input>
+                                      placement="top"
+                                      :show-after="200"
+                                      :disabled="!getFixedDocNormalConditionError('text', row.fieldId, 'bound')"
+                                      :content="getFixedDocNormalConditionError('text', row.fieldId, 'bound')"
+                                    >
+                                      <el-input
+                                        :model-value="isFixedDocLowerBoundMode(row.rangeMode) ? row.rangeMin : row.rangeMax"
+                                        size="small"
+                                        :placeholder="getFixedDocRangeInputPlaceholder(row.type)"
+                                        class="fixed-doc-range-input"
+                                        :class="{ 'is-error': !!getFixedDocNormalConditionError('text', row.fieldId, 'bound') }"
+                                        @update:model-value="setFixedDocFieldRule(row.fieldId, isFixedDocLowerBoundMode(row.rangeMode) ? { rangeMin: $event } : { rangeMax: $event })"
+                                        @blur="revalidateFixedDocTextNormalCondition(row.fieldId)"
+                                      ></el-input>
+                                    </el-tooltip>
                                   </template>
                                 </div>
+                                <span v-else class="fixed-doc-range-summary is-muted">—</span>
                               </td>
                               <td class="fixed-doc-confidence-col"><el-input :model-value="row.confidence" size="small"></el-input></td>
                         </tr>
@@ -940,38 +983,78 @@
                                       ></el-option>
                                     </el-select>
                                     <template v-if="col.rangeEnabled">
-                                      <el-input
+                                      <el-tooltip
                                         v-if="(col.rangeMode || 'between') === 'enum'"
-                                        :model-value="col.normalValues"
-                                        size="small"
-                                        placeholder="列挙値をカンマ区切りで入力"
-                                        class="fixed-doc-normal-values-input"
-                                        @update:model-value="setFixedDocTableColumnRule(table.id, col.columnId, { normalValues: $event })"
-                                      ></el-input>
+                                        placement="top"
+                                        :show-after="200"
+                                        :disabled="!getFixedDocNormalConditionError(table.id, col.columnId, 'normalValues')"
+                                        :content="getFixedDocNormalConditionError(table.id, col.columnId, 'normalValues')"
+                                      >
+                                        <el-input
+                                          :model-value="col.normalValues"
+                                          size="small"
+                                          :placeholder="getFixedDocNormalValuesPlaceholder()"
+                                          class="fixed-doc-normal-values-input"
+                                          :class="{ 'is-error': !!getFixedDocNormalConditionError(table.id, col.columnId, 'normalValues') }"
+                                          @update:model-value="setFixedDocTableColumnRule(table.id, col.columnId, { normalValues: $event })"
+                                          @blur="revalidateFixedDocTableColumnNormalCondition(table.id, col.columnId)"
+                                        ></el-input>
+                                      </el-tooltip>
                                       <template v-else-if="(col.rangeMode || 'between') === 'between'">
-                                      <el-input
-                                        :model-value="col.rangeMin"
-                                        size="small"
-                                        class="fixed-doc-range-input"
-                                        @update:model-value="setFixedDocTableColumnRule(table.id, col.columnId, { rangeMin: $event })"
-                                      ></el-input>
+                                      <el-tooltip
+                                        placement="top"
+                                        :show-after="200"
+                                        :disabled="!getFixedDocNormalConditionError(table.id, col.columnId, 'rangeMin')"
+                                        :content="getFixedDocNormalConditionError(table.id, col.columnId, 'rangeMin')"
+                                      >
+                                        <el-input
+                                          :model-value="col.rangeMin"
+                                          size="small"
+                                          :placeholder="getFixedDocRangeInputPlaceholder(col.type)"
+                                          class="fixed-doc-range-input"
+                                          :class="{ 'is-error': !!getFixedDocNormalConditionError(table.id, col.columnId, 'rangeMin') }"
+                                          @update:model-value="setFixedDocTableColumnRule(table.id, col.columnId, { rangeMin: $event })"
+                                          @blur="revalidateFixedDocTableColumnNormalCondition(table.id, col.columnId)"
+                                        ></el-input>
+                                      </el-tooltip>
                                       <span class="fixed-doc-range-sep">～</span>
-                                      <el-input
-                                        :model-value="col.rangeMax"
-                                        size="small"
-                                        class="fixed-doc-range-input"
-                                        @update:model-value="setFixedDocTableColumnRule(table.id, col.columnId, { rangeMax: $event })"
-                                      ></el-input>
+                                      <el-tooltip
+                                        placement="top"
+                                        :show-after="200"
+                                        :disabled="!getFixedDocNormalConditionError(table.id, col.columnId, 'rangeMax')"
+                                        :content="getFixedDocNormalConditionError(table.id, col.columnId, 'rangeMax')"
+                                      >
+                                        <el-input
+                                          :model-value="col.rangeMax"
+                                          size="small"
+                                          :placeholder="getFixedDocRangeInputPlaceholder(col.type)"
+                                          class="fixed-doc-range-input"
+                                          :class="{ 'is-error': !!getFixedDocNormalConditionError(table.id, col.columnId, 'rangeMax') }"
+                                          @update:model-value="setFixedDocTableColumnRule(table.id, col.columnId, { rangeMax: $event })"
+                                          @blur="revalidateFixedDocTableColumnNormalCondition(table.id, col.columnId)"
+                                        ></el-input>
+                                      </el-tooltip>
                                       </template>
-                                      <el-input
+                                      <el-tooltip
                                         v-else
-                                        :model-value="isFixedDocLowerBoundMode(col.rangeMode) ? col.rangeMin : col.rangeMax"
-                                        size="small"
-                                        class="fixed-doc-range-input"
-                                        @update:model-value="setFixedDocTableColumnRule(table.id, col.columnId, isFixedDocLowerBoundMode(col.rangeMode) ? { rangeMin: $event } : { rangeMax: $event })"
-                                      ></el-input>
+                                        placement="top"
+                                        :show-after="200"
+                                        :disabled="!getFixedDocNormalConditionError(table.id, col.columnId, 'bound')"
+                                        :content="getFixedDocNormalConditionError(table.id, col.columnId, 'bound')"
+                                      >
+                                        <el-input
+                                          :model-value="isFixedDocLowerBoundMode(col.rangeMode) ? col.rangeMin : col.rangeMax"
+                                          size="small"
+                                          :placeholder="getFixedDocRangeInputPlaceholder(col.type)"
+                                          class="fixed-doc-range-input"
+                                          :class="{ 'is-error': !!getFixedDocNormalConditionError(table.id, col.columnId, 'bound') }"
+                                          @update:model-value="setFixedDocTableColumnRule(table.id, col.columnId, isFixedDocLowerBoundMode(col.rangeMode) ? { rangeMin: $event } : { rangeMax: $event })"
+                                          @blur="revalidateFixedDocTableColumnNormalCondition(table.id, col.columnId)"
+                                        ></el-input>
+                                      </el-tooltip>
                                     </template>
                                   </div>
+                                  <span v-else class="fixed-doc-range-summary is-muted">—</span>
                                 </td>
                                 <td class="fixed-doc-confidence-col"><el-input v-model="col.confidence" size="small"></el-input></td>
                               </tr>
@@ -1044,11 +1127,10 @@
                       >
                         <header class="fixed-doc-test-card-head">
                           <strong>#{{ row.no }}</strong>
-                          <span v-if="row.sourceLabel" class="fixed-doc-test-source-tag">{{ row.sourceLabel }}</span>
+                          <span class="fixed-doc-test-source-tag">{{ row.sourceLabel }}</span>
                         </header>
                         <label>{{ row.name }}</label>
                         <el-input :model-value="row.value" readonly></el-input>
-                        <p v-if="row.errorMessage" class="fixed-doc-test-error">{{ row.errorMessage }}</p>
                       </article>
                     </div>
                     <div v-else class="fixed-doc-test-table-list">
@@ -1083,11 +1165,9 @@
                               <el-input :model-value="row.区分" readonly size="small"></el-input>
                               <div class="fixed-doc-test-table-cell" :class="{ 'is-error': row.error && row.errorField === '項目名' }">
                                 <el-input :model-value="row.項目名" readonly size="small"></el-input>
-                                <p v-if="row.error && row.errorField === '項目名'" class="fixed-doc-test-error">{{ row.errorMessage }}</p>
                               </div>
                               <div class="fixed-doc-test-table-cell" :class="{ 'is-error': row.error && row.errorField === '点数' }">
                                 <el-input :model-value="row.点数" readonly size="small"></el-input>
-                                <p v-if="row.error && row.errorField === '点数'" class="fixed-doc-test-error">{{ row.errorMessage }}</p>
                               </div>
                             </div>
                           </div>
@@ -3024,7 +3104,7 @@
                   </label>
                     <label v-if="notificationRuleDraft.channels.includes('email')" class="workflow-notification-field">
                       <span>メール宛先 <em>必須</em></span>
-                      <small class="workflow-notification-email-hint">複数のメールアドレスはカンマ・セミコロン・改行などで区切って入力できます。</small>
+                      <small class="workflow-notification-email-hint">複数のメールアドレスはカンマ区切りで入力（, または ，）。</small>
                       <el-input
                         v-model="notificationRuleDraft.emailRecipients"
                         type="textarea"
@@ -3656,7 +3736,7 @@
           </label>
             <label v-if="notificationRuleEditDraft.channels.includes('email')" class="workflow-notification-field">
               <span>メール宛先 <em>必須</em></span>
-              <small class="workflow-notification-email-hint">複数のメールアドレスはカンマ・セミコロン・改行などで区切って入力できます。</small>
+              <small class="workflow-notification-email-hint">複数のメールアドレスはカンマ区切りで入力（, または ，）。</small>
               <el-input
                 v-model="notificationRuleEditDraft.emailRecipients"
                 type="textarea"
@@ -3900,7 +3980,7 @@
               v-for="rule in readModelHitlRules"
               :key="rule.value"
               :model-value="readModelSettings.hitlRules.includes(rule.value)"
-              disabled
+              @change="toggleReadModelHitlRule(rule.value, $event)"
             >{{ rule.label }}</el-checkbox>
           </div>
         </div>
@@ -4007,6 +4087,6 @@
   <script src="scripts/workflow-core.js?v=683"></script>
   <script src="scripts/mock-data.js?v=678"></script>
   <script src="scripts/scene-config.js?v=675"></script>
-  <script src="main.js?v=713"></script>
+  <script src="main.js?v=714"></script>
 </body>
 </html>

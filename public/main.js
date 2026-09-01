@@ -71,12 +71,12 @@ const appOptions = {
       { value: 'master_low_similarity', label: 'Master照合類似度が低い' },
       { value: 'master_empty', label: 'Master照合結果が空' },
       { value: 'master_low_confidence', label: 'Master照合信頼度が低い' },
-      { value: 'normal_range_exceeded', label: '正常値範囲を超えています' },
+      { value: 'low_confidence_and_range_exceeded', label: '低信頼度かつ正常値範囲を超えています' },
     ];
     const readModelSettings = reactive({
       mainModel: 'neoseeo-local',
       verifyModels: ['tztest'],
-      hitlRules: readModelHitlRules.map((rule) => rule.value),
+      hitlRules: ['low_confidence_and_range_exceeded'],
     });
     const workflowTestRunning = ref(false);
     const workflowTestTimelineRef = ref(null);
@@ -1134,30 +1134,30 @@ const appOptions = {
       uiTranslationApplying = true;
       uiTranslationObserver?.disconnect();
       try {
-        document.documentElement.setAttribute('lang', uiLanguage.value === 'zh' ? 'zh-CN' : 'ja');
-        const textNodes = [];
-        const walker = document.createTreeWalker(root, 4);
-        let node = walker.nextNode();
-        while (node) {
-          if (!shouldSkipUiTranslationNode(node) && node.nodeValue && node.nodeValue.trim()) {
-            textNodes.push(node);
-          }
-          node = walker.nextNode();
+      document.documentElement.setAttribute('lang', uiLanguage.value === 'zh' ? 'zh-CN' : 'ja');
+      const textNodes = [];
+      const walker = document.createTreeWalker(root, 4);
+      let node = walker.nextNode();
+      while (node) {
+        if (!shouldSkipUiTranslationNode(node) && node.nodeValue && node.nodeValue.trim()) {
+          textNodes.push(node);
         }
-        textNodes.forEach((textNode) => {
-          if (!uiTranslationOriginals.has(textNode)
-            || (uiLanguage.value === 'ja' && uiTranslationOriginals.get(textNode) !== textNode.nodeValue)
-            || (uiLanguage.value === 'zh' && !isLikelyTranslatedUiString(textNode.nodeValue)
-              && uiTranslationOriginals.get(textNode) !== textNode.nodeValue)) {
-            uiTranslationOriginals.set(textNode, textNode.nodeValue);
-          }
-          const original = uiTranslationOriginals.get(textNode);
-          textNode.nodeValue = uiLanguage.value === 'zh' ? translateUiString(original) : original;
-        });
-        root.querySelectorAll?.('[placeholder], [title], [aria-label], [alt], [data-title], [data-label]').forEach((el) => {
-          if (shouldSkipUiAttributeTranslation(el)) return;
-          ['placeholder', 'title', 'aria-label', 'alt', 'data-title', 'data-label'].forEach((attr) =>
-            translateUiAttribute(el, attr));
+        node = walker.nextNode();
+      }
+      textNodes.forEach((textNode) => {
+        if (!uiTranslationOriginals.has(textNode)
+          || (uiLanguage.value === 'ja' && uiTranslationOriginals.get(textNode) !== textNode.nodeValue)
+          || (uiLanguage.value === 'zh' && !isLikelyTranslatedUiString(textNode.nodeValue)
+            && uiTranslationOriginals.get(textNode) !== textNode.nodeValue)) {
+          uiTranslationOriginals.set(textNode, textNode.nodeValue);
+        }
+        const original = uiTranslationOriginals.get(textNode);
+        textNode.nodeValue = uiLanguage.value === 'zh' ? translateUiString(original) : original;
+      });
+      root.querySelectorAll?.('[placeholder], [title], [aria-label], [alt], [data-title], [data-label]').forEach((el) => {
+        if (shouldSkipUiAttributeTranslation(el)) return;
+        ['placeholder', 'title', 'aria-label', 'alt', 'data-title', 'data-label'].forEach((attr) =>
+          translateUiAttribute(el, attr));
         });
       } finally {
         uiTranslationApplying = false;
@@ -1697,10 +1697,10 @@ const appOptions = {
             fetchIndex: 3,
             rule: '日付',
             confidence: '95.0 %',
-            rangeEnabled: true,
-            rangeMin: '1900-01-01',
+            rangeEnabled: false,
+            rangeMin: '',
             rangeMax: '',
-            rangeMaxToday: true,
+            rangeMaxToday: false,
           },
           {
             no: 2,
@@ -1726,7 +1726,7 @@ const appOptions = {
             no: 3,
             columnId: 'read-table-1-col-3',
             key: '点数',
-            type: 'string',
+            type: 'number',
             prompt: '半角数字のみを出力。単位は含めない。',
             sample: '24',
             required: false,
@@ -1746,7 +1746,7 @@ const appOptions = {
             no: 4,
             columnId: 'read-table-1-col-4',
             key: '回数',
-            type: 'string',
+            type: 'number',
             prompt: '回数欄の半角数字のみを出力。',
             sample: '3',
             required: false,
@@ -1766,7 +1766,7 @@ const appOptions = {
             no: 5,
             columnId: 'read-table-1-col-5',
             key: '金額',
-            type: 'string',
+            type: 'number',
             prompt: '金額欄を半角数字で出力。カンマは除去。',
             sample: '720',
             required: false,
@@ -1797,10 +1797,10 @@ const appOptions = {
             fetchIndex: 3,
             rule: '日付',
             confidence: '95.0 %',
-            rangeEnabled: true,
-            rangeMin: '1900-01-01',
+            rangeEnabled: false,
+            rangeMin: '',
             rangeMax: '',
-            rangeMaxToday: true,
+            rangeMaxToday: false,
           },
         ],
       },
@@ -1851,9 +1851,15 @@ const appOptions = {
     const fixedDocTextFieldDropTargetId = ref('');
     const fixedDocQrFetchIndexDrafts = reactive({});
     const fixedDocQrFetchIndexErrors = reactive({});
+    const fixedDocQrDelimiterDrafts = reactive({});
+    const fixedDocQrDelimiterErrors = reactive({});
     function normalizeFixedDocFieldType(type) {
-      if (type === 'enum') return 'string';
-      return ['string', 'number'].includes(type) ? type : 'string';
+      return ['string', 'number', 'enum'].includes(type) ? type : 'string';
+    }
+    function inferFixedDocFieldTypeFromName(fieldName = '') {
+      if (/性別|区分|種別|種目|判定|ステータス/.test(fieldName)) return 'enum';
+      if (/金額|日数|回数|点数|数量|率|身長|体重/.test(fieldName)) return 'number';
+      return 'string';
     }
     function getFixedDocFieldId(fieldName, index = -1) {
       const slug = String(fieldName || '').trim().replace(/\s+/g, '-');
@@ -1907,7 +1913,12 @@ const appOptions = {
     }
     function setFixedDocFieldType(fieldRef, type) {
       const fieldId = getFixedDocFieldMeta(fieldRef)?.fieldId || fieldRef;
-      fixedDocFieldTypes[fieldId] = normalizeFixedDocFieldType(type);
+      const nextType = normalizeFixedDocFieldType(type);
+      fixedDocFieldTypes[fieldId] = nextType;
+      ensureFixedDocFieldRules();
+      if (fixedDocFieldRules[fieldId]) {
+        normalizeFixedDocNormalConditionForType(fixedDocFieldRules[fieldId], nextType);
+      }
       normalizeFixedDocFieldRuleForType(fieldId);
     }
     function normalizeFixedDocFieldRuleForType(fieldRef) {
@@ -2002,7 +2013,7 @@ const appOptions = {
         name,
         canMoveUp: idx > 0,
         canMoveDown: idx < fieldNames.length - 1,
-        type: fixedDocFieldTypes[getFixedDocStableFieldId(name)] || (/金額|日数|回数/.test(name) ? 'number' : 'string'),
+        type: fixedDocFieldTypes[getFixedDocStableFieldId(name)] || inferFixedDocFieldTypeFromName(name),
         prompt: idx === 0 ? '**ページ左下角の番号のうち' : `${name}欄の値を原文のまま抽出`,
         sample: samples[name] || EXPORT_FIELD_SAMPLE_VALUES[name] || '',
         required: false,
@@ -2025,7 +2036,7 @@ const appOptions = {
       'テキスト置換',
       'バーコード',
     ];
-    const FIXED_DOC_RANGE_CAPABLE_RULES = new Set([
+    const FIXED_DOC_NUMBER_RANGE_RULES = new Set([
       '数字のみ',
       '小数点付きの数字',
       '金額（JPY）',
@@ -2213,6 +2224,32 @@ const appOptions = {
           qrDelimiter: '$',
         });
       });
+      if (!fixedDocQrFetchIndexBootstrapped) {
+        bootstrapFixedDocQrFetchIndexOrder();
+      }
+    }
+    let fixedDocQrFetchIndexBootstrapped = false;
+    function resequenceFixedDocQrSourceFetchIndexes(sourceId) {
+      if (!sourceId) return;
+      ensureFixedDocFieldRules();
+      getFixedDocQrSourceFieldRows(sourceId).forEach((row, index) => {
+        const rule = fixedDocFieldRules[row.fieldId];
+        if (!rule || rule.fetchIndexManual) return;
+        rule.fetchIndex = index;
+      });
+    }
+    function resequenceAllFixedDocQrFetchIndexes() {
+      ensureFixedDocFieldRules();
+      const sourceIds = new Set(
+        fixedDocTextRows.value
+          .map((row) => fixedDocFieldRules[row.fieldId]?.qrSourceId)
+          .filter(Boolean),
+      );
+      sourceIds.forEach((sourceId) => resequenceFixedDocQrSourceFetchIndexes(sourceId));
+    }
+    function bootstrapFixedDocQrFetchIndexOrder() {
+      resequenceAllFixedDocQrFetchIndexes();
+      fixedDocQrFetchIndexBootstrapped = true;
     }
     function shouldUseFixedDocQrPresetRule(fieldName) {
       return isFixedDocQrCapableDocType() && !!getFixedDocFieldQrPreset(fieldName);
@@ -2269,7 +2306,7 @@ const appOptions = {
       const rows = getFixedDocQrSourceFieldRows(sourceId);
       const total = rows.length;
       if (oneBased > total) {
-        return { ok: false, message: `1〜${total}の範囲で入力してください` };
+        return { ok: false, message: '最大値を超えています' };
       }
       const zeroBased = oneBased - 1;
       const duplicate = rows.some((row) => {
@@ -2277,7 +2314,7 @@ const appOptions = {
         const otherOneBased = getFixedDocQrFetchIndexOneBased(row, row.fieldId);
         return otherOneBased === oneBased;
       });
-      if (duplicate) return { ok: false, message: '同一QRソース内で順序が重複しています' };
+      if (duplicate) return { ok: false, message: '順序が重複しています' };
       const assigned = rows
         .map((row) => (row.fieldId === fieldId ? oneBased : getFixedDocQrFetchIndexOneBased(row, row.fieldId)))
         .filter((value) => Number.isInteger(value));
@@ -2285,7 +2322,7 @@ const appOptions = {
         const sorted = [...assigned].sort((a, b) => a - b);
         const isConsecutive = sorted.every((value, index) => value === index + 1);
         if (!isConsecutive) {
-          return { ok: false, message: `同一QRソース内で順序は1から${total}まで連番で指定してください` };
+          return { ok: false, message: '順序が連番ではありません' };
         }
       }
       return { ok: true, value: zeroBased };
@@ -2293,15 +2330,35 @@ const appOptions = {
     function revalidateFixedDocQrSourceFetchIndexes(sourceId) {
       if (!sourceId) return;
       getFixedDocQrSourceFieldRows(sourceId).forEach((row) => {
-        const display = getFixedDocQrFetchIndexStoredDisplay(row);
-        if (!display) {
-          delete fixedDocQrFetchIndexErrors[row.fieldId];
-          return;
+        if (fixedDocQrFetchIndexDrafts[row.fieldId] === undefined) {
+          const display = getFixedDocQrFetchIndexStoredDisplay(row);
+          const result = validateFixedDocQrFetchIndex(sourceId, row.fieldId, display);
+          if (!result.ok) fixedDocQrFetchIndexErrors[row.fieldId] = result.message;
+          else delete fixedDocQrFetchIndexErrors[row.fieldId];
         }
-        const result = validateFixedDocQrFetchIndex(sourceId, row.fieldId, display);
-        if (!result.ok) fixedDocQrFetchIndexErrors[row.fieldId] = result.message;
-        else delete fixedDocQrFetchIndexErrors[row.fieldId];
+        if (fixedDocQrDelimiterDrafts[row.fieldId] === undefined) {
+          const delimiter = getFixedDocQrDelimiterStoredDisplay(row);
+          const delimiterResult = validateFixedDocQrDelimiter(delimiter);
+          if (!delimiterResult.ok) fixedDocQrDelimiterErrors[row.fieldId] = delimiterResult.message;
+          else delete fixedDocQrDelimiterErrors[row.fieldId];
+        }
       });
+    }
+    function revalidateAllFixedDocQrFetchIndexes() {
+      const sourceIds = new Set();
+      ensureFixedDocFieldRules();
+      fixedDocTextRows.value.forEach((row) => {
+        const rule = fixedDocFieldRules[row.fieldId];
+        if (rule?.qrSourceId && isFixedDocQrSplitExtractMethod(rule)) {
+          sourceIds.add(rule.qrSourceId);
+        }
+      });
+      sourceIds.forEach((sourceId) => revalidateFixedDocQrSourceFetchIndexes(sourceId));
+      return Object.keys(fixedDocQrFetchIndexErrors).length > 0
+        || Object.keys(fixedDocQrDelimiterErrors).length > 0;
+    }
+    function sanitizeFixedDocQrFetchIndexInput(value) {
+      return String(value ?? '').replace(/\D/g, '');
     }
     function getFixedDocQrFetchIndexStoredDisplay(row) {
       if (!row?.fieldId) return '';
@@ -2317,13 +2374,25 @@ const appOptions = {
       }
       return getFixedDocQrFetchIndexStoredDisplay(row);
     }
+    function commitOtherFixedDocQrFetchIndexDrafts(activeFieldId) {
+      Object.keys(fixedDocQrFetchIndexDrafts).forEach((fieldId) => {
+        if (fieldId !== activeFieldId) commitFixedDocQrFetchIndexDraft(fieldId);
+      });
+    }
     function beginFixedDocQrFetchIndexDraft(fieldId) {
       const row = getFixedDocFieldMeta(fieldId);
-      if (!row || fixedDocQrFetchIndexDrafts[fieldId] !== undefined) return;
-      fixedDocQrFetchIndexDrafts[fieldId] = getFixedDocQrFetchIndexStoredDisplay(row);
+      if (!row) return;
+      if (fixedDocQrFetchIndexDrafts[fieldId] === undefined) {
+        fixedDocQrFetchIndexDrafts[fieldId] = getFixedDocQrFetchIndexStoredDisplay(row);
+      }
+    }
+    function focusFixedDocQrFetchIndexField(fieldId) {
+      commitOtherFixedDocQrFetchIndexDrafts(fieldId);
+      commitOtherFixedDocQrDelimiterDrafts(fieldId);
+      beginFixedDocQrFetchIndexDraft(fieldId);
     }
     function setFixedDocQrFetchIndexDraft(fieldId, value) {
-      fixedDocQrFetchIndexDrafts[fieldId] = value;
+      fixedDocQrFetchIndexDrafts[fieldId] = sanitizeFixedDocQrFetchIndexInput(value);
       delete fixedDocQrFetchIndexErrors[fieldId];
     }
     function commitFixedDocQrFetchIndexDraft(fieldId) {
@@ -2348,6 +2417,71 @@ const appOptions = {
     function getFixedDocQrFetchIndexError(fieldId) {
       return fixedDocQrFetchIndexErrors[fieldId] || '';
     }
+    function validateFixedDocQrDelimiter(rawValue) {
+      const trimmed = String(rawValue ?? '').trim();
+      if (!trimmed) return { ok: false, message: '区切り文字を入力してください' };
+      return { ok: true, value: trimmed };
+    }
+    function getFixedDocQrDelimiterStoredDisplay(row) {
+      if (!row?.fieldId) return '';
+      ensureFixedDocFieldRules();
+      const rule = fixedDocFieldRules[row.fieldId] || row;
+      if (rule.qrDelimiter !== undefined && rule.qrDelimiter !== null) return String(rule.qrDelimiter);
+      if (rule.qrDetail?.delimiter !== undefined && rule.qrDetail?.delimiter !== null) {
+        return String(rule.qrDetail.delimiter);
+      }
+      return '';
+    }
+    function getFixedDocQrDelimiterInput(row) {
+      if (!row?.fieldId) return '';
+      if (fixedDocQrDelimiterDrafts[row.fieldId] !== undefined) {
+        return fixedDocQrDelimiterDrafts[row.fieldId];
+      }
+      return getFixedDocQrDelimiterStoredDisplay(row);
+    }
+    function commitOtherFixedDocQrDelimiterDrafts(activeFieldId) {
+      Object.keys(fixedDocQrDelimiterDrafts).forEach((fieldId) => {
+        if (fieldId !== activeFieldId) commitFixedDocQrDelimiterDraft(fieldId);
+      });
+    }
+    function beginFixedDocQrDelimiterDraft(fieldId) {
+      const row = getFixedDocFieldMeta(fieldId);
+      if (!row) return;
+      if (fixedDocQrDelimiterDrafts[fieldId] === undefined) {
+        fixedDocQrDelimiterDrafts[fieldId] = getFixedDocQrDelimiterStoredDisplay(row);
+      }
+    }
+    function focusFixedDocQrDelimiterField(fieldId) {
+      commitOtherFixedDocQrDelimiterDrafts(fieldId);
+      commitOtherFixedDocQrFetchIndexDrafts(fieldId);
+      beginFixedDocQrDelimiterDraft(fieldId);
+    }
+    function setFixedDocQrDelimiterDraft(fieldId, value) {
+      fixedDocQrDelimiterDrafts[fieldId] = value;
+      delete fixedDocQrDelimiterErrors[fieldId];
+    }
+    function commitFixedDocQrDelimiterDraft(fieldId) {
+      const draft = fixedDocQrDelimiterDrafts[fieldId];
+      if (draft === undefined) return;
+      delete fixedDocQrDelimiterDrafts[fieldId];
+      const row = getFixedDocFieldMeta(fieldId);
+      if (!row) return;
+      ensureFixedDocFieldRules();
+      const sourceId = fixedDocFieldRules[fieldId]?.qrSourceId || '';
+      if (!sourceId || !isFixedDocQrSplitExtractMethod(fixedDocFieldRules[fieldId])) return;
+      const result = validateFixedDocQrDelimiter(draft);
+      if (!result.ok) {
+        fixedDocQrDelimiterErrors[fieldId] = result.message;
+        fixedDocQrDelimiterDrafts[fieldId] = draft;
+        return;
+      }
+      delete fixedDocQrDelimiterErrors[fieldId];
+      setFixedDocFieldRule(fieldId, { qrDelimiter: result.value });
+      revalidateFixedDocQrSourceFetchIndexes(sourceId);
+    }
+    function getFixedDocQrDelimiterError(fieldId) {
+      return fixedDocQrDelimiterErrors[fieldId] || '';
+    }
     function ensureFixedDocQrFetchIndexes(sourceId) {
       if (!sourceId) return;
       ensureFixedDocFieldRules();
@@ -2363,14 +2497,15 @@ const appOptions = {
       const fieldName = getFixedDocFieldName(fieldRef);
       const qrMap = getFixedDocFieldQrPreset(fieldName);
       if (enabled) {
+        const qrSourceId = qrMap?.qrSourceId || fixedDocQrSourceCatalog[0]?.id || 'QR1';
         setFixedDocFieldRule(fieldRef, {
-          qrSourceId: qrMap?.qrSourceId || fixedDocQrSourceCatalog[0]?.id || 'QR1',
-          fetchIndex: qrMap?.fetchIndex ?? 0,
-          sourceQr: qrMap?.qrSourceId || fixedDocQrSourceCatalog[0]?.id || 'QR1',
+          qrSourceId,
+          sourceQr: qrSourceId,
           qrExtractMethod: FIXED_DOC_QR_EXTRACT_SPLIT,
           qrDelimiter: '$',
           qrDetail: createDefaultFixedDocQrDetail(),
         });
+        ensureFixedDocQrFetchIndexes(qrSourceId);
         return;
       }
       setFixedDocFieldRule(fieldRef, {
@@ -2381,9 +2516,21 @@ const appOptions = {
       });
     }
     function setFixedDocQrSplitEnabled(fieldRef, enabled) {
+      const meta = getFixedDocFieldMeta(fieldRef);
+      const fieldId = meta?.fieldId || fieldRef;
+      const previousSourceId = fixedDocFieldRules[fieldId]?.qrSourceId || '';
+      if (!enabled) {
+        delete fixedDocQrFetchIndexErrors[fieldId];
+        delete fixedDocQrFetchIndexDrafts[fieldId];
+        delete fixedDocQrDelimiterErrors[fieldId];
+        delete fixedDocQrDelimiterDrafts[fieldId];
+      }
       setFixedDocFieldRule(fieldRef, {
         qrExtractMethod: enabled ? FIXED_DOC_QR_EXTRACT_SPLIT : FIXED_DOC_QR_EXTRACT_PLAIN,
       });
+      if (!enabled && previousSourceId) {
+        revalidateFixedDocQrSourceFetchIndexes(previousSourceId);
+      }
     }
     function migrateFixedDocQrFieldRules() {
       ensureFixedDocFieldRules();
@@ -2400,19 +2547,69 @@ const appOptions = {
         });
       });
     }
-    function canFixedDocFieldHaveRange() {
-      return canFixedDocFieldHaveNormalCondition();
+    function canFixedDocFieldHaveRange(row) {
+      return canFixedDocFieldTypeHaveNormalCondition(row?.type);
     }
-    function canFixedDocFieldTypeHaveNormalCondition() {
-      return true;
+    function canFixedDocFieldTypeHaveNormalCondition(fieldType = '') {
+      const type = normalizeFixedDocFieldType(fieldType);
+      return type === 'number' || type === 'enum';
+    }
+    function clearFixedDocNormalConditionFields(target = {}) {
+      target.rangeEnabled = false;
+      target.rangeMode = 'between';
+      target.rangeMin = '';
+      target.rangeMax = '';
+      target.rangeMaxToday = false;
+      target.normalValues = '';
+    }
+    function normalizeFixedDocNormalConditionForType(target = {}, fieldType = '') {
+      const type = normalizeFixedDocFieldType(fieldType);
+      if (!canFixedDocFieldTypeHaveNormalCondition(type)) {
+        clearFixedDocNormalConditionFields(target);
+        return;
+      }
+      if (!target.rangeEnabled) return;
+      const allowedModes = getFixedDocRangeModeOptionsByType(type).map((item) => item.value);
+      const currentMode = target.rangeMode || 'between';
+      if (!allowedModes.includes(currentMode)) {
+        target.rangeMode = getDefaultFixedDocNormalConditionMode(type);
+        if (target.rangeMode === 'enum') {
+          target.rangeMin = '';
+          target.rangeMax = '';
+          target.rangeMaxToday = false;
+        } else {
+          target.normalValues = '';
+        }
+      }
     }
     function canFixedDocFieldHaveNormalCondition() {
       return true;
     }
-    function getFixedDocRangeKind(rule) {
-      if (rule === '日付') return 'date';
-      if (FIXED_DOC_RANGE_CAPABLE_RULES.has(rule)) return 'number';
-      return null;
+    function getFixedDocRangeKind(fieldType) {
+      const type = normalizeFixedDocFieldType(fieldType);
+      if (type === 'enum') return 'enum';
+      if (type === 'number') return 'number';
+      return 'text';
+    }
+    function getFixedDocRangeInputPlaceholder(fieldType) {
+      return '';
+    }
+    function getFixedDocNormalValuesPlaceholder() {
+      return '列挙値をカンマ区切りで入力（, または ，）';
+    }
+    function parseFixedDocNormalEnumValues(value) {
+      if (typeof splitMultiValueDelimitedList === 'function') {
+        return splitMultiValueDelimitedList(value);
+      }
+      const raw = String(value || '').trim();
+      if (!raw) return [];
+      return raw
+        .split(/[,，]+/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+    }
+    function normalizeFixedDocEnumCompareValue(value) {
+      return String(value ?? '').trim();
     }
     function formatFixedDocRangeSummary(row) {
       const fieldKey = row.fieldKey || row.name;
@@ -2427,6 +2624,99 @@ const appOptions = {
       if (mode === 'gt') return `> ${min}`;
       if (mode === 'gte') return `≥ ${min}`;
       return `${min}～${max}`;
+    }
+    const fixedDocNormalConditionErrors = reactive({});
+    function getFixedDocNormalConditionErrorKey(scope, id, part) {
+      return `${scope}:${id}:${part}`;
+    }
+    function getFixedDocNormalConditionError(scope, id, part) {
+      return fixedDocNormalConditionErrors[getFixedDocNormalConditionErrorKey(scope, id, part)] || '';
+    }
+    function clearFixedDocNormalConditionErrors(scope, id) {
+      const prefix = `${scope}:${id}:`;
+      Object.keys(fixedDocNormalConditionErrors).forEach((key) => {
+        if (key.startsWith(prefix)) delete fixedDocNormalConditionErrors[key];
+      });
+    }
+    function applyFixedDocNormalConditionErrors(scope, id, errors) {
+      clearFixedDocNormalConditionErrors(scope, id);
+      Object.entries(errors).forEach(([part, message]) => {
+        fixedDocNormalConditionErrors[getFixedDocNormalConditionErrorKey(scope, id, part)] = message;
+      });
+    }
+    function parseFixedDocNormalNumber(value) {
+      const trimmed = String(value ?? '').trim();
+      if (!trimmed) return { ok: false, empty: true };
+      const num = Number(trimmed);
+      if (!Number.isFinite(num)) return { ok: false, empty: false, invalid: true };
+      return { ok: true, value: num };
+    }
+    function validateFixedDocNormalConditionTarget(target = {}) {
+      const errors = {};
+      if (!target.rangeEnabled) return errors;
+      const mode = target.rangeMode || 'between';
+      if (mode === 'enum') {
+        if (!parseFixedDocNormalEnumValues(target.normalValues).length) {
+          errors.normalValues = '列挙値を入力してください';
+        }
+        return errors;
+      }
+      if (mode === 'between') {
+        const minResult = parseFixedDocNormalNumber(target.rangeMin);
+        const maxResult = parseFixedDocNormalNumber(target.rangeMax);
+        if (minResult.empty) errors.rangeMin = '最小値を入力してください';
+        else if (!minResult.ok) errors.rangeMin = '数値を入力してください';
+        if (maxResult.empty) errors.rangeMax = '最大値を入力してください';
+        else if (!maxResult.ok) errors.rangeMax = '数値を入力してください';
+        if (!errors.rangeMin && !errors.rangeMax && minResult.ok && maxResult.ok && minResult.value > maxResult.value) {
+          errors.rangeMin = '最小値が最大値を超えています';
+          errors.rangeMax = '最小値が最大値を超えています';
+        }
+        return errors;
+      }
+      if (mode === 'lt' || mode === 'lte') {
+        const maxResult = parseFixedDocNormalNumber(target.rangeMax);
+        if (maxResult.empty) errors.bound = '値を入力してください';
+        else if (!maxResult.ok) errors.bound = '数値を入力してください';
+        return errors;
+      }
+      if (mode === 'gt' || mode === 'gte') {
+        const minResult = parseFixedDocNormalNumber(target.rangeMin);
+        if (minResult.empty) errors.bound = '値を入力してください';
+        else if (!minResult.ok) errors.bound = '数値を入力してください';
+        return errors;
+      }
+      return errors;
+    }
+    function revalidateFixedDocTextNormalCondition(fieldId) {
+      const row = fixedDocProcessRows.value.find((item) => item.fieldId === fieldId);
+      if (!row || !canFixedDocRowHaveNormalCondition(row)) {
+        clearFixedDocNormalConditionErrors('text', fieldId);
+        return;
+      }
+      applyFixedDocNormalConditionErrors('text', fieldId, validateFixedDocNormalConditionTarget(row));
+    }
+    function revalidateFixedDocTableColumnNormalCondition(tableId, columnId) {
+      const table = fixedDocReadTables.find((item) => item.id === tableId);
+      const col = table?.columns.find((item) => item.columnId === columnId);
+      if (!col || !canFixedDocTableColumnHaveNormalCondition(col)) {
+        clearFixedDocNormalConditionErrors(tableId, columnId);
+        return;
+      }
+      applyFixedDocNormalConditionErrors(tableId, columnId, validateFixedDocNormalConditionTarget(col));
+    }
+    function revalidateAllFixedDocNormalConditions() {
+      fixedDocProcessRows.value.forEach((row) => {
+        if (canFixedDocRowHaveNormalCondition(row)) revalidateFixedDocTextNormalCondition(row.fieldId);
+      });
+      fixedDocReadTables.forEach((table) => {
+        table.columns.forEach((col) => {
+          if (canFixedDocTableColumnHaveNormalCondition(col)) {
+            revalidateFixedDocTableColumnNormalCondition(table.id, col.columnId);
+          }
+        });
+      });
+      return Object.keys(fixedDocNormalConditionErrors).length > 0;
     }
     function inferFixedDocAiMatchingRule(fieldName) {
       if (/傷病|診断名|ICD10|医療機関/.test(fieldName)) return 'マスタ照合';
@@ -2458,13 +2748,25 @@ const appOptions = {
       if (col.normalValues === undefined) col.normalValues = '';
     }
     function setFixedDocTableColumnType(tableId, columnRef, type) {
-      setFixedDocTableColumnRule(tableId, columnRef, { type: normalizeFixedDocFieldType(type) });
+      const table = fixedDocReadTables.find((item) => item.id === tableId);
+      const col = table?.columns.find((item) => item.columnId === columnRef || item.no === columnRef);
+      if (!col) return;
+      const nextType = normalizeFixedDocFieldType(type);
+      setFixedDocTableColumnRule(tableId, columnRef, { type: nextType });
+      normalizeFixedDocNormalConditionForType(col, nextType);
     }
     function isFixedDocLowerBoundMode(mode) {
       return mode === 'gt' || mode === 'gte';
     }
-    function getFixedDocRangeModeOptionsByType() {
-      return fixedDocRangeModeOptions;
+    function getFixedDocRangeModeOptionsByType(type) {
+      const normalized = normalizeFixedDocFieldType(type);
+      if (normalized === 'enum') {
+        return fixedDocRangeModeOptions.filter((option) => option.value === 'enum');
+      }
+      if (normalized === 'number') {
+        return fixedDocRangeModeOptions.filter((option) => option.value !== 'enum');
+      }
+      return [];
     }
     function setFixedDocTableColumnRule(tableId, columnRef, patch) {
       const table = fixedDocReadTables.find((item) => item.id === tableId);
@@ -2472,17 +2774,21 @@ const appOptions = {
       if (!col) return;
       ensureFixedDocTableColumnRangeFields(col);
       Object.assign(col, patch);
+      if (patch.type !== undefined) {
+        normalizeFixedDocNormalConditionForType(col, col.type);
+      }
     }
     function setFixedDocTableColumnNormalConditionMode(tableId, columnRef, mode) {
       const table = fixedDocReadTables.find((item) => item.id === tableId);
       const col = table?.columns.find((item) => item.columnId === columnRef || item.no === columnRef);
       if (!mode) {
+        clearFixedDocNormalConditionErrors(tableId, col?.columnId || columnRef);
         setFixedDocTableColumnRule(tableId, columnRef, { rangeEnabled: false, rangeMode: 'between' });
         return;
       }
       const nextMode = getFixedDocTableColumnNormalConditionModeOptions(col).some((option) => option.value === mode)
         ? mode
-        : 'between';
+        : getDefaultFixedDocNormalConditionMode(col?.type);
       setFixedDocTableColumnRule(tableId, columnRef, { rangeEnabled: true, rangeMode: nextMode });
     }
     function buildFixedDocAiMatchingDraft() {
@@ -2672,7 +2978,7 @@ const appOptions = {
       const qrMap = getFixedDocFieldQrPreset(fieldName);
       const useQrMapping = shouldUseFixedDocQrPresetRule(fieldName);
       const rule = getFixedDocPostProcessRule(fieldName);
-      return {
+      const base = {
         rule,
         rangeEnabled: false,
         rangeMode: 'between',
@@ -2681,7 +2987,7 @@ const appOptions = {
         rangeMaxToday: false,
         normalValues: '',
         qrSourceId: useQrMapping && qrMap ? qrMap.qrSourceId : '',
-        fetchIndex: qrMap?.fetchIndex ?? 0,
+        fetchIndex: 0,
         sourceQr: useQrMapping && qrMap ? qrMap.qrSourceId : '',
         qrExtractMethod: useQrMapping ? FIXED_DOC_QR_EXTRACT_SPLIT : '',
         qrDelimiter: useQrMapping ? '$' : '',
@@ -2697,6 +3003,24 @@ const appOptions = {
         replaceTo: '',
         confidence: '95.0 %',
       };
+      if (fieldName === '通院日数') {
+        return {
+          ...base,
+          rangeEnabled: true,
+          rangeMode: 'between',
+          rangeMin: '1',
+          rangeMax: '15',
+        };
+      }
+      if (fieldName === '性別') {
+        return {
+          ...base,
+          rangeEnabled: true,
+          rangeMode: 'enum',
+          normalValues: '男,女',
+        };
+      }
+      return base;
     }
     function getDefaultFixedDocMaster(fieldName) {
       if (fieldName === '医療機関名') return '病院名・住所-病院名';
@@ -2711,13 +3035,13 @@ const appOptions = {
       return row?.rule === 'テキスト置換';
     }
     function isFixedDocRangeRule(row) {
-      return canFixedDocFieldHaveRange();
+      return canFixedDocFieldHaveRange(row);
     }
-    function canFixedDocRowHaveNormalCondition() {
-      return canFixedDocFieldHaveNormalCondition();
+    function canFixedDocRowHaveNormalCondition(row) {
+      return canFixedDocFieldTypeHaveNormalCondition(row?.type);
     }
-    function canFixedDocTableColumnHaveNormalCondition() {
-      return canFixedDocFieldHaveNormalCondition();
+    function canFixedDocTableColumnHaveNormalCondition(col) {
+      return canFixedDocFieldTypeHaveNormalCondition(col?.type);
     }
     function getFixedDocNormalConditionMode(row) {
       return row?.rangeEnabled ? (row.rangeMode || 'between') : '';
@@ -2754,18 +3078,18 @@ const appOptions = {
       }
       const previousQrSourceId = fixedDocFieldRules[fieldId].qrSourceId || '';
       Object.assign(fixedDocFieldRules[fieldId], patch, { fieldId });
-      const fieldType = normalizeFixedDocFieldType(fixedDocFieldTypes[fieldId] || fixedDocFieldRules[fieldId].type || meta?.type);
-      const rangeRule = fixedDocFieldRules[fieldId].rule || '';
       if (patch.rule !== undefined) {
-        if (rangeRule === 'マスタ照合' && !fixedDocFieldRules[fieldId].master) {
+        if (fixedDocFieldRules[fieldId].rule === 'マスタ照合' && !fixedDocFieldRules[fieldId].master) {
           fixedDocFieldRules[fieldId].master = getDefaultFixedDocMaster(fieldName);
         }
       }
       if (patch.type !== undefined) {
         fixedDocFieldTypes[fieldId] = normalizeFixedDocFieldType(patch.type);
       }
-      if (patch.rule !== undefined || patch.type !== undefined) {
+      const fieldType = normalizeFixedDocFieldType(fixedDocFieldTypes[fieldId] || meta?.type);
+      if (patch.type !== undefined || patch.rule !== undefined) {
         normalizeFixedDocFieldRuleForType(fieldId);
+        normalizeFixedDocNormalConditionForType(fixedDocFieldRules[fieldId], fieldType);
       }
       if (patch.qrSourceId) {
         fixedDocFieldRules[fieldId].sourceQr = patch.qrSourceId;
@@ -2781,7 +3105,8 @@ const appOptions = {
           extractMethod: patch.qrExtractMethod,
         };
       }
-      if (patch.qrDelimiter) {
+      if (patch.qrDelimiter !== undefined) {
+        delete fixedDocQrDelimiterErrors[fieldId];
         fixedDocFieldRules[fieldId].qrDetail = {
           ...(fixedDocFieldRules[fieldId].qrDetail || createDefaultFixedDocQrDetail()),
           delimiter: patch.qrDelimiter,
@@ -2792,15 +3117,28 @@ const appOptions = {
       }
       if (patch.qrSourceId !== undefined || patch.qrExtractMethod !== undefined || patch.sourceQr !== undefined) {
         const nextSourceId = fixedDocFieldRules[fieldId].qrSourceId || '';
-        if (patch.qrSourceId && patch.qrSourceId !== previousQrSourceId) {
+        if (patch.qrSourceId !== undefined && patch.qrSourceId !== previousQrSourceId) {
           delete fixedDocQrFetchIndexErrors[fieldId];
-          if (!fixedDocFieldRules[fieldId].fetchIndexManual) {
+          delete fixedDocQrFetchIndexDrafts[fieldId];
+          delete fixedDocQrDelimiterErrors[fieldId];
+          delete fixedDocQrDelimiterDrafts[fieldId];
+          if (patch.qrSourceId && !fixedDocFieldRules[fieldId].fetchIndexManual) {
             fixedDocFieldRules[fieldId].fetchIndex = getNextFixedDocQrFetchIndex(nextSourceId, fieldId);
           }
         }
-        ensureFixedDocQrFetchIndexes(nextSourceId);
+        if (patch.qrExtractMethod === FIXED_DOC_QR_EXTRACT_PLAIN) {
+          delete fixedDocQrFetchIndexErrors[fieldId];
+          delete fixedDocQrFetchIndexDrafts[fieldId];
+          delete fixedDocQrDelimiterErrors[fieldId];
+          delete fixedDocQrDelimiterDrafts[fieldId];
+        }
+        if (nextSourceId) ensureFixedDocQrFetchIndexes(nextSourceId);
         if (previousQrSourceId && previousQrSourceId !== nextSourceId) {
           ensureFixedDocQrFetchIndexes(previousQrSourceId);
+          revalidateFixedDocQrSourceFetchIndexes(previousQrSourceId);
+        }
+        if (nextSourceId && isFixedDocQrSplitExtractMethod(fixedDocFieldRules[fieldId])) {
+          revalidateFixedDocQrSourceFetchIndexes(nextSourceId);
         }
       }
       if (patch.qrExtractMethod === FIXED_DOC_QR_EXTRACT_SPLIT && fixedDocFieldRules[fieldId].qrSourceId) {
@@ -2809,17 +3147,20 @@ const appOptions = {
     }
     function setFixedDocNormalConditionMode(fieldRef, mode) {
       const row = getFixedDocFieldMeta(fieldRef);
+      const fieldId = row?.fieldId || fieldRef;
       if (!mode) {
+        clearFixedDocNormalConditionErrors('text', fieldId);
         setFixedDocFieldRule(fieldRef, { rangeEnabled: false, rangeMode: 'between' });
         return;
       }
       const nextMode = getFixedDocNormalConditionModeOptions(row).some((option) => option.value === mode)
         ? mode
-        : getDefaultFixedDocNormalConditionMode();
+        : getDefaultFixedDocNormalConditionMode(row?.type);
       setFixedDocFieldRule(fieldRef, { rangeEnabled: true, rangeMode: nextMode });
     }
-    function getDefaultFixedDocNormalConditionMode() {
-      return 'between';
+    function getDefaultFixedDocNormalConditionMode(fieldType = '') {
+      const type = normalizeFixedDocFieldType(fieldType);
+      return type === 'enum' ? 'enum' : 'between';
     }
     const fixedDocProcessRows = computed(() => {
       ensureFixedDocFieldRules();
@@ -2828,9 +3169,11 @@ const appOptions = {
         ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)),
       }));
     });
-    const fixedDocShowNormalConditionColumn = computed(() => fixedDocProcessRows.value.length > 0);
+    const fixedDocShowNormalConditionColumn = computed(() => (
+      fixedDocProcessRows.value.some((row) => canFixedDocFieldTypeHaveNormalCondition(row.type))
+    ));
     function shouldShowFixedDocTableNormalConditionColumn(table) {
-      return (table?.columns?.length || 0) > 0;
+      return (table?.columns || []).some((col) => canFixedDocFieldTypeHaveNormalCondition(col.type));
     }
     const fixedDocFieldNameOptions = computed(() => getFixedDocFieldNameList().map((name) => ({ value: name, label: name })));
     const fixedDocQrSourceOptions = computed(() => fixedDocQrSourceCatalog.map((slot) => ({
@@ -2983,10 +3326,8 @@ const appOptions = {
       if (text.length === 2) return `${text[0]}*`;
       return `${text[0]}${'＊'.repeat(Math.max(1, text.length - 2))}${text[text.length - 1]}`;
     }
-    const FIXED_DOC_TEST_OCR_REVIEW_MESSAGE = '自信度が閾値未満である';
-    function getFixedDocTestErrorMessage(needsReview, sourceLabel) {
-      if (!needsReview || sourceLabel === 'QR読取') return '';
-      return FIXED_DOC_TEST_OCR_REVIEW_MESSAGE;
+    function getFixedDocTestSourceLabel(useQrPreview) {
+      return useQrPreview ? 'QR読取' : 'OCR読取';
     }
     function parseFixedDocConfidencePercent(value) {
       const num = Number.parseFloat(String(value ?? '').replace(/[^\d.]/g, ''));
@@ -2997,31 +3338,30 @@ const appOptions = {
       if (threshold == null) return 75;
       return threshold > 1 ? threshold : threshold * 100;
     }
-    function getFixedDocTestSourceLabel(useQrPreview, hasQrMapping) {
-      if (useQrPreview) return 'QR読取';
-      if (hasQrMapping && fixedDocReadMode.value === 'qr') return 'QR→OCR兜底';
-      return '';
-    }
     function evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue) {
       const range = evaluateFixedDocTestRange(fieldRule, readValue);
       if (hasQrMapping && !qrValue && !ocrValue) {
         return { needsReview: true, reason: 'empty', range };
       }
       const hitlRules = readModelSettings.hitlRules || [];
-      if (hitlRules.includes('normal_range_exceeded') && range.status === 'fail' && canFixedDocFieldHaveRange()) {
-        return { needsReview: true, reason: 'range', range };
+      const confidence = parseFixedDocConfidencePercent(fieldRule.confidence);
+      const threshold = getFixedDocTestConfidenceThreshold();
+      const isLowConfidence = confidence != null && confidence < threshold;
+      if (hitlRules.includes('low_confidence') && isLowConfidence) {
+        return { needsReview: true, reason: 'low_confidence', range };
       }
-      if (hitlRules.includes('low_confidence')) {
-        const confidence = parseFixedDocConfidencePercent(fieldRule.confidence);
-        const threshold = getFixedDocTestConfidenceThreshold();
-        if (confidence != null && confidence < threshold) {
-          return { needsReview: true, reason: 'low_confidence', range };
-        }
+      if (
+        hitlRules.includes('low_confidence_and_range_exceeded')
+        && isLowConfidence
+        && range.status === 'fail'
+        && canFixedDocFieldHaveRange(fieldRule)
+      ) {
+        return { needsReview: true, reason: 'low_confidence_and_range', range };
       }
       return { needsReview: false, reason: '', range };
     }
     function evaluateFixedDocTestRange(row, value) {
-      const canRange = canFixedDocFieldHaveRange();
+      const canRange = canFixedDocFieldHaveRange(row);
       const buildDetail = (override = {}) => {
         if (!canRange) return '';
         const summaryRow = { ...row, rangeEnabled: true, ...override };
@@ -3042,6 +3382,17 @@ const appOptions = {
         return { status: 'skip', label: '範囲未設定', detail: '' };
       }
       const detail = buildDetail();
+      if ((row.rangeMode || 'between') === 'enum') {
+        const allowed = parseFixedDocNormalEnumValues(row.normalValues);
+        const normalized = normalizeFixedDocEnumCompareValue(value);
+        if (allowed.length && normalized && !allowed.some((item) => normalizeFixedDocEnumCompareValue(item) === normalized)) {
+          return { status: 'fail', label: '範囲越界', detail };
+        }
+        if (!value && row.required) {
+          return { status: 'fail', label: '必須未入力', detail };
+        }
+        return { status: 'pass', label: '範囲OK', detail };
+      }
       if (!value && row.required) {
         return { status: 'fail', label: '必須未入力', detail };
       }
@@ -3095,6 +3446,7 @@ const appOptions = {
     /** Step5 mock：覆盖部分字段的读取路径，便于展示 QR / 兜底 / 纯 OCR 与要確認 */
     const FIXED_DOC_TEST_READ_SCENARIOS = {
       ICD10コード: { path: 'ocr' },
+      通院日数: { confidence: '62.0 %' },
       医療機関名: { path: 'fallback', confidence: '62.0 %' },
     };
     function resolveFixedDocTestReadContext(fieldName, fieldRule, row) {
@@ -3133,8 +3485,7 @@ const appOptions = {
         const postProcess = fieldRule.rule || 'OCR読取';
         const processedValue = readValue || '—';
         const review = evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue);
-        const sourceLabel = getFixedDocTestSourceLabel(useQrPreview, hasQrMapping);
-        const errorMessage = getFixedDocTestErrorMessage(review.needsReview, sourceLabel);
+        const sourceLabel = getFixedDocTestSourceLabel(useQrPreview);
         return {
           no: idx + 1,
           name: row.name,
@@ -3142,7 +3493,6 @@ const appOptions = {
           postProcess,
           sourceLabel,
           error: review.needsReview,
-          errorMessage,
           fieldRule,
         };
       }).filter(Boolean);
@@ -3337,6 +3687,15 @@ const appOptions = {
     function openReadModelSettings() {
       readModelSettingsVisible.value = true;
     }
+    function toggleReadModelHitlRule(ruleValue, checked) {
+      const rules = readModelSettings.hitlRules;
+      if (checked) {
+        if (!rules.includes(ruleValue)) rules.push(ruleValue);
+        return;
+      }
+      const index = rules.indexOf(ruleValue);
+      if (index >= 0) rules.splice(index, 1);
+    }
     function handleFixedDocTemplateAction(command) {
       if (command === 'download-template') {
         exportFixedDocFieldTemplate();
@@ -3470,6 +3829,14 @@ const appOptions = {
       fixedDocSetupStep.value = Math.min(5, fixedDocSetupStep.value + 1);
     }
     function saveFixedDocSettings() {
+      if (revalidateAllFixedDocQrFetchIndexes()) {
+        ElementPlus.ElMessage.warning('QR分割設定の入力を確認してください');
+        return;
+      }
+      if (revalidateAllFixedDocNormalConditions()) {
+        ElementPlus.ElMessage.warning('正常条件の入力を確認してください');
+        return;
+      }
       ElementPlus.ElMessage.success('保存しました');
     }
 
@@ -12377,6 +12744,7 @@ const appOptions = {
       readModelSettingsVisible,
       readModelSettings,
       readModelHitlRules,
+      toggleReadModelHitlRule,
       getDocCompletenessFieldOptions,
       normalizeDocRequiredFields,
       getDocRequiredFieldCount,
@@ -12560,6 +12928,9 @@ const appOptions = {
       canFixedDocRowHaveNormalCondition,
       canFixedDocTableColumnHaveNormalCondition,
       getFixedDocNormalConditionMode,
+      getFixedDocNormalConditionError,
+      revalidateFixedDocTextNormalCondition,
+      revalidateFixedDocTableColumnNormalCondition,
       getFixedDocTableColumnNormalConditionMode,
       getFixedDocNormalConditionModeOptions,
       getFixedDocTableColumnNormalConditionModeOptions,
@@ -12598,6 +12969,12 @@ const appOptions = {
       shouldShowFixedDocQrFieldExtractMethod,
       getFixedDocQrFetchIndexInput,
       getFixedDocQrFetchIndexError,
+      focusFixedDocQrFetchIndexField,
+      getFixedDocQrDelimiterInput,
+      getFixedDocQrDelimiterError,
+      focusFixedDocQrDelimiterField,
+      setFixedDocQrDelimiterDraft,
+      commitFixedDocQrDelimiterDraft,
       beginFixedDocQrFetchIndexDraft,
       setFixedDocQrFetchIndexDraft,
       commitFixedDocQrFetchIndexDraft,
@@ -12624,6 +13001,8 @@ const appOptions = {
       shouldShowFixedDocFieldQrMapping,
       toggleFixedDocFieldQrMapping,
       getFixedDocRangeKind,
+      getFixedDocRangeInputPlaceholder,
+      getFixedDocNormalValuesPlaceholder,
       fixedDocOcrProcessRuleOptions,
       formatFixedDocRangeSummary,
       setFixedDocTableColumnRule,

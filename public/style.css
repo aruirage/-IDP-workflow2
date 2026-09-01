@@ -182,12 +182,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 0 0 4px;
+  padding: 0 0 6px 52px;
 }
 .global-nav-subitem {
   min-height: 36px;
   border: none;
-  padding: 0 16px 0 40px;
+  padding: 0 12px 0 0;
   color: #344054;
   background: transparent;
   border-radius: 6px;
@@ -7813,6 +7813,19 @@ code.export-config-meta-value {
   min-width: 0;
   table-layout: fixed;
 }
+.fixed-doc-table--qr-read td {
+  vertical-align: top;
+  height: auto;
+  min-height: 42px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.fixed-doc-qr-index-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
 .fixed-doc-table--read {
   min-width: 960px;
 }
@@ -7938,11 +7951,19 @@ code.export-config-meta-value {
 .fixed-doc-qr-index-input.is-error .el-input__wrapper {
   box-shadow: 0 0 0 1px #fda29b inset;
 }
+.fixed-doc-qr-delim-select.is-error .el-input__wrapper,
+.fixed-doc-range-input.is-error .el-input__wrapper,
+.fixed-doc-normal-values-input.is-error .el-input__wrapper {
+  box-shadow: 0 0 0 1px #fda29b inset;
+}
 .fixed-doc-field-error {
   margin: 4px 0 0;
   color: #b42318;
   font-size: 11px;
   line-height: 1.35;
+}
+.fixed-doc-table--qr-read .fixed-doc-field-error {
+  white-space: nowrap;
 }
 .fixed-doc-qr-index-input {
   width: 88px;

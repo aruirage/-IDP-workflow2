@@ -543,6 +543,9 @@ test('supports email recipients with delimiter-separated addresses in Step3 noti
   const core = await readFile(new URL('../scripts/workflow-core.js', import.meta.url), 'utf8');
 
   assert.match(core, /function parseNotifyEmailRecipients/);
+  assert.match(core, /function splitMultiValueDelimitedList/);
+  assert.match(core, /MULTI_VALUE_DELIMITER_SPLIT_RE = \/\[,，\]\+\//);
+  assert.doesNotMatch(core, /\\u3000/);
   assert.match(core, /function validateNotifyEmailRecipients/);
   assert.match(main, /emailRecipients: normalizeNotifyEmailRecipients\(rule\.emailRecipients\)/);
   assert.match(main, /validateNotifyEmailRecipients\(rule\.emailRecipients\)/);
