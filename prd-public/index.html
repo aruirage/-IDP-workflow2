@@ -379,7 +379,7 @@
       </div>
     </aside>
     <main class="main">
-      <div class="main__meta">由 PRD.zh-CN.md 生成 · 2026/9/2 13:52:50</div>
+      <div class="main__meta">由 PRD.zh-CN.md 生成 · 2026/9/2 14:18:48</div>
       <article class="paper">
 <h1>NeosAI 日本保险 IDP — 产品需求文档</h1>
 <h2 id="chapter-1" class="chapter-heading">第 1 章｜术语与词汇表</h2>
@@ -594,8 +594,8 @@
 <h4 class="subsection-heading" id="fig-step3-正常值范围">Step3 正常值范围</h4>
 <div class="figure-row figure-row--single">
 <figure class="screenshot-figure">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step3-range.png?v=1788232323181" data-caption="账票类型 Step3 · 正常条件（字段读取 + 表格读取）">
-    <img src="assets/fixed-doc-step3-range.png?v=1788232323181" alt="账票类型 Step3 · 正常条件（字段读取 + 表格读取）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step3-range.png?v=1788329877204" data-caption="账票类型 Step3 · 正常条件（字段读取 + 表格读取）">
+    <img src="assets/fixed-doc-step3-range.png?v=1788329877204" alt="账票类型 Step3 · 正常条件（字段读取 + 表格读取）" loading="lazy" />
   </button>
   <figcaption>账票类型 Step3 · 正常条件（字段读取 + 表格读取）</figcaption>
 </figure>
@@ -618,7 +618,7 @@
 <table><thead><tr><th>输出项</th><th>テキスト読取</th><th>テーブル情報読取</th><th>说明</th></tr></thead><tbody><tr><td>字段值</td><td>适用</td><td>适用（表格行）</td><td>只读展示 mock 读取结果</td></tr><tr><td>范围结论</td><td>适用</td><td>适用</td><td>仅 Step5：範囲OK / 超出正常值范围 + 配置区间（如 <code>1</code>～<code>15</code>）；越界时字段标红</td></tr><tr><td>读取来源标签</td><td>适用</td><td>—</td><td>仅 Step5：字段卡片右上角；QR読取 / OCR読取；纯 OCR 路径展示 OCR読取</td></tr><tr><td>要確認标记</td><td>适用</td><td>适用</td><td>命中要確認时输入框标红</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-step2-qr-界面文案日语">Step2 · QR 界面文案（日语）</h4>
 <p>Step2 字段读取 tab 与 QR 源条、映射表、提示与弹窗沿用原型日文文案（表格读取 tab 无 QR 相关项）。</p>
-<table><thead><tr><th>类型</th><th>界面文案（日语）</th><th>说明</th></tr></thead><tbody><tr><td>Tab</td><td>テキスト読取</td><td>Step2 字段读取 tab</td></tr><tr><td>Tab</td><td>テーブル情報読取</td><td>Step2 表格读取 tab（无 QR）</td></tr><tr><td>模式切换</td><td>OCR設定 / QR設定</td><td>仅字段读取 tab 内轻量切换</td></tr><tr><td>区域标题</td><td>QRソース</td><td>QR 源条标题</td></tr><tr><td>空态</td><td>Step1 でテンプレートをアップロードしてください</td><td>无 Step1 template</td></tr><tr><td>空态</td><td>読取中…</td><td>QR 扫描进行中</td></tr><tr><td>空态</td><td>QR を検出できませんでした。「QRスキャン」で再試行できます</td><td>扫描无检出</td></tr><tr><td>表头</td><td>番号 / 項目名 / 必須 / タイプ / QRソース / 取値方法 / 区切り文字 / 順序</td><td>字段映射表列；界面列名 タイプ = 字段类别</td></tr><tr><td>下拉占位</td><td>未選択（OCR）</td><td>QR 源下拉；未选则该字段 OCR</td></tr><tr><td>取値方法说明</td><td>OFF：QR 解码全文をそのままフィールドに書き込みます。ON：区切り文字と順序を入力し、指定した 1 段だけを取得します。</td><td>取値方法列 i 提示；OFF=全文 / ON=分割取 1 段</td></tr><tr><td>分隔符说明</td><td>区切り文字で split します。連続する区切り（例：$$）の間は空フィールドです。段内が空文字または空値占位の場合も空として扱います。</td><td>仅取値方法 ON 时生效；连续分隔符→空段</td></tr><tr><td>字段排序说明</td><td>分割時に QR 解码串から取る位置（1 起）。同一 QR ソース内で重複不可。</td><td>仅取値方法 ON 时生效；1 起、同源不重复</td></tr><tr><td>順序校验报错</td><td>順序を入力してください / 最大値を超えています / 順序が連番ではありません / 順序が重複しています</td><td>取値方法 ON 时 順序 列；空值、超上限、非连号、重复</td></tr><tr><td>分隔符校验报错</td><td>区切り文字を入力してください</td><td>取値方法 ON 时 区切り文字 列为空</td></tr><tr><td>タイプ（字段类别）说明</td><td>OCR設定で定義した項目タイプを表示します。QR読取では編集できません。</td><td>タイプ（字段类别）列 i 提示</td></tr><tr><td>QR源说明</td><td>QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1、QR2… と検出数に応じて割り当てます。テンプレート変更後は「QRスキャン」で再実行できます。</td><td>仅生成 QRソース目录；字段映射须手动</td></tr><tr><td>QR扫描重扫确认</td><td>既にフィールド映射が設定されています。QRスキャンを再実行すると、フィールド映射がクリアされ、QRソース目録が上書きされます。続行しますか？</td><td>映射表已有字段选 QRソース 时再次点击 QRスキャン；确认后清空字段映射并重扫目录；按钮「続行」「キャンセル」</td></tr></tbody></table>
+<table><thead><tr><th>类型</th><th>界面文案（日语）</th><th>说明</th></tr></thead><tbody><tr><td>Tab</td><td>テキスト読取</td><td>Step2 字段读取 tab</td></tr><tr><td>Tab</td><td>テーブル情報読取</td><td>Step2 表格读取 tab（无 QR）</td></tr><tr><td>模式切换</td><td>OCR設定 / QR設定</td><td>仅字段读取 tab 内轻量切换</td></tr><tr><td>区域标题</td><td>QRソース</td><td>QR 源条标题</td></tr><tr><td>空态</td><td>Step1 でテンプレートをアップロードしてください</td><td>无 Step1 template</td></tr><tr><td>空态</td><td>読取中…</td><td>QR 扫描进行中</td></tr><tr><td>空态</td><td>QR を検出できませんでした。「QRスキャン」で再試行できます</td><td>扫描无检出</td></tr><tr><td>表头</td><td>番号 / 項目名 / 必須 / タイプ / QRソース / 取値方法 / 区切り文字 / 順序</td><td>字段映射表列；界面列名 タイプ = 字段类别</td></tr><tr><td>下拉占位</td><td>未選択（OCR）</td><td>QR 源下拉；未选则该字段 OCR</td></tr><tr><td>取値方法说明</td><td>OFF：QR 解码全文をそのままフィールドに書き込みます。ON：区切り文字と順序を入力し、指定した 1 段だけを取得します。</td><td>取値方法列 i 提示；OFF=全文 / ON=分隔取 1 段</td></tr><tr><td>分隔符说明</td><td>区切り文字で split します。連続する区切り（例：$$）の間は空フィールドです。段内が空文字または空値占位の場合も空として扱います。</td><td>仅取値方法 ON 时生效；连续分隔符→空段</td></tr><tr><td>字段排序说明</td><td>分割時に QR 解码串から取る位置（1 起）。同一 QR ソース内で重複不可。</td><td>仅取値方法 ON 时生效；1 起、同源不重复</td></tr><tr><td>順序校验报错</td><td>順序を入力してください / 最大値を超えています / 順序が連番ではありません / 順序が重複しています</td><td>取値方法 ON 时 順序 列；空值、超上限、非连号、重复</td></tr><tr><td>分隔符校验报错</td><td>区切り文字を入力してください</td><td>取値方法 ON 时 区切り文字 列为空</td></tr><tr><td>タイプ（字段类别）说明</td><td>OCR設定で定義した項目タイプを表示します。QR読取では編集できません。</td><td>タイプ（字段类别）列 i 提示</td></tr><tr><td>QR源说明</td><td>QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1、QR2… と検出数に応じて割り当てます。テンプレート変更後は「QRスキャン」で再実行できます。</td><td>仅生成 QRソース目录；字段映射须手动</td></tr><tr><td>QR扫描重扫确认</td><td>既にフィールド映射が設定されています。QRスキャンを再実行すると、フィールド映射がクリアされ、QRソース目録が上書きされます。続行しますか？</td><td>映射表已有字段选 QRソース 时再次点击 QRスキャン；确认后清空字段映射并重扫目录；按钮「続行」「キャンセル」</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-按钮step2-qr">按钮（Step2 · QR）</h4>
 <table><thead><tr><th>按钮</th><th>界面文案（日语）</th><th>启用条件</th><th>点击后</th></tr></thead><tbody><tr><td>QR扫描</td><td>QRスキャン</td><td>Step1 有 template</td><td>仅重扫并更新 QRソース目录（QR1、QR2…）；不自动填写字段映射表的 QRソース / 取値方法 / 区切り文字 / 順序。已有字段 QR 映射时点击弹窗确认后先清空映射再重扫；无映射时直接扫描；按钮「続行」「キャンセル」</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-异常与边界">异常与边界</h4>
@@ -628,6 +628,14 @@
 <ol><li>读取模型弹窗确认规则扩展为七项（前五项为读取置信/Master 等既有规则，第六项为「正常値範囲を超えています」，第七项为「低信頼度かつ正常値範囲を超えています」）；复选框多选 OR；默认勾选规则 6 + 7；admin 可改为其他组合；任一已勾选规则命中 → OCR 抽出确认待办（多选细则见下节）。</li><li>画像不正 preprocessResult=reviewRequired → 前处理人工确认待办（非 OCR 抽出确认页）。</li><li>前处理确认页脱敏预览与字段展示（待确认）。</li><li>OCR 抽出确认执行页：要確認字段高亮 + 可编辑；不展示要確認原因、范围结论、配置区间、读取来源（读取来源仅账票类别设定 Step5 / 案件日志）。</li><li>QR 不单独产生待办类型；QR 与 OCR 路径汇合后按 6.04 适用矩阵 判定（QR 写值不适用规则 1、2、7；规则 6 为越界 alone）。</li></ol>
 <p>办结仍校验必填与正常值；未通过则阻断。</p>
 <h4 class="subsection-heading" id="fig-人工确认规则七项">人工确认规则（七项）</h4>
+<div class="figure-row figure-row--single">
+<figure class="screenshot-figure">
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/read-model-hitl-rules.png?v=1788329877197" data-caption="业务规则配置 · 読取モデル設定 · 人工確認ルール（七项 OR 多选，默认勾选「正常値範囲を超えています」「低信頼度かつ正常値範囲を超えています」）">
+    <img src="assets/read-model-hitl-rules.png?v=1788329877197" alt="业务规则配置 · 読取モデル設定 · 人工確認ルール（七项 OR 多选，默认勾选「正常値範囲を超えています」「低信頼度かつ正常値範囲を超えています」）" loading="lazy" />
+  </button>
+  <figcaption>业务规则配置 · 読取モデル設定 · 人工確認ルール（七项 OR 多选，默认勾选「正常値範囲を超えています」「低信頼度かつ正常値範囲を超えています」）</figcaption>
+</figure>
+</div>
 <p>配置入口：业务规则配置 → モデル設定 → 读取模型设置弹窗（人工确认触发规则，多选 OR，默认勾选规则 6 + 7）。</p>
 <table><thead><tr><th>序号</th><th>规则</th><th>判定对象</th><th>典型场景</th></tr></thead><tbody><tr><td>1</td><td>信頼度が閾値未満</td><td>OCR 模型读取置信度（仅 OCR / QR→OCR 兜底路径）</td><td>诊断书手写区域 OCR 仅 62%，低于读取模型阈值</td></tr><tr><td>2</td><td>多モデル結果不一致</td><td>主模型与校验模型输出</td><td>主模型读「齊藤」、校验模型读「斎藤」</td></tr><tr><td>3</td><td>Master照合類似度が低い</td><td>Step3 Master 照合后相似度</td><td>伤病情报与 ICD-10 词典最佳匹配低于阈值</td></tr><tr><td>4</td><td>Master照合結果が空</td><td>Step3 Master 照合无命中</td><td>医疗机构名在 Master 中查无结果</td></tr><tr><td>5</td><td>Master照合信頼度が低い</td><td>Master 照合返回置信度</td><td>照合有候选但置信度不足</td></tr><tr><td>6</td><td>正常値範囲を超えています</td><td>Step3 正常条件越界（全路径：QR 写值、OCR、兜底）</td><td>QR：通院日数 QR 读值 <code>20</code> 超出 <code>1</code>～<code>15</code>；OCR：置信正常但越界</td></tr><tr><td>7</td><td>低信頼度かつ正常値範囲を超えています</td><td>Step3 正常条件越界；仅 OCR / QR→OCR 兜底；须 OCR 读取置信低于阈值 且 越界</td><td>OCR：通院日数置信 62% 且后处理值 <code>20</code> 超出 <code>1</code>～<code>15</code></td></tr></tbody></table>
 <p>七项为 OR 关系：账票级任一字段命中 → 该账票合并为一条 OCR 抽出确认待办。</p>
