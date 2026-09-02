@@ -1490,12 +1490,12 @@ const appOptions = {
     function updateFixedDocQrSourceMappingRefs(idMap, removedSourceId) {
       Object.keys(fixedDocFieldRules).forEach((fieldRef) => {
         const rule = fixedDocFieldRules[fieldRef];
-        if (!rule) return;
+        if (!rule || !rule.qrSourceId) return;
         const nextId = idMap[rule.qrSourceId];
         if (nextId) {
           rule.qrSourceId = nextId;
           rule.sourceQr = nextId;
-        } else if (rule.qrSourceId === removedSourceId) {
+        } else if (removedSourceId && rule.qrSourceId === removedSourceId) {
           const fallback = getDefaultFixedDocQrSourceId();
           rule.qrSourceId = fallback;
           rule.sourceQr = fallback;
@@ -1503,11 +1503,12 @@ const appOptions = {
       });
       fixedDocReadTables.forEach((table) => {
         table.columns.forEach((column) => {
+          if (!column.qrSourceId) return;
           const nextId = idMap[column.qrSourceId];
           if (nextId) {
             column.qrSourceId = nextId;
             column.sourceQr = nextId;
-          } else if (column.qrSourceId === removedSourceId) {
+          } else if (removedSourceId && column.qrSourceId === removedSourceId) {
             const fallback = getDefaultFixedDocQrSourceId();
             column.qrSourceId = fallback;
             column.sourceQr = fallback;
@@ -2083,6 +2084,7 @@ const appOptions = {
     const fixedDocQrSourceCatalog = reactive([]);
     const fixedDocQrIgnoredDetections = reactive([]);
     const fixedDocQrScanActive = ref(false);
+    const fixedDocQrSuppressAutoSourceAssignment = ref(false);
     let fixedDocQrScanRunToken = 0;
     const FIXED_DOC_QR_SAMPLE_PAYLOADS = {
       QR1: '040c1$001$LIAJ045-A01-202104^安達　珠美$女$0000214951$1960$11$9$上行結腸癌$C182$$1$$1$$$$不詳$$$$不詳$$$$$$2026$5$18$$$$$1$2026$5$28$20',
@@ -2112,7 +2114,7 @@ const appOptions = {
     };
     function normalizeFixedDocQrExtractMethod(method) {
       if (method === '特殊OCR（区切り分割）') return FIXED_DOC_QR_EXTRACT_SPLIT;
-      if (method === '分割' || method === '区切り文字で分割' || method === '文字列分割') return FIXED_DOC_QR_EXTRACT_SPLIT;
+      if (method === '分割' || method === '区切り' || method === '区切り文字で分割' || method === '文字列分割') return FIXED_DOC_QR_EXTRACT_SPLIT;
       if (method === '全文を使用' || method === '普通OCR') return FIXED_DOC_QR_EXTRACT_PLAIN;
       return method || FIXED_DOC_QR_EXTRACT_SPLIT;
     }
@@ -2215,6 +2217,7 @@ const appOptions = {
     }
     function clearAllFixedDocConfiguredQrFieldMappings() {
       ensureFixedDocFieldRules();
+      fixedDocQrSuppressAutoSourceAssignment.value = true;
       fixedDocTextRows.value.forEach((row) => {
         const fieldId = row.fieldId;
         const rule = fixedDocFieldRules[fieldId];
@@ -2235,7 +2238,7 @@ const appOptions = {
       fixedDocQrFetchIndexBootstrapped = false;
     }
     function ensureFixedDocQrSourceAssignments() {
-      if (fixedDocReadMode.value !== 'qr') return;
+      if (fixedDocReadMode.value !== 'qr' || fixedDocQrSuppressAutoSourceAssignment.value) return;
       ensureFixedDocFieldRules();
       fixedDocTextRows.value.forEach((row) => {
         if (fixedDocFieldRules[row.fieldId]?.qrSourceId) return;
@@ -3892,6 +3895,7 @@ const appOptions = {
       if (readMode !== 'qr') {
         fixedDocQrScanRunToken += 1;
         fixedDocQrScanActive.value = false;
+        fixedDocQrSuppressAutoSourceAssignment.value = false;
         return;
       }
       nextTick(() => ensureFixedDocQrSourceAssignments());

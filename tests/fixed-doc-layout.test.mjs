@@ -138,6 +138,10 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(main, /fixedDocHasConfiguredFieldQrMapping\.value[\s\S]*ElMessageBox\.confirm/);
   assert.match(main, /既にフィールド映射が設定されています。QRスキャンを再実行すると、フィールド映射がクリアされ、QRソース目録が上書きされます。続行しますか？/);
   assert.match(main, /function clearAllFixedDocConfiguredQrFieldMappings/);
+  assert.match(main, /function updateFixedDocQrSourceMappingRefs\(idMap, removedSourceId\)/);
+  assert.match(main, /if \(!rule \|\| !rule\.qrSourceId\) return;/);
+  assert.match(main, /else if \(removedSourceId && rule\.qrSourceId === removedSourceId\)/);
+  assert.match(main, /fixedDocQrSuppressAutoSourceAssignment/);
   assert.match(main, /runFixedDocQrSourcesScan\(\{ clearFieldMappings: true \}\)/);
   assert.match(main, /skipQrSourceAssignments: !!options\.clearFieldMappings/);
   assert.match(html, /class="fixed-doc-ai-generate"[\s\S]*@click="runFixedDocAiGenerate"[\s\S]*>AI自動生成/);
@@ -190,7 +194,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.doesNotMatch(css, /\.fixed-doc-qr-fetch-index/);
   assert.doesNotMatch(main, /const FIXED_DOC_QR_EXTRACT_PLAIN = '普通OCR';/);
   assert.match(main, /const FIXED_DOC_QR_EXTRACT_PLAIN = '全文';/);
-  assert.match(main, /const FIXED_DOC_QR_EXTRACT_SPLIT = '区切り';/);
+  assert.match(main, /const FIXED_DOC_QR_EXTRACT_SPLIT = '分割';/);
   assert.match(main, /function setFixedDocQrSplitEnabled\(fieldRef, enabled\) \{[\s\S]*?qrExtractMethod: enabled \? FIXED_DOC_QR_EXTRACT_SPLIT : FIXED_DOC_QR_EXTRACT_PLAIN/);
   assert.doesNotMatch(html, /<th>操作・処理<\/th>/);
   assert.match(html, /<th class="fixed-doc-row-actions-col">操作<\/th>/);
