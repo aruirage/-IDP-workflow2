@@ -512,6 +512,7 @@ const appOptions = {
       ['未指定', '未指定'],
       ['全帳票タイプ', '全部账票类型'],
       ['全帳票', '全部账票'],
+      ['分割', '分隔'],
       ['区切り', '分隔'],
       ['白紙', '空白页'],
       ['フォルダ階層', '文件夹层级'],
@@ -2056,7 +2057,7 @@ const appOptions = {
     const fixedDocNumberRangeModeValues = new Set(['between', 'lt', 'lte', 'gt', 'gte']);
     const FIXED_DOC_QR_RULE_PRESET = '事前定義QRソースから取得';
     const FIXED_DOC_QR_EXTRACT_PLAIN = '全文';
-    const FIXED_DOC_QR_EXTRACT_SPLIT = '区切り';
+    const FIXED_DOC_QR_EXTRACT_SPLIT = '分割';
     const fixedDocQrFailureRuleOptions = ['空文字を出力', '要確認（HITL）', '処理失敗'];
     const fixedDocQrDelimiterOptions = ['$', '|', ',', ';', '\\t'];
     const fixedDocQrEmptyTokenOptions = ['-', '*', '#', '（空）'];

@@ -175,7 +175,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(html, /<th class="fixed-doc-qr-extract-col">[\s\S]*?取値方法/);
   assert.match(html, /取値方法[\s\S]*?OFF：QR 解码全文をそのままフィールドに書き込みます/);
   assert.match(html, /取値方法[\s\S]*?ON：区切り文字と順序を入力し、指定した 1 段だけを取得します/);
-  assert.match(step2QrHtml, /<el-switch[\s\S]*:model-value="isFixedDocQrSplitExtractMethod\(row\)"[\s\S]*class="fixed-doc-qr-split-switch"[\s\S]*active-text="区切り"[\s\S]*inactive-text="全文"[\s\S]*@change="setFixedDocQrSplitEnabled\(row\.fieldId, \$event\)"/);
+  assert.match(step2QrHtml, /<el-switch[\s\S]*:model-value="isFixedDocQrSplitExtractMethod\(row\)"[\s\S]*class="fixed-doc-qr-split-switch"[\s\S]*active-text="分割"[\s\S]*inactive-text="全文"[\s\S]*@change="setFixedDocQrSplitEnabled\(row\.fieldId, \$event\)"/);
   assert.doesNotMatch(step2QrHtml, /fixed-doc-qr-extract-select/);
   assert.match(html, /<th class="fixed-doc-qr-index-col">[\s\S]*?順序/);
   assert.match(step2QrHtml, /fixed-doc-qr-index-col/);

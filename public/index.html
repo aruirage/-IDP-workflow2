@@ -534,7 +534,7 @@
                                   </th>
                                   <th class="fixed-doc-qr-index-col">
                                     順序
-                                    <el-tooltip placement="top" :show-after="200" content="区切り時に QR 解码串から取る位置（1 起）。同一 QR ソース内で重複不可。">
+                                    <el-tooltip placement="top" :show-after="200" content="分割時に QR 解码串から取る位置（1 起）。同一 QR ソース内で重複不可。">
                                       <span class="fixed-doc-info" tabindex="0">i</span>
                                     </el-tooltip>
                                   </th>
@@ -575,7 +575,7 @@
                                       :model-value="isFixedDocQrSplitExtractMethod(row)"
                                       size="small"
                                       class="fixed-doc-qr-split-switch"
-                                      active-text="区切り"
+                                      active-text="分割"
                                       inactive-text="全文"
                                       @change="setFixedDocQrSplitEnabled(row.fieldId, $event)"
                                     ></el-switch>
