@@ -3,8 +3,8 @@ const WF_CANONICAL_LAYOUT_KEY = 'neosai-idp-wf-canonical-layout-v27';
 
 const appOptions = {
   setup() {
-    localStorage.setItem('neosai-idp-ui-language', 'ja');
-    const uiLanguage = ref('ja');
+    const storedUiLanguage = localStorage.getItem('neosai-idp-ui-language');
+    const uiLanguage = ref(storedUiLanguage === 'zh' ? 'zh' : 'ja');
     const sceneSearch = ref('');
     const currentSceneId = ref('2064639102406844416');
     const currentNode = ref('scene');
@@ -115,6 +115,8 @@ const appOptions = {
     const sceneSetupNetworkViewportSize = reactive({ width: 0, height: 0 });
     let sceneSetupNetworkResizeObserver = null;
     const UI_ZH_REPLACEMENTS = [
+      ['列プロンプト', '列プロンプト（提示词）'],
+      ['プロンプト', 'プロンプト（提示词）'],
       ['次へ', '下一步'],
       ['前へ', '上一步'],
       ['業務シーン・案件集約', '业务场景・案件集约'],
@@ -1917,9 +1919,8 @@ const appOptions = {
       fixedDocFieldTypes[fieldId] = nextType;
       ensureFixedDocFieldRules();
       if (fixedDocFieldRules[fieldId]) {
-        normalizeFixedDocNormalConditionForType(fixedDocFieldRules[fieldId], nextType);
+        normalizeFixedDocFieldRuleForType(fieldId);
       }
-      normalizeFixedDocFieldRuleForType(fieldId);
     }
     function normalizeFixedDocFieldRuleForType(fieldRef) {
       ensureFixedDocFieldRules();
@@ -2053,7 +2054,7 @@ const appOptions = {
     const fixedDocNumberRangeModeValues = new Set(['between', 'lt', 'lte', 'gt', 'gte']);
     const FIXED_DOC_QR_RULE_PRESET = '事前定義QRソースから取得';
     const FIXED_DOC_QR_EXTRACT_PLAIN = '全文';
-    const FIXED_DOC_QR_EXTRACT_SPLIT = '分割';
+    const FIXED_DOC_QR_EXTRACT_SPLIT = '区切り';
     const fixedDocQrFailureRuleOptions = ['空文字を出力', '要確認（HITL）', '処理失敗'];
     const fixedDocQrDelimiterOptions = ['$', '|', ',', ';', '\\t'];
     const fixedDocQrEmptyTokenOptions = ['-', '*', '#', '（空）'];
@@ -2110,7 +2111,7 @@ const appOptions = {
     };
     function normalizeFixedDocQrExtractMethod(method) {
       if (method === '特殊OCR（区切り分割）') return FIXED_DOC_QR_EXTRACT_SPLIT;
-      if (method === '区切り文字で分割' || method === '文字列分割') return FIXED_DOC_QR_EXTRACT_SPLIT;
+      if (method === '分割' || method === '区切り文字で分割' || method === '文字列分割') return FIXED_DOC_QR_EXTRACT_SPLIT;
       if (method === '全文を使用' || method === '普通OCR') return FIXED_DOC_QR_EXTRACT_PLAIN;
       return method || FIXED_DOC_QR_EXTRACT_SPLIT;
     }
@@ -2210,6 +2211,27 @@ const appOptions = {
     function getDefaultFixedDocQrSourceId(fieldName = '') {
       const preset = getFixedDocFieldQrPreset(fieldName);
       return preset?.qrSourceId || fixedDocQrSourceCatalog[0]?.id || 'QR1';
+    }
+    function clearAllFixedDocConfiguredQrFieldMappings() {
+      ensureFixedDocFieldRules();
+      fixedDocTextRows.value.forEach((row) => {
+        const fieldId = row.fieldId;
+        const rule = fixedDocFieldRules[fieldId];
+        if (!rule?.qrSourceId) return;
+        delete fixedDocQrFetchIndexErrors[fieldId];
+        delete fixedDocQrFetchIndexDrafts[fieldId];
+        delete fixedDocQrDelimiterErrors[fieldId];
+        delete fixedDocQrDelimiterDrafts[fieldId];
+        setFixedDocFieldRule(fieldId, {
+          qrSourceId: '',
+          sourceQr: '',
+          qrExtractMethod: '',
+          qrDelimiter: '',
+          fetchIndexManual: false,
+        });
+        delete fixedDocFieldRules[fieldId].fetchIndex;
+      });
+      fixedDocQrFetchIndexBootstrapped = false;
     }
     function ensureFixedDocQrSourceAssignments() {
       if (fixedDocReadMode.value !== 'qr') return;
@@ -2547,12 +2569,17 @@ const appOptions = {
         });
       });
     }
-    function canFixedDocFieldHaveRange(row) {
-      return canFixedDocFieldTypeHaveNormalCondition(row?.type);
+    function canFixedDocRuleHaveNormalCondition(rule = '') {
+      const normalized = String(rule || '').trim();
+      if (!normalized) return false;
+      return normalized !== 'マスタ照合' && normalized !== 'テキスト置換';
     }
-    function canFixedDocFieldTypeHaveNormalCondition(fieldType = '') {
-      const type = normalizeFixedDocFieldType(fieldType);
-      return type === 'number' || type === 'enum';
+    function getFixedDocRangeModeOptionsByRule(rule = '') {
+      if (!canFixedDocRuleHaveNormalCondition(rule)) return [];
+      return fixedDocRangeModeOptions;
+    }
+    function canFixedDocFieldHaveRange(row) {
+      return canFixedDocRuleHaveNormalCondition(row?.rule);
     }
     function clearFixedDocNormalConditionFields(target = {}) {
       target.rangeEnabled = false;
@@ -2562,17 +2589,16 @@ const appOptions = {
       target.rangeMaxToday = false;
       target.normalValues = '';
     }
-    function normalizeFixedDocNormalConditionForType(target = {}, fieldType = '') {
-      const type = normalizeFixedDocFieldType(fieldType);
-      if (!canFixedDocFieldTypeHaveNormalCondition(type)) {
+    function normalizeFixedDocNormalConditionForRule(target = {}, rule = '') {
+      if (!canFixedDocRuleHaveNormalCondition(rule)) {
         clearFixedDocNormalConditionFields(target);
         return;
       }
       if (!target.rangeEnabled) return;
-      const allowedModes = getFixedDocRangeModeOptionsByType(type).map((item) => item.value);
+      const allowedModes = getFixedDocRangeModeOptionsByRule(rule).map((item) => item.value);
       const currentMode = target.rangeMode || 'between';
       if (!allowedModes.includes(currentMode)) {
-        target.rangeMode = getDefaultFixedDocNormalConditionMode(type);
+        target.rangeMode = getDefaultFixedDocNormalConditionModeByRule();
         if (target.rangeMode === 'enum') {
           target.rangeMin = '';
           target.rangeMax = '';
@@ -2753,20 +2779,9 @@ const appOptions = {
       if (!col) return;
       const nextType = normalizeFixedDocFieldType(type);
       setFixedDocTableColumnRule(tableId, columnRef, { type: nextType });
-      normalizeFixedDocNormalConditionForType(col, nextType);
     }
     function isFixedDocLowerBoundMode(mode) {
       return mode === 'gt' || mode === 'gte';
-    }
-    function getFixedDocRangeModeOptionsByType(type) {
-      const normalized = normalizeFixedDocFieldType(type);
-      if (normalized === 'enum') {
-        return fixedDocRangeModeOptions.filter((option) => option.value === 'enum');
-      }
-      if (normalized === 'number') {
-        return fixedDocRangeModeOptions.filter((option) => option.value !== 'enum');
-      }
-      return [];
     }
     function setFixedDocTableColumnRule(tableId, columnRef, patch) {
       const table = fixedDocReadTables.find((item) => item.id === tableId);
@@ -2774,8 +2789,8 @@ const appOptions = {
       if (!col) return;
       ensureFixedDocTableColumnRangeFields(col);
       Object.assign(col, patch);
-      if (patch.type !== undefined) {
-        normalizeFixedDocNormalConditionForType(col, col.type);
+      if (patch.rule !== undefined) {
+        normalizeFixedDocNormalConditionForRule(col, col.rule);
       }
     }
     function setFixedDocTableColumnNormalConditionMode(tableId, columnRef, mode) {
@@ -2788,7 +2803,7 @@ const appOptions = {
       }
       const nextMode = getFixedDocTableColumnNormalConditionModeOptions(col).some((option) => option.value === mode)
         ? mode
-        : getDefaultFixedDocNormalConditionMode(col?.type);
+        : getDefaultFixedDocNormalConditionModeByRule();
       setFixedDocTableColumnRule(tableId, columnRef, { rangeEnabled: true, rangeMode: nextMode });
     }
     function buildFixedDocAiMatchingDraft() {
@@ -3038,10 +3053,10 @@ const appOptions = {
       return canFixedDocFieldHaveRange(row);
     }
     function canFixedDocRowHaveNormalCondition(row) {
-      return canFixedDocFieldTypeHaveNormalCondition(row?.type);
+      return canFixedDocRuleHaveNormalCondition(row?.rule);
     }
     function canFixedDocTableColumnHaveNormalCondition(col) {
-      return canFixedDocFieldTypeHaveNormalCondition(col?.type);
+      return canFixedDocRuleHaveNormalCondition(col?.rule);
     }
     function getFixedDocNormalConditionMode(row) {
       return row?.rangeEnabled ? (row.rangeMode || 'between') : '';
@@ -3050,10 +3065,10 @@ const appOptions = {
       return col?.rangeEnabled ? (col.rangeMode || 'between') : '';
     }
     function getFixedDocNormalConditionModeOptions(row) {
-      return getFixedDocRangeModeOptionsByType(row?.type);
+      return getFixedDocRangeModeOptionsByRule(row?.rule);
     }
     function getFixedDocTableColumnNormalConditionModeOptions(col) {
-      return getFixedDocRangeModeOptionsByType(col?.type);
+      return getFixedDocRangeModeOptionsByRule(col?.rule);
     }
     function hasFixedDocRuleParams(row) {
       return isFixedDocMasterRule(row) || isFixedDocTextReplaceRule(row) || canFixedDocRowHaveNormalCondition(row);
@@ -3087,9 +3102,14 @@ const appOptions = {
         fixedDocFieldTypes[fieldId] = normalizeFixedDocFieldType(patch.type);
       }
       const fieldType = normalizeFixedDocFieldType(fixedDocFieldTypes[fieldId] || meta?.type);
-      if (patch.type !== undefined || patch.rule !== undefined) {
+      if (patch.type !== undefined) {
         normalizeFixedDocFieldRuleForType(fieldId);
-        normalizeFixedDocNormalConditionForType(fixedDocFieldRules[fieldId], fieldType);
+      }
+      if (patch.rule !== undefined) {
+        normalizeFixedDocNormalConditionForRule(
+          fixedDocFieldRules[fieldId],
+          fixedDocFieldRules[fieldId].rule,
+        );
       }
       if (patch.qrSourceId) {
         fixedDocFieldRules[fieldId].sourceQr = patch.qrSourceId;
@@ -3153,14 +3173,14 @@ const appOptions = {
         setFixedDocFieldRule(fieldRef, { rangeEnabled: false, rangeMode: 'between' });
         return;
       }
-      const nextMode = getFixedDocNormalConditionModeOptions(row).some((option) => option.value === mode)
+      const fieldRule = fixedDocFieldRules[fieldId] || {};
+      const nextMode = getFixedDocNormalConditionModeOptions({ rule: fieldRule.rule }).some((option) => option.value === mode)
         ? mode
-        : getDefaultFixedDocNormalConditionMode(row?.type);
+        : getDefaultFixedDocNormalConditionModeByRule();
       setFixedDocFieldRule(fieldRef, { rangeEnabled: true, rangeMode: nextMode });
     }
-    function getDefaultFixedDocNormalConditionMode(fieldType = '') {
-      const type = normalizeFixedDocFieldType(fieldType);
-      return type === 'enum' ? 'enum' : 'between';
+    function getDefaultFixedDocNormalConditionModeByRule() {
+      return 'between';
     }
     const fixedDocProcessRows = computed(() => {
       ensureFixedDocFieldRules();
@@ -3170,10 +3190,10 @@ const appOptions = {
       }));
     });
     const fixedDocShowNormalConditionColumn = computed(() => (
-      fixedDocProcessRows.value.some((row) => canFixedDocFieldTypeHaveNormalCondition(row.type))
+      fixedDocProcessRows.value.some((row) => canFixedDocRowHaveNormalCondition(row))
     ));
     function shouldShowFixedDocTableNormalConditionColumn(table) {
-      return (table?.columns || []).some((col) => canFixedDocFieldTypeHaveNormalCondition(col.type));
+      return (table?.columns || []).some((col) => canFixedDocTableColumnHaveNormalCondition(col));
     }
     const fixedDocFieldNameOptions = computed(() => getFixedDocFieldNameList().map((name) => ({ value: name, label: name })));
     const fixedDocQrSourceOptions = computed(() => fixedDocQrSourceCatalog.map((slot) => ({
@@ -3228,7 +3248,7 @@ const appOptions = {
           .filter(Boolean),
       );
     }
-    function applyFixedDocQrSourcesFromTemplate() {
+    function applyFixedDocQrSourcesFromTemplate(options = {}) {
       const detections = listFixedDocQrTemplateDetections();
       const excludedKeys = getFixedDocQrExcludedSourceKeys();
       const scanKeys = new Set(detections.map((detection) => detection.sourceKey));
@@ -3264,7 +3284,9 @@ const appOptions = {
         });
       });
       reindexFixedDocQrSources();
-      ensureFixedDocQrSourceAssignments();
+      if (!options.skipQrSourceAssignments) {
+        ensureFixedDocQrSourceAssignments();
+      }
       return true;
     }
     function waitFixedDocQrScan(ms) {
@@ -3283,11 +3305,14 @@ const appOptions = {
       const runToken = fixedDocQrScanRunToken + 1;
       fixedDocQrScanRunToken = runToken;
       fixedDocQrScanActive.value = true;
+      if (options.clearFieldMappings) {
+        clearAllFixedDocConfiguredQrFieldMappings();
+      }
       fixedDocQrSourceCatalog.splice(0, fixedDocQrSourceCatalog.length);
       fixedDocActiveQrSourceId.value = '';
       await waitFixedDocQrScan(900);
       if (runToken !== fixedDocQrScanRunToken) return false;
-      applyFixedDocQrSourcesFromTemplate();
+      applyFixedDocQrSourcesFromTemplate({ skipQrSourceAssignments: !!options.clearFieldMappings });
       fixedDocQrScanActive.value = false;
       if (!options.silent) {
         ElementPlus.ElMessage.success('読取成功');
@@ -3298,9 +3323,9 @@ const appOptions = {
       return runFixedDocQrSourcesScan(options);
     }
     function parseFixedDocQrSourcesFromTemplate() {
-      if (fixedDocHasQrSourceCatalog.value) {
+      if (fixedDocHasConfiguredFieldQrMapping.value) {
         ElementPlus.ElMessageBox.confirm(
-          'QRスキャンを再実行すると、現在の QRソース目録が上書きされます。続行しますか？',
+          '既にフィールド映射が設定されています。QRスキャンを再実行すると、フィールド映射がクリアされ、QRソース目録が上書きされます。続行しますか？',
           'QRスキャン',
           {
             confirmButtonText: '続行',
@@ -3308,14 +3333,14 @@ const appOptions = {
             type: 'warning',
           },
         ).then(() => {
-          runFixedDocQrSourcesScan();
+          runFixedDocQrSourcesScan({ clearFieldMappings: true });
         }).catch(() => {});
         return;
       }
       runFixedDocQrSourcesScan();
     }
     function runFixedDocOcrAiGenerate() {
-      ElementPlus.ElMessage.success('OCR プロンプトと正解サンプルを AI 生成しました');
+      ElementPlus.ElMessage.success('OCR promptと正解サンプルを AI 生成しました');
     }
     function runFixedDocAiGenerate() {
       runFixedDocOcrAiGenerate();
@@ -3835,7 +3860,7 @@ const appOptions = {
     }
     function saveFixedDocSettings() {
       if (revalidateAllFixedDocQrFetchIndexes()) {
-        ElementPlus.ElMessage.warning('QR分割設定の入力を確認してください');
+        ElementPlus.ElMessage.warning('QR区切り設定の入力を確認してください');
         return;
       }
       if (revalidateAllFixedDocNormalConditions()) {

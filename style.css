@@ -77,6 +77,30 @@ body {
   max-width: 168px;
   object-fit: contain;
 }
+.global-topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.global-lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  min-width: 52px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: #fff;
+  color: #344054;
+  font-family: var(--app-font-family);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.global-lang-toggle:hover {
+  background: #f5f5f5;
+}
 .global-user-menu {
   display: inline-flex;
   align-items: center;

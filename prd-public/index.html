@@ -379,39 +379,41 @@
       </div>
     </aside>
     <main class="main">
-      <div class="main__meta">由 PRD.zh-CN.md 生成 · 2026/9/1 21:58:58</div>
+      <div class="main__meta">由 PRD.zh-CN.md 生成 · 2026/9/2 12:27:27</div>
       <article class="paper">
 <h1>NeosAI 日本保险 IDP — 产品需求文档</h1>
 <h2 id="chapter-1" class="chapter-heading">第 1 章｜术语与词汇表</h2>
 <h3 class="section-heading">1.1 术语表（本期新增）</h3>
-<table><thead><tr><th>中文</th><th>日语/界面</th><th>定义</th></tr></thead><tbody><tr><td>画像不正検知</td><td>画像不正検知</td><td>前处理节点内模块：整合 PS 加工、AI 生成图像、模板特征不一致检测；模型输出二分值（通过/不通过）；模块开关 + 对象账票</td></tr><tr><td>QR 字段读取</td><td>QR読取</td><td>运行时能力：仅针对 Step2 字段读取 tab（界面：テキスト読取）配置的 QR 映射；OCR 节点执行时工具扫描/解码并按映射写值；テーブル情報読取 不参与 QR</td></tr><tr><td>QR 源</td><td>QRソース</td><td>账票级逻辑槽位（QR1、QR2…）；配置端在固定账票下方扫描区域内从左到右检出；检出几个生成几个；目录仅展示扫描结果，不可手动删改</td></tr><tr><td>取值方法</td><td>取値方法</td><td>字段级 QR 分割开关：关闭时全文取值，开启时按分割符与字段排序取值</td></tr><tr><td>分割符</td><td>区切り文字</td><td>分割模式下用于 split QR 解码串的 delimiter；连续分隔符之间视为空字段；段内空串或空值占位亦视为空</td></tr><tr><td>字段排序</td><td>順序</td><td>分割模式下，从 QR 解码串中取第几个片段（1 起）；同一 QR 源内 N=该源分割映射字段总数，順序须为 1～N 连号且不重复</td></tr><tr><td>正常范围</td><td>正常範囲</td><td>Step3 正常条件：按 Step2 タイプ 决定；<code>string</code> 不可配；<code>number</code> 可配数值范围；<code>enum</code> 仅列挙；比较对象为 処理ルール 后处理产物</td></tr><tr><td>PII</td><td>PII</td><td>个人可识别信息（Personally Identifiable Information）：可识别具体个人的信息，如姓名、地址、电话、证件号、病历号等；本期不在 Step2 单独配置 PII 规则，而由前处理「敏感情报检出」按 Step2 マスク=ON 字段在实例影像上检测并打码</td></tr><tr><td>脱敏标记</td><td>マスク</td><td>Step2 OCR設定 字段/表格列开关：标记该字段为前处理脱敏对象；マスク=ON 的字段参与 PII 检测与打码；导出与详情展示脱敏后值</td></tr><tr><td>敏感情报检出</td><td>敏感情報検出</td><td>前处理节点内固定子模块：对 Step2 マスク=ON 字段做 PII 检测与图像打码；模块开关 + 对象账票；工程执行（success/failed），非 Agent 业务判定</td></tr><tr><td>分類信頼度閾値</td><td>分類信頼度閾値</td><td>Step1 必填项：案件集约识别分类阶段的账票分类置信度下限（百分比）</td></tr><tr><td>账票类型设置</td><td>帳票タイプ設定</td><td>配置端账票主数据模块；Step2 含 OCR/QR 双模式与脱敏；Step3 含処理ルール与正常范围</td></tr><tr><td>抽出单位</td><td>（プロンプト约定）</td><td>Step2 プロンプト 中声明的 OCR 输出量纲（如 cm、円、日）；与 タイプ 解耦；正解サンプル与 Step3 正常条件阈值均使用该量纲下的纯数字</td></tr></tbody></table>
+<table><thead><tr><th>中文</th><th>日语/界面</th><th>定义</th></tr></thead><tbody><tr><td>画像不正検知</td><td>画像不正検知</td><td>前处理节点内模块：整合 PS 加工、AI 生成图像、模板特征不一致检测；模型输出二分值（通过/不通过）；模块开关 + 对象账票</td></tr><tr><td>QR 字段读取</td><td>QR読取</td><td>运行时能力：仅针对 Step2 字段读取 tab（界面：テキスト読取）配置的 QR 映射；OCR 节点执行时工具扫描/解码并按映射写值；テーブル情報読取 不参与 QR</td></tr><tr><td>QR 源</td><td>QRソース</td><td>账票级逻辑槽位（QR1、QR2…）；配置端在固定账票下方扫描区域内从左到右检出；检出几个生成几个；目录仅展示扫描结果，不可手动删改</td></tr><tr><td>取值方法</td><td>取値方法</td><td>字段级 QR 分隔开关：关闭时全文取值（QR扫描到的内容全部填入该字段），开启时按分隔符与字段排序取值</td></tr><tr><td>分隔符</td><td>区切り文字</td><td>分隔模式下用于切分 QR 解码串的分隔符；连续分隔符之间视为空字段；段内空串或空值占位亦视为空</td></tr><tr><td>字段排序</td><td>順序</td><td>分隔模式下，从 QR 解码串中取第几个片段（1 起）；同一 QR 源内 N=该源分隔映射字段总数，順序须为 1～N 连号且不重复</td></tr><tr><td>正常范围</td><td>正常範囲</td><td>Step3 正常条件：按 処理ルール（后处理规则）决定可否配置；マスタ照合、テキスト置換 不可配；其余规则可选；比较对象为 処理ルール 后处理产物</td></tr><tr><td>脱敏标记</td><td>マスク</td><td>Step2 OCR設定 字段/表格列开关：标记该账票内哪些字段/列为脱敏与打码对象（字段级）；仅定义范围，不单独触发运行时脱敏</td></tr><tr><td>敏感情报检出</td><td>敏感情報検出</td><td>前处理节点子模块：模块开关 + 对象账票（账票级）；对象账票须同时为业务场景 Step1 关联账票，且该账票 Step2 至少一项 マスク=ON（テキスト読取 字段或 テーブル情報読取 列）；仅当模块 ON 且实例账票在对象列表中，才读取该账票 マスク 配置并打码</td></tr><tr><td>分類信頼度閾値</td><td>分類信頼度閾値</td><td>Step1 必填项：案件集约识别分类阶段的账票分类置信度下限（百分比）</td></tr><tr><td>账票类型设置</td><td>帳票タイプ設定</td><td>配置端账票主数据模块；Step2 含 OCR/QR 双模式与脱敏；Step3 含処理ルール与正常范围</td></tr><tr><td>提示词</td><td>プロンプト</td><td>Step2 字段/列的读取提示词：约束 OCR 模型从账票何处抽取、输出格式与抽出单位（含单位换算）；界面列名 プロンプト = 提示词</td></tr><tr><td>字段类别</td><td>タイプ</td><td>Step2 字段/列的数据类别（<code>string</code> / <code>number</code> / <code>enum</code> 等）；决定 OCR 读取与后处理的数据形态；不承载计量单位（量纲见 プロンプト（提示词））；不单独决定 Step3 正常条件可否配置</td></tr><tr><td>抽出单位</td><td>（プロンプト（提示词）约定）</td><td>Step2 プロンプト（提示词）中声明的 OCR 输出计量单位（如 cm、円、日）；与 字段类型 强绑定；正确答案与 Step3 正常条件阈值均使用该量纲下的纯数字</td></tr></tbody></table>
 <h3 class="section-heading">1.2 易混术语</h3>
-<table><thead><tr><th>中文</th><th>区分要点</th></tr></thead><tbody><tr><td>OCR 读取设定 vs QR 读取设定</td><td>字段主数据在 OCR 读取设定维护，QR 读取设定只配 QR 源与取值；テーブル情報読取 固定 OCR</td></tr><tr><td>账票读取模式 vs 字段 OCR 兜底</td><td>QR設定 下逐字段路由：① 未选 QRソース → 该字段 OCR；② 已选且 QR 扫到 → 映射写值；③ 已选但 QR 未扫到 → 该字段 OCR 兜底；OCR設定 则全字段 OCR</td></tr><tr><td>敏感情报检出 vs 画像不正検知</td><td>脱敏为前处理工程（敏感信息检测+打码）；画像不正为模型二值判定（通过/不通过）→ 前处理人工确认待办；二者均无阈值配置</td></tr><tr><td>マスク vs PII 检测</td><td>マスク 是 Step2 配置侧标记哪些字段/列需脱敏；PII 检测是运行时在前处理实例影像上定位并打码；二者配合，无マスク 则不触发该字段脱敏</td></tr><tr><td>正常范围 vs Master 照合</td><td>正常条件是否展示由 Step2 タイプ 决定（<code>string</code> 不可配）；与 処理ルール 解耦；マスタ照合 仍走 OCR 确认规则 3～5</td></tr><tr><td>正常范围 vs AI 检证</td><td>正常范围在账票 Step3 配置、OCR 节点执行时校验；AI 检证在独立节点跨字段</td></tr><tr><td>配置 test vs 前处理确认预览</td><td>Step5 标记脱敏对象；遮挡预览与打码在前处理确认页</td></tr><tr><td>配置 test vs OCR 抽出确认</td><td>Step5 展示取值来源（QR/OCR) ；OCR 抽出确认页不展示来源标签</td></tr><tr><td>タイプ vs プロンプト抽出单位</td><td>タイプ（<code>number</code> / <code>enum</code> / <code>string</code>）只声明字段类别与 Step3 正常条件是否可配；cm / m / 円 等量纲写在 プロンプト，不由 タイプ 表达；正解サンプル须按 プロンプト 量纲填写（如账面 <code>1.6米</code>、プロンプト 约定 cm → 正解 <code>160</code>）</td></tr><tr><td>规则 6 vs QR 写值</td><td>规则 6 兼容 QR：QR 写值越界 alone 即命中；OCR / QR→OCR 兜底须低置信且越界（无 OCR 置信时不考核「低置信」半条）</td></tr></tbody></table>
+<table><thead><tr><th>中文</th><th>区分要点</th></tr></thead><tbody><tr><td>OCR 读取设定 vs QR 读取设定</td><td>字段主数据在 OCR 读取设定维护，QR 读取设定只配 QR 源与取值；テーブル情報読取 固定 OCR</td></tr><tr><td>账票读取模式 vs 字段 OCR 兜底</td><td>QR設定 下逐字段路由：① 未选 QRソース → 该字段 OCR；② 已选且 QR 扫到 → 映射写值；③ 已选但 QR 未扫到 → 该字段 OCR 兜底；OCR設定 则全字段 OCR</td></tr><tr><td>敏感情报检出 vs 画像不正検知</td><td>脱敏为前处理工程（读取对象账票的 マスク 配置并打码）；画像不正为模型二值判定（通过/不通过）→ 前处理人工确认待办；二者均无阈值配置</td></tr><tr><td>マスク vs 敏感情报检出</td><td>包含关系：マスク（Step2）定字段/列；敏感情报检出（节点）定账票；对象账票可选范围 = Step1 关联账票 ∩ Step2 存在 マスク=ON（含表格列）；运行时 = 节点 ON + 实例账票在对象列表 → 读取该账票 マスク=ON 项并打码</td></tr><tr><td>正常范围 vs Master 照合</td><td>正常条件是否展示由 Step3 処理ルール 决定（マスタ照合、テキスト置換 不可配）；与 Step2 タイプ（字段类别）解耦；マスタ照合 仍走 OCR 确认规则 3～5</td></tr><tr><td>正常范围 vs AI 检证</td><td>正常范围在账票 Step3 配置、OCR 节点执行时校验；AI 检证在独立节点跨字段</td></tr><tr><td>配置 test vs 前处理确认预览</td><td>Step5 标记脱敏对象；遮挡预览与打码在前处理确认页</td></tr><tr><td>配置 test vs OCR 抽出确认</td><td>Step5 展示取值来源（QR/OCR) ；OCR 抽出确认页不展示来源标签</td></tr><tr><td>タイプ（字段类别） vs プロンプト（提示词）抽出单位</td><td>タイプ（字段类别）（<code>number</code> / <code>enum</code> / <code>string</code>）声明字段类别与 OCR 数据形态；cm / m / 円 等量纲写在 プロンプト（提示词），不由 タイプ（字段类别）表达；正解サンプル须按 プロンプト（提示词） 量纲填写（如账面 <code>1.6米</code>、プロンプト（提示词） 约定 cm → 正解 <code>160</code>）；正常条件可否配置由 処理ルール 决定，不由 タイプ（字段类别）决定</td></tr><tr><td>规则 6 vs QR 写值</td><td>规则 6 兼容 QR：QR 写值越界 alone 即命中；OCR / QR→OCR 兜底须低置信且越界（无 OCR 置信时不考核「低置信」半条）</td></tr></tbody></table>
 <h2 id="chapter-2" class="chapter-heading">第 2 章｜用户交互流程</h2>
 <p>本章按五项能力组织用户故事：正常值校验、マスク（敏感情报检出）、画像不正検知、通知（邮件）、QR 读取。</p>
 <h3 class="section-heading">2.1 故事：正常值校验</h3>
 <p>角色：admin（配置正常条件）；操作员（办结 OCR 抽出确认）</p>
 <p>目标：Step3 配置正常范围；运行时后处理完成后校验，未通过则进 OCR 抽出确认。判定口径、比较模式与异常见 6.03 · Step3 正常值范围；执行页展示边界见 6.04。</p>
-<pre><code>配置：Step3 启用正常条件 + 选择人工确认规则 6 → Step5 test 验收
-运行：后处理完成 → 正常条件比较 → reviewRequired → 我的任务 · OCR 抽出确认</code></pre>
-<ol><li>admin 在 Step3 为 <code>number</code> / <code>enum</code> 类型字段选配正常条件（见 6.03 · 适用 タイプ）；与 Step2 プロンプト、処理ルール 对齐；Step5 展示字段来源标签（QR/OCR）。</li><li>运行时逐字段比较后处理产物（OCR、QR 写值、QR→OCR 兜底均适用）；命中规则 6 → OCR 抽出确认：QR 写值为越界 alone；OCR / 兜底为低置信且越界。</li><li>操作员在执行页修正要確認字段；不展示范围结论、配置区间或读取来源；办结仍校验正常值（未通过则阻断）。</li></ol>
+<pre><code>配置：Step3 启用正常条件 + 読取モデル設定 人工確認ルール（**默认仅规则 6**，可追加 1～5）→ Step5 test 验收
+运行：后处理完成 → 正常条件比较 → 已启用规则 OR 判定 → reviewRequired → 我的任务 · OCR 抽出确认</code></pre>
+<ol><li>admin 在 Step3 按 処理ルール 为字段/列选配正常条件（见 6.03 · 适用 処理ルール）；与 Step2 プロンプト（提示词）、処理ルール 对齐；Step5 展示字段来源标签（QR/OCR）。</li><li>运行时逐字段比较后处理产物（OCR、QR 写值、QR→OCR 兜底均适用）；仅评估读取模型弹窗中已勾选的人工确认规则，OR 合并——默认仅规则 6 时：QR 写值越界 alone 即进确认；OCR / 兜底须低置信且越界。若 admin 另启规则 1，则 OCR 低置信 alone 亦可进确认（组合见 6.04 · 多选配置）。</li><li>操作员在执行页修正要確認字段；不展示范围结论、配置区间、读取来源或命中哪条规则；办结仍校验正常值（未通过则阻断）。</li></ol>
 <hr />
 <h3 class="section-heading">2.2 故事：マスク（敏感情报检出）</h3>
-<p>角色：admin（定义脱敏对象与启用模块）；操作员（查看脱敏结果；无专用待办）</p>
-<p>目标：在账票 Step2 标记需脱敏字段，在业务场景前处理节点启用敏感情报检出模块；运行时在 OCR 前对实例脱敏，导出与详情展示脱敏后值。</p>
-<p>配置流程：</p>
-<pre><code>账票 Step2 OCR設定 · 文本字段/表格列 マスク=ON → 业务场景 Step2 前処理設定 · 敏感情报检出 ON + 对象账票</code></pre>
-<ol><li>admin 在账票类型 Step2 OCR設定 下，对需脱敏的文本字段或表格列开启マスク列（如患者氏名、住所；テキスト読取 / テーブル情報読取 均有マスク列）。</li><li>在业务场景 Step2 前処理設定 开启「敏感情报检出」，选择对象账票（可选范围 = Step1 关联且存在マスク=ON 文本字段或表格列的账票）。</li><li>Step5 test 标记マスク対象；不展示脱敏后像素预览（遮挡预览在前处理确认页，见运行流程）。</li></ol>
+<p>角色：admin（账票侧配置 マスク、节点侧启用敏感情报检出）；操作员（查看脱敏结果；无专用待办）</p>
+<p>目标：マスク 在账票 Step2 标记字段级脱敏对象；敏感情报检出 在前处理节点以开关 + 对象账票决定账票级是否执行；运行时仅对「节点 ON 且对象账票命中」的实例，读取该账票 マスク=ON 配置并打码。</p>
+<p>配置流程（两层，包含关系）：</p>
+<pre><code>账票 Step2：字段/列 マスク=ON（字段级，定义「哪些字段要脱敏」）
+        ↓ 节点运行时读取
+业务场景 Step2 前処理設定：敏感情报检出 ON + 对象账票（账票级，定义「哪些账票要脱敏」）</code></pre>
+<ol><li>admin 在账票类型 Step2 OCR設定 下，对需脱敏的文本字段或表格列开启マスク（如患者氏名、住所；テキスト読取 / テーブル情報読取 均有マスク列）。</li><li>在业务场景 Step2 前処理設定 开启「敏感情报检出」，从对象账票中选择要脱敏的账票。可选范围须同时满足：① 该业务场景 Step1 已关联；② 该账票 Step2 至少一项 マスク=ON（テキスト読取 字段或 テーブル情報読取 列）。</li><li>Step5 test 标记マスク対象；不展示脱敏后像素预览（遮挡预览在前处理确认页，见运行流程）。</li></ol>
 <p>运行流程：</p>
-<pre><code>前处理：画像不正検知 → 敏感情报检出→ 回転 → 補正 → 整列 → OCR 抽出读脱敏后实例</code></pre>
-<ol><li>工作流进入前处理节点；敏感情报检出对マスク=ON 字段所在实例执行脱敏。</li><li>脱敏成功 → 后续 OCR 抽出读取脱敏后实例；案件详情与导出字段值为脱敏后值。</li><li>前处理确认页（已脱敏场景）：原图 / 遮挡后 Tab 切换预览，默认遮挡后；マスク=ON 字段值统一打码展示。</li><li>敏感情报检出模块执行失败 → preprocessStatus=failed，走案件异常；不新增脱敏专用待办；可并行收到 Step3 通知。</li></ol>
+<pre><code>前处理：画像不正検知 → 敏感情报检出 → 回転 → 補正 → 整列 → OCR 抽出读脱敏后实例</code></pre>
+<ol><li>工作流进入前处理节点；当敏感情报检出 ON 且当前实例账票在对象账票列表中，读取该账票 Step2 マスク=ON 的字段/列并执行脱敏与打码。</li><li>脱敏成功 → 后续 OCR 抽出读取脱敏后实例；案件详情与导出字段值为脱敏后值。</li><li>前处理确认页（已脱敏场景）：默认遮挡后；マスク=ON 字段值统一打码展示。</li><li>节点 OFF、或未选该账票、或该账票无 マスク=ON 字段 → 跳过脱敏，OCR 读原实例。</li><li>敏感情报检出模块执行失败 → preprocessStatus=failed，走案件异常；不新增脱敏专用待办；可并行收到 Step3 通知。</li></ol>
 <hr />
 <h3 class="section-heading">2.3 故事：画像不正検知</h3>
 <p>角色：admin（启用模块）；操作员（人工确认待办）</p>
 <p>目标：在前处理节点启用画像不正検知，对指定账票检测 PS 加工/AI 生成/模板特征异常；模型判「不通过」时进人工确认（非 OCR 抽出确认）。</p>
 <p>配置流程：</p>
 <pre><code>业务场景 Step2 → 前処理設定 → 画像不正検知 ON + 对象账票 → Step3 可选配置 preprocessResult=reviewRequired 通知</code></pre>
-<ol><li>admin 在业务场景 Step2 前処理設定 开启「画像不正検知」，按 Step1 关联账票逐行指定对象（未指定则视为全部关联账票）。</li><li>依赖账票 Step1 template 与客户正常样张库做模板特征比对。</li><li>可选：Step3 为前处理对象配置 preprocessResult=reviewRequired 或 preprocessStatus=failed 的通知规则。</li></ol>
+<ol><li>admin 在业务场景 Step2 前処理設定 开启「画像不正検知」，按 Step1 关联账票逐行指定对象（未指定则视为全部关联账票）。</li><li>依赖账票 Step1 template 与客户正常样张库做模板特征比对，PS和AI生成依赖开源算法（待确定）判断是否伪造。</li><li>可选：Step3 为前处理对象配置 preprocessResult=reviewRequired 或 preprocessStatus=failed 的通知规则。</li></ol>
 <p>运行流程：</p>
 <pre><code>前处理 · 画像不正検知 → 模型输出「不通过」→ preprocessResult=reviewRequired → 我的任务 · 人工确认</code></pre>
 <ol><li>前处理串行执行时，画像不正検知在脱敏与几何处理之前运行。</li><li>模型二值输出「不通过」→ 生成人工确认待办；操作员在人工确认页选择完了/补件/案件中止。</li><li>输出「通过」→ 继续后续子模块与 OCR 抽出。</li><li>检测服务异常 → preprocessStatus=failed；可走案件异常与 Step3 告警，不进 OCR 抽出确认。</li></ol>
@@ -424,14 +426,14 @@
 <ol><li>admin 选择对象节点（如前处理、OCR 抽出）与触发事件（如 preprocessStatus=failed、preprocessResult=reviewRequired、ocrResult=reviewRequired）。</li><li>通知渠道多选站内信、邮件，至少选一；勾选邮件时填写邮箱地址（カンマ区切り，<code>,</code> または <code>，</code>；格式校验）。</li><li>编辑件名/正文，可插入通知变量池 token；保存规则。</li><li>典型配置：前处理要确认 = → 邮件通知案件担当者；OCR failed → 站内信 + 邮件通知操作管理者。</li></ol>
 <p>运行流程：</p>
 <pre><code>节点输出事件 → 匹配 Step3 开启规则 → 并行发送站内信 / 邮件 → 用户查阅（工作流继续；待办独立生成）</code></pre>
-<ol><li>运行时引擎按节点类型与变量取值匹配 Step3 规则；命中多条则全部发送。</li><li>案件担当者从顶栏站内信查阅；勾选邮件的规则同步投递至配置邮箱。</li><li>变量缺值按空渲染，不阻断流程；邮件投递失败记日志。</li><li>角色权限：在触发消息通知/邮件分发时，指派角色后，如该角色的用户中存在案件担当者，则只发给每个案件的案件担当者（指定用户）；如不存在，则发给该角色下所有用户集合</li></ol>
+<ol><li>运行时引擎按节点类型与变量取值匹配 Step3 规则；命中多条则全部发送。</li><li>案件担当者（或其他角色）从顶栏站内信查阅；勾选邮件的规则同步投递至配置邮箱。</li><li>变量缺值按空渲染，不阻断流程；邮件投递失败记日志。</li><li>角色权限：在触发消息通知/邮件分发时，指派角色后，如该角色的用户中存在案件担当者，则只发给每个案件的案件担当者（指定用户）；如不存在，则发给该角色下所有用户集合</li></ol>
 <hr />
 <h3 class="section-heading">2.5 故事：QR 读取</h3>
 <p>角色：admin（QR 映射与读取模式）；操作员（OCR 抽出确认，无 QR 专用待办）</p>
 <p>目标：在账票 Step2 字段读取 tab 配置 QR 源与字段映射；运行时按三种情况路由；与 OCR 路径汇合后统一六项确认规则。</p>
 <p>配置流程：</p>
 <pre><code>Step1 上传 template → Step2 字段读取 · QR扫描 → QR 源目录 → QR 字段映射 → Step5 test 验收</code></pre>
-<ol><li>admin 在 Step1 上传 template 样张；Step2 字段读取（テキスト読取）切换 QR設定 后，系统扫描样张生成 QRソース目录（QR1、QR2…）；也可点击 QR扫描 手动重扫刷新目录（防止第一次扫描漏检或重新上传样例后漏检的情况）。</li><li>QR扫描仅生成或刷新 QR 源目录，不自动写入字段映射。admin 在映射表逐字段可选配置 QRソース、取値方法、区切り文字、順序；未选 QRソース 的字段运行时走 OCR（OCR 模式维护的項目名/タイプ/マスク/必须/字段排序/删减操作） 在 QR 模式只读）。テーブル情報読取 不参与 QR。</li><li>Step5 test：每字段卡片右上角展示读取来源标签（QR読取 或 OCR読取，仅两种）；命中要確認时仅输入框标红。</li><li>业务场景 OCR 抽出节点仍为开关 + 对象账票；引擎执行时读取上述账票配置，画布无 QR 专用节点。</li></ol>
+<ol><li>admin 在 Step1 上传 template 样张；Step2 字段读取（テキスト読取）切换 QR設定 后，系统扫描样张生成 QRソース目录（QR1、QR2…）；也可点击 QR扫描 手动重扫刷新目录（防止第一次扫描漏检或重新上传样例后漏检的情况）。</li><li>QR扫描仅生成或刷新 QR 源目录，不自动写入字段映射。admin 在映射表逐字段可选配置 QRソース、取値方法、区切り文字、順序；未选 QRソース 的字段运行时走 OCR（OCR 模式维护項目名/タイプ/マスク/必须/字段排序/删减操作） 在 QR 模式只读）。テーブル情報読取 不参与 QR。</li><li>Step5 test：每字段卡片右上角展示读取来源标签（QR読取 或 OCR読取，仅两种）；命中要確認时仅输入框标红。</li><li>业务场景 OCR 抽出节点仍为开关 + 对象账票；引擎执行时读取上述账票配置，画布无 QR 专用节点。</li></ol>
 <p>运行流程（配置流程图与运行时流程图均在账票类型设置 · 6.03 分节展示，与用户故事不重复贴图）：</p>
 <ol><li>OCR設定，或 QR設定 下某字段未选 QRソース：该字段 OCR。</li><li>QR設定 下字段已选 QRソース 且对应 QR 扫描成功：按映射写值。</li><li>QR設定 下字段已选 QRソース 但对应 QR 未扫到：该字段 OCR 兜底。</li></ol>
 <hr />
@@ -449,9 +451,9 @@
 </div>
 <p>前处理节点内五个子模块固定顺序（脱敏先于几何处理）：</p>
 <pre><code>画像不正検知 → 敏感情报检出 → 画像回転 → 画像補正 → 画像整列</code></pre>
-<table><thead><tr><th>步骤</th><th>模块</th><th>理由</th></tr></thead><tbody><tr><td>1</td><td>画像不正検知</td><td>优先在原实例上判定篡改/伪造风险</td></tr><tr><td>2</td><td>敏感情报检出</td><td>固定工程：PII 检测 + 图像打码；OCR 读脱敏后实例；无业务待办</td></tr><tr><td>3～5</td><td>回転 → 補正 → 整列</td><td>几何预处理</td></tr></tbody></table>
+<table><thead><tr><th>步骤</th><th>模块</th><th>理由</th></tr></thead><tbody><tr><td>1</td><td>画像不正検知</td><td>优先在原实例上判定篡改/伪造风险</td></tr><tr><td>2</td><td>敏感情报检出</td><td>对对象账票读取 Step2 マスク 配置并打码；OCR 读脱敏后实例；无业务待办</td></tr><tr><td>3～5</td><td>回転 → 補正 → 整列</td><td>几何预处理</td></tr></tbody></table>
 <p>文件状态四段枚举不变；子模块进度汇总至 preprocessStatus / preprocessResult，不在案件一覧展示子模块名。</p>
-<ol><li>前处理面板新增画像不正检测、敏感信息检出（各：开关 + 对象账票）；插入在画像回転/補正/整列之前。</li><li>敏感信息检出可选账票：Step1 关联且账票类别设定Step2 存在マスク=ON 的文本字段或表格列。</li><li>画像不正检测：输出通过/不通过，判「不通过」→ preprocessResult=reviewRequired → 人工确认。</li><li>OCR 抽出节点配置面板为开关 + 对象账票，本期无新增配置项；QR 读取、正常值校验、后处理规则均在账票类型 Step2/Step3 配置，由运行时引擎在该节点执行时读取。</li></ol>
+<ol><li>前处理面板新增画像不正检测、敏感情报检出（各：开关 + 对象账票）；插入在画像回転/補正/整列之前。</li><li>敏感情报检出：模块 ON 且实例账票在对象列表时，读取该账票 Step2 マスク=ON 的字段/列并打码。对象账票可选范围须同时满足：① 业务场景 Step1 关联账票；② 该账票 Step2 至少一项 マスク=ON（含 テーブル情報読取 列）。</li><li>画像不正检测：输出通过/不通过，判「不通过」→ preprocessResult=reviewRequired → 人工确认。</li><li>OCR 抽出节点配置面板为开关 + 对象账票，本期无新增配置项；QR 读取、正常值校验、后处理规则均在账票类型 Step2/Step3 配置，由运行时引擎在该节点执行时读取。</li></ol>
 <table><thead><tr><th>信号</th><th>新增或变化</th></tr></thead><tbody><tr><td>preprocessResult=reviewRequired</td><td>画像不正判「不通过」</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-step3-通知设置本期增量">Step3 通知设置（本期增量）</h4>
 <div class="figure-row figure-row--single">
@@ -464,7 +466,7 @@
 </div>
 <p>通知规则支持对象节点、触发事件、站内信投递；本节增量见下方「通知ルール追加」面板（截图）。</p>
 <ol><li>通知渠道新增邮件：可多选站内信 + 邮件；勾选邮件须填邮箱地址；共用件名/正文与变量渲染。</li></ol>
-<table><thead><tr><th>字段/参数</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th></tr></thead><tbody><tr><td>通知渠道</td><td>通知チャネル</td><td>多选</td><td>是</td><td>选项：システム通知、メール，至少选一</td></tr><tr><td>站内信</td><td>システム通知</td><td>复选</td><td>—</td><td>通知チャネル多选之一；勾选后须选通知対象</td></tr><tr><td>邮件</td><td>メール</td><td>复选</td><td>—</td><td>通知チャネル多选之一</td></tr><tr><td>邮箱地址</td><td>メール宛先</td><td>文本</td><td>勾选邮件时</td><td>多地址以 <code>,</code> 或 <code>，</code> 分隔；各地址段前后空格保存时 trim；邮箱本体须半角格式</td></tr></tbody></table>
+<table><thead><tr><th>字段/参数</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th></tr></thead><tbody><tr><td>通知渠道</td><td>通知チャネル</td><td>多选</td><td>是</td><td>选项：システム通知、メール，至少选一</td></tr><tr><td>站内信</td><td>システム通知</td><td>复选</td><td>—</td><td>通知チャネル多选之一；勾选后须选通知対象</td></tr><tr><td>邮件</td><td>メール</td><td>复选</td><td>—</td><td>通知チャネル多选之一</td></tr><tr><td>邮箱地址</td><td>メール宛先</td><td>文本</td><td>勾选邮件时</td><td>多地址以 <code>,</code> 或 <code>，</code> 分隔；各地址段前后空格保存时去除空格；邮箱本体须半角格式</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-异常与边界">异常与边界</h4>
 <table><thead><tr><th>场景</th><th>条件</th><th>用户提示 / 处理</th></tr></thead><tbody><tr><td>Step2 · 敏感情报检出失败</td><td>敏感情报检出模块执行失败</td><td>preprocessStatus=failed；走案件异常；不新增脱敏专用待办</td></tr><tr><td>Step3 · 邮件地址分隔与空白</td><td>メール宛先 输入全角逗号 <code>，</code> 或地址段前后含空格</td><td>允许：<code>,</code> / <code>，</code> 均可作多地址分隔符；各段 trim 后校验；不因分隔符全半角或首尾空格报错</td></tr><tr><td>Step3 · 勾选站内信未选对象</td><td>渠道含システム通知但通知対象为空</td><td>保存报错（<code>通知対象を選択してください</code>）</td></tr><tr><td>Step3 · 勾选邮件未填邮箱</td><td>渠道含メール但メール宛先为空</td><td>保存报错（<code>メール宛先を入力してください</code>）</td></tr><tr><td>Step3 · 邮件地址格式错误</td><td>trim 后仍含无效邮箱（如全角 <code>@</code>、缺 <code>@</code> 等）</td><td>保存报错（<code>メールアドレスの形式が正しくありません: …</code>）；列出无效地址</td></tr><tr><td>Step3 · 件名/正文未填</td><td>件名或正文为空</td><td>保存报错（<code>件名を入力してください</code> / <code>内容を入力してください</code>）</td></tr><tr><td>Step3 · 邮件投递失败</td><td>运行时邮件服务失败</td><td>记日志；工作流继续（不阻断）</td></tr></tbody></table>
 <h3 id="sec-6-03" class="section-heading">6.03 账票类型设置</h3>
@@ -505,7 +507,7 @@
   post --> range --> rules --> hit
   hit -->|是| hitl
   hit -->|否| pass</div>
-<table><thead><tr><th>步骤</th><th>读取配置</th><th>行为</th></tr></thead><tbody><tr><td>路由</td><td>账票 Step2 字段读取 tab 读取设定</td><td>OCR設定 → 全字段 OCR；QR設定 → 逐字段：未选 QRソース 走 OCR，已选且 QR 扫到写值，已选但 QR 未扫到 OCR 兜底。テーブル情報読取 始终 OCR</td></tr><tr><td>后处理</td><td>账票 Step3 処理ルール</td><td>固定规则标准化（待确认）</td></tr><tr><td>正常值校验</td><td>账票 Step3 正常条件</td><td>后处理成功后比较（全路径）；规则 6：QR 写值越界 / OCR·兜底低置信且越界 → OCR 抽出确认（见 6.04）</td></tr><tr><td>确认规则</td><td>读取模型弹窗六项</td><td>OR 合并判定；适用矩阵见 6.04</td></tr></tbody></table>
+<table><thead><tr><th>步骤</th><th>读取配置</th><th>行为</th></tr></thead><tbody><tr><td>路由</td><td>账票 Step2 字段读取 tab 读取设定</td><td>OCR設定 → 全字段 OCR；QR設定 → 逐字段：未选 QRソース 走 OCR，已选且 QR 扫到写值，已选但 QR 未扫到 OCR 兜底。テーブル情報読取 始终 OCR</td></tr><tr><td>后处理</td><td>账票 Step3 処理ルール</td><td>固定规则标准化（待确认）</td></tr><tr><td>正常值校验</td><td>账票 Step3 正常条件</td><td>后处理成功后比较（全路径）；规则 6：QR 写值越界 / OCR·兜底低置信且越界 → OCR 抽出确认（见 6.04）</td></tr><tr><td>确认规则</td><td>读取模型弹窗六项</td><td>多选 OR；默认仅规则 6；运行时只评估已勾选规则；适用矩阵见 6.04</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-字段读取-qr-配置流程">字段读取 · QR 配置流程</h4>
 <p>仅 Step2 字段读取 tab（界面：テキスト読取）· QR設定。与上方运行时路由图分工：本图描述 admin 配置步骤，不描述 OCR 节点执行顺序。</p>
 <div class="mermaid">flowchart LR
@@ -533,26 +535,26 @@
 <table><thead><tr><th>字段/参数</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th><th>下游消费</th></tr></thead><tbody><tr><td>读取 tab</td><td>テキスト読取 / テーブル情報読取</td><td>tab</td><td>—</td><td>字段读取 / 表格读取</td><td>—</td></tr><tr><td>读取设定</td><td>OCR設定 / QR設定</td><td>轻量切换</td><td>字段读取 tab 内</td><td>二选一；QR設定 下逐字段路由（未选 QRソース → OCR）；表格读取 tab 不展示</td><td>运行时路由</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-step2-按钮读取-ocr">Step2 按钮（读取 · OCR）</h4>
 <p>AI自動生成 不生成 QR 源目录、字段 QR 映射、取値方法、区切り文字、順序；QR 源目录由扫描 / QR扫描 生成，字段映射及相关列须用户手动配置。</p>
-<table><thead><tr><th>按钮</th><th>界面文案（日语）</th><th>显示条件</th><th>点击后</th></tr></thead><tbody><tr><td>AI自动生成</td><td>AI自動生成</td><td>字段读取 · OCR設定，或表格读取 tab</td><td>生成 OCR プロンプトと正解サンプル（字段/列级）；プロンプト 须含抽出位置、输出格式、抽出单位（含账面单位与输出单位不一致时的换算说明）；正解サンプル 与 プロンプト 同量纲；不涉及 QR</td></tr><tr><td>AI自动生成</td><td>—</td><td>字段读取 · QR設定</td><td>不显示</td></tr></tbody></table>
-<h4 class="subsection-heading" id="fig-step2">Step2 プロンプト</h4>
-<p>タイプ 与 プロンプト 的分工</p>
-<ul><li>タイプ（Step2 項目タイプ）：声明字段类别——<code>string</code> / <code>number</code> / <code>enum</code> 等；决定 Step3 能否配置正常条件，以及后处理/比较时的数据形态（是否为数字、可否列挙）。タイプ 不承载计量单位。</li><li>プロンプト：在 タイプ 已确定类别的前提下，约束读取模型——从账票何处抽取、以何种格式输出、结果的计量单位（抽出单位）是什么；若账面上的写法/单位与约定输出单位不一致，须在 プロンプト 写明换算规则（由读取模型在抽取阶段完成，运行时不另调大模型做单位推断）。</li><li>正解サンプル：与 プロンプト 完全对齐的期望输出，供 Step5 test / 调优；不是账面上的原文，而是按 プロンプト（含单位换算后）应得到的值。</li></ul>
+<table><thead><tr><th>按钮</th><th>界面文案（日语）</th><th>显示条件</th><th>点击后</th></tr></thead><tbody><tr><td>AI自动生成</td><td>AI自動生成</td><td>字段读取 · OCR設定，或表格读取 tab</td><td>生成 OCR プロンプト（提示词）と正解サンプル（字段/列级）；プロンプト（提示词） 须含抽出位置、输出格式、抽出单位（含账面单位与输出单位不一致时的换算说明）；正解サンプル 与 プロンプト（提示词） 同量纲；不涉及 QR</td></tr><tr><td>AI自动生成</td><td>—</td><td>字段读取 · QR設定</td><td>不显示</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-step2-提示词">Step2 プロンプト（提示词）</h4>
+<p>タイプ（字段类别） 与 プロンプト（提示词） 的分工</p>
+<ul><li>タイプ（字段类别）（Step2 項目タイプ）：声明字段类别——<code>string</code> / <code>number</code> / <code>enum</code> 等；决定 OCR 读取与后处理时的数据形态。タイプ（字段类别）不承载计量单位，不单独决定 Step3 正常条件可否配置（由 処理ルール 决定）。</li><li>プロンプト（提示词）：在 タイプ（字段类别）已确定类别的前提下，约束读取模型——从账票何处抽取、以何种格式输出、结果的计量单位（抽出单位）是什么；若账面上的写法/单位与约定输出单位不一致，须在 プロンプト（提示词） 写明换算规则（由读取模型在抽取阶段完成，运行时不另调大模型做单位推断）。</li><li>正解サンプル：与 プロンプト（提示词） 完全对齐的期望输出，供 Step5 test / 调优；不是账面上的原文，而是按 プロンプト（提示词）（含单位换算后）应得到的值。</li></ul>
 <p>配置位置（Step2 OCR設定）</p>
-<table><thead><tr><th>适用范围</th><th>界面位置</th><th>界面文案（日语）</th><th>说明</th></tr></thead><tbody><tr><td>文本字段</td><td>テキスト読取 · 字段表</td><td>プロンプト</td><td>约束读取模型：抽取位置、输出格式、抽出单位</td></tr><tr><td>文本字段</td><td>同上</td><td>正解サンプル</td><td>与 プロンプト 同量纲、同格式的样例值，供 test / 调优</td></tr><tr><td>表格列</td><td>テーブル情報読取 · 列定义</td><td>プロンプト / 正解サンプル</td><td>同上</td></tr></tbody></table>
-<p>プロンプト 须写清的内容</p>
-<p><code>number</code> 类字段（タイプ=<code>number</code>）：</p>
-<ol><li>抽取位置：账票上读哪个栏位/语义（如「身長欄」「請求金額欄」）。</li><li>抽出单位：输出值采用的计量单位（如 cm、円、日）；写在 プロンプト，不写在 タイプ。</li><li>单位换算（若账面与抽出单位不一致）：须在 プロンプト 明示。例：账面 <code>1.6米</code> / <code>1.6m</code>，プロンプト 约定输出单位为 cm → 模型输出 <code>160</code>（不带 <code>cm</code> 后缀时写「単位は含めない」）。</li><li>输出格式：半角数字、是否允许小数、输出是否带单位后缀（number 类通常输出纯数字，量纲仅由 プロンプト 约定、正解サンプル 与 Step3 阈值体现）。</li></ol>
-<p><code>enum</code> / <code>string</code> 类字段：プロンプト 约定输出形态（如原文照录、仅输出枚举值之一、日期格式等）；正解サンプル 同样须与 プロンプト 一致。</p>
+<table><thead><tr><th>适用范围</th><th>界面位置</th><th>界面文案（日语）</th><th>说明</th></tr></thead><tbody><tr><td>文本字段</td><td>テキスト読取 · 字段表</td><td>プロンプト</td><td>约束读取模型：抽取位置、输出格式、抽出单位；界面列名 プロンプト = 提示词</td></tr><tr><td>文本字段</td><td>同上</td><td>正解サンプル</td><td>与 プロンプト（提示词） 同量纲、同格式的样例值，供 test / 调优</td></tr><tr><td>表格列</td><td>テーブル情報読取 · 列定义</td><td>プロンプト / 正解サンプル</td><td>同上；列级 プロンプト = 提示词</td></tr></tbody></table>
+<p>プロンプト（提示词） 须写清的内容</p>
+<p><code>number</code> 类字段（タイプ（字段类别）=<code>number</code>）：</p>
+<ol><li>抽取位置：账票上读哪个栏位/语义（如「身長欄」「請求金額欄」）。</li><li>抽出单位：输出值采用的计量单位（如 cm、円、日）；写在 プロンプト（提示词），不写在 タイプ（字段类别）。</li><li>单位换算（若账面与抽出单位不一致）：须在 プロンプト（提示词） 明示。例：账面 <code>1.6米</code> / <code>1.6m</code>，プロンプト（提示词） 约定输出单位为 cm → 模型输出 <code>160</code>（不带 <code>cm</code> 后缀时写「単位は含めない」）。</li><li>输出格式：半角数字、是否允许小数、输出是否带单位后缀（number 类通常输出纯数字，量纲仅由 プロンプト（提示词） 约定、正解サンプル 与 Step3 阈值体现）。</li></ol>
+<p><code>enum</code> / <code>string</code> 类字段：プロンプト（提示词） 约定输出形态（如原文照录、仅输出枚举值之一、日期格式等）；正解サンプル 同样须与 プロンプト（提示词） 一致。</p>
 <p>示例（<code>number</code> 类；正解サンプル 列供 Step5 / 调优对照）</p>
-<table><thead><tr><th>账面可见（样张）</th><th>タイプ</th><th>プロンプト（摘要）</th><th>正解サンプル</th><th>処理ルール</th><th>正常条件阈值（同抽出单位、纯数字）</th></tr></thead><tbody><tr><td><code>1.6米</code></td><td>number</td><td>身長欄。半角数字のみ。単位は cm。帳票が m/米 表記の場合は cm に換算して出力。単位 suffix は含めない。</td><td><code>160</code></td><td>数字のみ</td><td><code>50</code>～<code>250</code></td></tr><tr><td><code>12日</code></td><td>number</td><td>通院日数欄。半角数字のみ。単位は含めない。</td><td><code>12</code></td><td>数字のみ</td><td><code>1</code>～<code>15</code></td></tr><tr><td><code>12万円</code></td><td>number</td><td>請求金額欄。半角数字のみ。単位は円。帳票の「万円」表記は円に換算。</td><td><code>120000</code></td><td>金額（JPY）</td><td><code>0</code>～<code>99999999</code></td></tr></tbody></table>
+<table><thead><tr><th>账面可见（样张）</th><th>タイプ（字段类别）</th><th>プロンプト（提示词）·摘要</th><th>正解サンプル</th><th>処理ルール</th><th>正常条件阈值（同抽出单位、纯数字）</th></tr></thead><tbody><tr><td><code>1.6米</code></td><td>number</td><td>身長欄。半角数字のみ。単位は cm。帳票が m/米 表記の場合は cm に換算して出力。単位 suffix は含めない。</td><td><code>160</code></td><td>数字のみ</td><td><code>50</code>～<code>250</code></td></tr><tr><td><code>12日</code></td><td>number</td><td>通院日数欄。半角数字のみ。単位は含めない。</td><td><code>12</code></td><td>数字のみ</td><td><code>1</code>～<code>15</code></td></tr><tr><td><code>12万円</code></td><td>number</td><td>請求金額欄。半角数字のみ。単位は円。帳票の「万円」表記は円に換算。</td><td><code>120000</code></td><td>金額（JPY）</td><td><code>0</code>～<code>99999999</code></td></tr></tbody></table>
 <p>路径说明</p>
-<ul><li>OCR / QR→OCR 兜底：读取时消费 Step2 プロンプト（含抽出单位与换算）；写值后进入 Step3 固定规则链。</li><li>QR 写值：不经过 OCR プロンプト；载荷格式由 QR 规范决定，同样进入 Step3 固定规则链。</li></ul>
+<ul><li>OCR / QR→OCR 兜底：读取时消费 Step2 プロンプト（提示词）（含抽出单位与换算）；写值后进入 Step3 固定规则链。</li><li>QR 写值：不经过 OCR プロンプト（提示词）；载荷格式由 QR 规范决定，同样进入 Step3 固定规则链。</li></ul>
 <p>与 Step3 的分工</p>
-<table><thead><tr><th>阶段</th><th>职责</th><th>是否调大模型</th></tr></thead><tbody><tr><td>Step2 プロンプト</td><td>约定 OCR 抽取输出的格式、抽出单位及账面→约定单位的换算</td><td>读取阶段由读取模型执行</td></tr><tr><td>Step3 処理ルール</td><td>按 admin 所选固定规则做格式标准化（不再推断/换算量纲）</td><td>否</td></tr><tr><td>Step3 正常条件</td><td>数值范围或列挙比较；阈值为与 プロンプト 同量纲的纯数字</td><td>否</td></tr></tbody></table>
+<table><thead><tr><th>阶段</th><th>职责</th><th>是否调大模型</th></tr></thead><tbody><tr><td>Step2 プロンプト（提示词）</td><td>约定 OCR 抽取输出的格式、抽出单位及账面→约定单位的换算</td><td>读取阶段由读取模型执行</td></tr><tr><td>Step3 処理ルール</td><td>按 admin 所选固定规则做格式标准化（不再推断/换算量纲）</td><td>否</td></tr><tr><td>Step3 正常条件</td><td>数值范围或列挙比较；阈值为与 プロンプト（提示词） 同量纲的纯数字</td><td>否</td></tr></tbody></table>
 <p>配置对齐链（number 类）</p>
-<pre><code>タイプ=number → プロンプト 写明抽出单位（+ 换算） → 正解サンプル 同量纲
+<pre><code>タイプ（字段类别）=number → プロンプト（提示词） 写明抽出单位（+ 换算） → 正解サンプル 同量纲
   → Step3 処理ルール 标准化 → 正常条件阈值（纯数字、同量纲）</code></pre>
-<p>运行时不调大模型做单位推断或换算；量纲约定只在 Step2 プロンプト（及对齐的 正解サンプル / Step3 阈值）一处声明。</p>
+<p>运行时不调大模型做单位推断或换算；量纲约定只在 Step2 プロンプト（提示词）（及对齐的 正解サンプル / Step3 阈值）一处声明。</p>
 <h4 class="subsection-heading" id="fig-step2-脱敏列">Step2 脱敏列</h4>
 <div class="figure-row figure-row--single">
 <figure class="screenshot-figure">
@@ -563,9 +565,9 @@
 </figure>
 </div>
 <p>Step2 AI 读取分 テキスト読取 / テーブル情報読取 两个 tab；マスク列均在 OCR設定 下配置。テーブル情報読取 固定 OCR（无 QR 模式切换），按各表格卡片维护列定义。</p>
-<table><thead><tr><th>适用范围</th><th>界面位置</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th><th>下游消费</th></tr></thead><tbody><tr><td>文本字段</td><td>テキスト読取 · 字段表</td><td>マスク</td><td>开关</td><td>否</td><td>标记该字段为前处理敏感情报检出脱敏对象</td><td>前处理敏感信息检出、Step5 マスク対象、导出脱敏后值</td></tr><tr><td>表格列</td><td>テーブル情報読取 · 各表列定义</td><td>マスク</td><td>开关</td><td>否</td><td>标记该列为前处理敏感情报检出脱敏对象</td><td>同上</td></tr></tbody></table>
+<table><thead><tr><th>适用范围</th><th>界面位置</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th><th>下游消费</th></tr></thead><tbody><tr><td>文本字段</td><td>テキスト読取 · 字段表</td><td>マスク</td><td>开关</td><td>否</td><td>标记该账票内该字段为脱敏/打码对象（字段级）</td><td>节点敏感情报检出读取；Step5 マスク対象；导出脱敏后值</td></tr><tr><td>表格列</td><td>テーブル情報読取 · 各表列定义</td><td>マスク</td><td>开关</td><td>否</td><td>标记该账票内该列为脱敏/打码对象（字段级）</td><td>同上</td></tr></tbody></table>
 <p>界面文案：</p>
-<ul><li>マスク列 i 提示：「この項目は前処理の個人情報脱敏（マスキング）対象フィールドの指定に使用されます。」</li></ul>
+<ul><li>マスク列 i 提示：「マスキング（脱敏・打码）対象フィールドの指定。前処理の敏感情报检出が ON かつ対象帳票に含まれる場合のみ実行されます。」</li></ul>
 <h4 class="subsection-heading" id="fig-step2-字段读取-qr-映射">Step2 字段读取 · QR 映射</h4>
 <div class="figure-row figure-row--single">
 <figure class="screenshot-figure">
@@ -579,17 +581,17 @@
 <p>QRソース目录 vs 字段映射</p>
 <table><thead><tr><th>环节</th><th>谁执行</th><th>产出</th><th>是否自动写字段映射</th></tr></thead><tbody><tr><td>进入 QR設定 自动扫描 / 点击 QR扫描</td><td>系统扫描 Step1 template</td><td>QRソース目录 QR1、QR2…</td><td>否</td></tr><tr><td>映射表各行配置</td><td>admin 手动</td><td>字段 ↔ QR 源、取値方法、区切り文字、順序</td><td>—</td></tr></tbody></table>
 <p>映射表字段</p>
-<table><thead><tr><th>字段/参数</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th></tr></thead><tbody><tr><td>QR 源目录</td><td>QRソース（来源条）</td><td>列表 + QR扫描</td><td>否</td><td>扫描生成；QR扫描 仅刷新此目录，不代填映射表</td></tr><tr><td>QR 源</td><td>QRソース（映射表列）</td><td>下拉（可清空）</td><td>否</td><td>从目录选 QR1、QR2…；未选占位「未選択（OCR）」→ 该字段走 OCR</td></tr><tr><td>取值方法</td><td>取値方法</td><td>开关</td><td>已选 QR 源后</td><td>见下方「取値方法 / 区切り文字 / 順序」</td></tr><tr><td>分割符</td><td>区切り文字</td><td>文本</td><td>取値方法 ON 时必填</td><td>见下方</td></tr><tr><td>字段排序</td><td>順序</td><td>数字</td><td>取値方法 ON 时必填</td><td>见下方</td></tr></tbody></table>
-<p>取値方法 / 区切り文字 / 順序（分割取值规则）</p>
+<table><thead><tr><th>字段/参数</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th></tr></thead><tbody><tr><td>QR 源目录</td><td>QRソース（来源条）</td><td>列表 + QR扫描</td><td>否</td><td>扫描生成；QR扫描 仅刷新此目录，不代填映射表</td></tr><tr><td>QR 源</td><td>QRソース（映射表列）</td><td>下拉（可清空）</td><td>否</td><td>从目录选 QR1、QR2…；未选占位「未選択（OCR）」→ 该字段走 OCR</td></tr><tr><td>取值方法</td><td>取値方法</td><td>开关</td><td>已选 QR 源后</td><td>见下方「取値方法 / 区切り文字 / 順序」</td></tr><tr><td>分隔符</td><td>区切り文字</td><td>文本</td><td>取値方法 ON 时必填</td><td>见下方</td></tr><tr><td>字段排序</td><td>順序</td><td>数字</td><td>取値方法 ON 时必填</td><td>见下方</td></tr></tbody></table>
+<p>取値方法 / 区切り文字 / 順序（分隔取值规则）</p>
 <p>三者仅在该字段已选 QRソース 且需从 QR 解码串取值时配置；取値方法 OFF 时隐藏区切り文字、順序列。</p>
-<table><thead><tr><th>配置项</th><th>界面状态</th><th>行为</th></tr></thead><tbody><tr><td>取値方法 OFF</td><td>开关关闭</td><td>将该 QR 源的完整解码串原样写入本字段（全文取值）</td></tr><tr><td>取値方法 ON</td><td>开关开启</td><td>先按 区切り文字 split 解码串，再按 順序 取其中一段写入本字段（分割取值）</td></tr><tr><td>区切り文字</td><td>ON 时显示</td><td>split 分隔符（如 <code>$</code>）。连续分隔符之间视为空段（例：<code>a$$b</code> → <code>a</code>、空、<code>b</code>）。段内为空串或空值占位（原型占位符 <code>-</code> 等）亦视为空</td></tr><tr><td>順序</td><td>ON 时显示</td><td>分割后取第几段，从 1 起（第 1 段 = 1）。同一 QRソース 下所有开启分割的字段：順序不可重复；须为 1～N 不重号，N = 该源下开启分割映射的字段总数</td></tr></tbody></table>
+<table><thead><tr><th>配置项</th><th>界面状态</th><th>行为</th></tr></thead><tbody><tr><td>取値方法 OFF</td><td>开关关闭</td><td>将该 QR 源的完整解码串原样写入本字段（全文取值）</td></tr><tr><td>取値方法 ON</td><td>开关开启</td><td>先按 区切り文字 切分解码串，再按 順序 取其中一段写入本字段（分隔取值）</td></tr><tr><td>区切り文字</td><td>ON 时显示</td><td>切分用分隔符（如 <code>$</code>）。连续分隔符之间视为空段（例：<code>a$$b</code> → <code>a</code>、空、<code>b</code>）。段内为空串或空值占位（原型占位符 <code>-</code> 等）亦视为空</td></tr><tr><td>順序</td><td>ON 时显示</td><td>分隔后取第几段，从 1 起（第 1 段 = 1）。同一 QRソース 下所有开启分隔的字段：順序不可重复；须为 1～N 不重号，N = 该源下开启分隔映射的字段总数</td></tr></tbody></table>
 <p>示例（取値方法 ON，区切り文字 <code>$</code>）</p>
 <p>解码串 <code>安達$珠美$1960</code>：順序 1 → <code>安達</code>，順序 2 → <code>珠美</code>，順序 3 → <code>1960</code>。若順序 2 已被同 QR 源另一字段占用，则不可重复选择。</p>
 <p>运行时</p>
-<ul><li>全文（OFF）：QR 扫到 → 整串写值。</li><li>分割（ON）：QR 扫到 → split 后取对应段写值；段缺失/为空视为该字段 QR 未取到值，该字段走 OCR 兜底（若已配置 QR 映射）。</li></ul>
+<ul><li>全文（OFF）：QR 扫到 → 整串写值。</li><li>分隔（ON）：QR 扫到 → 切分后取对应段写值；段缺失/为空视为该字段 QR 未取到值，该字段走 OCR 兜底（若已配置 QR 映射）。</li></ul>
 <h4 class="subsection-heading" id="fig-step3-処理后处理职责">Step3 処理ルール（后处理职责）</h4>
-<p>与正常条件同表（テキスト読取 / テーブル情報読取 双 tab）。QR/OCR 写值均先经固定 処理ルール；后处理成功后，若 Step2 タイプ 为 <code>number</code> 或 <code>enum</code> 且已配正常条件，则进入正常条件比较。</p>
-<pre><code>Step2 プロンプト → 写值 → 固定処理ルール →（タイプ 适用时）正常条件比较（均不调大模型）</code></pre>
+<p>与正常条件同表（テキスト読取 / テーブル情報読取 双 tab）。QR/OCR 写值均先经固定 処理ルール；后处理成功后，若该字段/列 処理ルール 允许配置且已配正常条件，则进入正常条件比较。</p>
+<pre><code>Step2 プロンプト（提示词） → 写值 → 固定処理ルール →（処理ルール适用时）正常条件比较（均不调大模型）</code></pre>
 <ul><li>処理ルール 执行失败 → <code>ocrStatus=failed</code>，案件异常，不进 OCR 确认。</li><li>AIマッチング 仅推荐规则，不生成正常条件。</li></ul>
 <h4 class="subsection-heading" id="fig-step3-正常值范围">Step3 正常值范围</h4>
 <div class="figure-row figure-row--single">
@@ -600,14 +602,17 @@
   <figcaption>账票类型 Step3 · 正常条件（字段读取 + 表格读取）</figcaption>
 </figure>
 </div>
-<p>本期范围：正常条件支持 範囲内、&lt;、≤、&gt;、≥ 与 列挙；比较对象为 Step3 処理ルール 后处理产物。数值类阈值填与 Step2 プロンプト 抽出单位同量纲的纯数字（字段上不写 cm/円 等后缀）。</p>
-<p>适用 Step2 タイプ（均为可选，未配则跳过比较）：</p>
-<table><thead><tr><th>タイプ</th><th>正常条件</th></tr></thead><tbody><tr><td><code>string</code></td><td>不展示、不配、不参与</td></tr><tr><td><code>number</code></td><td>範囲内 / &lt; / ≤ / &gt; / ≥</td></tr><tr><td><code>enum</code></td><td>仅 列挙；允许值 カンマ区切り（<code>,</code> または <code>，</code>），trim + 全半角归一后完全匹配</td></tr></tbody></table>
-<p>バーコード等不确定格式字段：Step2 タイプ 设为 <code>enum</code>，用列挙列出允许取值；若后处理产物可解析为数字且タイプ 为 <code>number</code>，範囲内 / 比较模式亦适用。</p>
-<p>正常条件列：仅在 <code>number</code> / <code>enum</code> タイプ 的行展示；模式下拉 + 阈值输入；i 提示「処理ルール後の値を判定。number はプロンプト同単位の数字、enum は列挙値と照合。」配置对齐见 Step2 プロンプト 节。</p>
-<p>运行时判定（后处理成功后；タイプ 不适用、未配置正常条件或字段为空则跳过）</p>
-<ol><li>正常条件比较所有路径均执行（OCR、QR 写值、QR→OCR 兜底）。</li><li>规则 6（→ OCR 抽出确认）按取值路径分流：<ul><li>QR 写值：Step3 正常条件越界 alone 即命中（无 OCR 读取置信度，不要求「低置信」）。</li><li>OCR / QR→OCR 兜底：OCR 读取置信低于阈值 且 正常条件越界，同时成立才命中。</li></ul></li><li>QR 写值路径：规则 1、2 不适用（无 OCR 读取置信 / 未走 OCR 多模型）；规则 3～6 适用。</li><li><code>number</code> タイプ：产物无法解析为数字 → 无法比较。</li><li><code>enum</code> タイプ：列挙 按 trim + 全半角归一后完全匹配。</li><li>命中规则 6 时生成 OCR 抽出确认待办（执行页仅字段标红，不展示命中原因文案）。</li></ol>
-<table><thead><tr><th>结果</th><th>取值路径</th><th>典型示例</th></tr></thead><tbody><tr><td>规则 6 命中</td><td>OCR / 兜底</td><td>通院日数 OCR 置信 62%，后处理值 <code>20</code> 超出 <code>1</code>～<code>15</code></td></tr><tr><td>规则 6 命中</td><td>QR 写值</td><td>QR 读得通院日数 <code>20</code>，超出 <code>1</code>～<code>15</code>（不要求 OCR 置信）</td></tr><tr><td>仅越界（不触发规则 6）</td><td>OCR / 兜底</td><td>通院日数置信正常但值 <code>20</code> 超出配置区间</td></tr><tr><td>仅低置信（规则 1）</td><td>OCR / 兜底</td><td>某字段 OCR 置信 62%，正常条件通过</td></tr></tbody></table>
+<p>本期范围：正常条件支持 範囲内、&lt;、≤、&gt;、≥ 与 列挙；比较对象为 Step3 処理ルール 后处理产物。数值类阈值填与 Step2 プロンプト（提示词） 抽出单位同量纲的纯数字（字段上不写 cm/円 等后缀）。</p>
+<p>适用 処理ルール（均为可选，未配则跳过比较）：</p>
+<table><thead><tr><th>処理ルール</th><th>正常条件</th><th>可用模式</th></tr></thead><tbody><tr><td>マスタ照合</td><td>不展示、不配、不参与</td><td>—</td></tr><tr><td>テキスト置換</td><td>不展示、不配、不参与</td><td>—</td></tr><tr><td>其余所有 処理ルール</td><td>可配</td><td>範囲内 / &lt; / ≤ / &gt; / ≥ / 列挙（六种模式均可选，不按 Step2 タイプ 或 処理ルール 类别限制）</td></tr></tbody></table>
+<p>バーコード等不确定格式字段：処理ルール 选 バーコード 等时，可用 列挙 列出允许取值，亦可选数值比较模式（若后处理产物可解析为数字）。</p>
+<p>正常条件列：在 処理ルール 非 マスタ照合 / テキスト置換 的行展示；模式下拉 + 阈值输入；i 提示「処理ルール後の値の正常範囲を判定。」数值阈值对齐见 Step2 プロンプト（提示词） 节。</p>
+<p>运行时判定（后处理成功后；処理ルール 为 マスタ照合 / テキスト置換、未配置正常条件或后处理产物为空则跳过）</p>
+<ol><li>正常条件比较所有路径均执行（OCR、QR 写值、QR→OCR 兜底）。</li><li>规则 6（→ OCR 抽出确认，须已勾选）按取值路径分流：<ul><li>QR 写值：Step3 正常条件越界 alone 即命中（无 OCR 读取置信度，不要求「低置信」）。</li><li>OCR / QR→OCR 兜底：OCR 读取置信低于阈值 且 正常条件越界，同时成立才命中。</li></ul></li><li>规则 1（读取置信低于阈值，须已勾选）：仅 OCR / QR→OCR 兜底 路径；低置信 alone 即命中，与正常值是否越界无关（可与规则 6 叠加勾选）。</li><li>QR 写值路径：规则 1、2 不适用（无 OCR 读取置信 / 未走 OCR 多模型）；规则 3～6 在已勾选时适用。</li></ol>
+<p>比对失败 / 无法比较的情况（后处理已成功且已配正常条件时）：</p>
+<table><thead><tr><th>情况</th><th>处理</th></tr></thead><tbody><tr><td>数值模式（数字のみ / 小数点 / 金額 等）：后处理产物无法解析为数字</td><td>视为比较失败（无法完成阈值比较）</td></tr><tr><td>列挙 模式：产物经 trim + 全半角归一后不在允许列表</td><td>视为比较失败（越界）</td></tr><tr><td>后处理产物为空</td><td>跳过正常条件比较</td></tr><tr><td>比较失败 alone</td><td>不单独生成 OCR 抽出确认待办；须结合 6.04 已勾选规则（默认规则 6：QR 写值越界 alone；OCR/兜底低置信且越界）</td></tr></tbody></table>
+<ol><li>任一已启用规则命中 → 生成 OCR 抽出确认待办（执行页仅字段标红，不展示命中原因文案）。</li></ol>
+<table><thead><tr><th>结果</th><th>取值路径</th><th>典型示例</th></tr></thead><tbody><tr><td>规则 6 命中（默认配置）</td><td>OCR / 兜底</td><td>通院日数 OCR 置信 62%，后处理值 <code>20</code> 超出 <code>1</code>～<code>15</code></td></tr><tr><td>规则 6 命中（默认配置）</td><td>QR 写值</td><td>QR 读得通院日数 <code>20</code>，超出 <code>1</code>～<code>15</code>（不要求 OCR 置信）</td></tr><tr><td>仅越界（默认配置：仅规则 6 时）</td><td>OCR / 兜底</td><td>通院日数置信正常但值 <code>20</code> 超出配置区间 → 不进待办</td></tr><tr><td>仅低置信（须启用规则 1）</td><td>OCR / 兜底</td><td>某字段 OCR 置信 62%，正常条件通过 → 进待办</td></tr></tbody></table>
 <table><thead><tr><th>模式</th><th>判定</th></tr></thead><tbody><tr><td>範囲内 / &lt; / ≤ / &gt; / ≥</td><td>后处理数值与阈值比较</td></tr><tr><td>列挙</td><td>按统一分隔符切分允许值列表；trim + 全半角归一后完全匹配</td></tr></tbody></table>
 <p>阈值：数值为纯数字（不含円、日等量纲单位）；列挙为上述分隔符切分的值列表（全半角逗号/分号/空格/换行等均可）。</p>
 <h4 class="subsection-heading" id="fig-step5-效果测试">Step5 效果测试</h4>
@@ -615,31 +620,23 @@
 <table><thead><tr><th>输出项</th><th>テキスト読取</th><th>テーブル情報読取</th><th>说明</th></tr></thead><tbody><tr><td>字段值</td><td>适用</td><td>适用（表格行）</td><td>只读展示 mock 读取结果</td></tr><tr><td>范围结论</td><td>适用</td><td>适用</td><td>仅 Step5：範囲OK / 超出正常值范围 + 配置区间（如 <code>1</code>～<code>15</code>）；越界时字段标红</td></tr><tr><td>读取来源标签</td><td>适用</td><td>—</td><td>仅 Step5：字段卡片右上角；QR読取 / OCR読取；纯 OCR 路径展示 OCR読取</td></tr><tr><td>要確認标记</td><td>适用</td><td>适用</td><td>命中要確認时输入框标红</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-step2-qr-界面文案日语">Step2 · QR 界面文案（日语）</h4>
 <p>Step2 字段读取 tab 与 QR 源条、映射表、提示与弹窗沿用原型日文文案（表格读取 tab 无 QR 相关项）。</p>
-<table><thead><tr><th>类型</th><th>界面文案（日语）</th><th>说明</th></tr></thead><tbody><tr><td>Tab</td><td>テキスト読取</td><td>Step2 字段读取 tab</td></tr><tr><td>Tab</td><td>テーブル情報読取</td><td>Step2 表格读取 tab（无 QR）</td></tr><tr><td>模式切换</td><td>OCR設定 / QR設定</td><td>仅字段读取 tab 内轻量切换</td></tr><tr><td>区域标题</td><td>QRソース</td><td>QR 源条标题</td></tr><tr><td>空态</td><td>Step1 でテンプレートをアップロードしてください</td><td>无 Step1 template</td></tr><tr><td>空态</td><td>読取中…</td><td>QR 扫描进行中</td></tr><tr><td>空态</td><td>QR を検出できませんでした。「QRスキャン」で再試行できます</td><td>扫描无检出</td></tr><tr><td>表头</td><td>番号 / 項目名 / 必須 / タイプ / QRソース / 取値方法 / 区切り文字 / 順序</td><td>字段映射表列</td></tr><tr><td>下拉占位</td><td>未選択（OCR）</td><td>QR 源下拉；未选则该字段 OCR</td></tr><tr><td>取値方法说明</td><td>OFF：QR 解码全文をそのままフィールドに書き込みます。ON：区切り文字と順序を入力し、指定した 1 段だけを取得します。</td><td>取値方法列 i 提示；OFF=全文 / ON=分割取 1 段</td></tr><tr><td>分割符说明</td><td>区切り文字で split します。連続する区切り（例：$$）の間は空フィールドです。段内が空文字または空値占位の場合も空として扱います。</td><td>仅取値方法 ON 时生效；连续分隔符→空段</td></tr><tr><td>字段排序说明</td><td>分割時に QR 解码串から取る位置（1 起）。同一 QR ソース内で重複不可。</td><td>仅取値方法 ON 时生效；1 起、同源不重复</td></tr><tr><td>タイプ说明</td><td>OCR設定で定義した項目タイプを表示します。QR読取では編集できません。</td><td>タイプ列 i 提示</td></tr><tr><td>QR源说明</td><td>QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1、QR2… と検出数に応じて割り当てます。テンプレート変更後は「QRスキャン」で再実行できます。</td><td>仅生成 QRソース目录；字段映射须手动</td></tr></tbody></table>
+<table><thead><tr><th>类型</th><th>界面文案（日语）</th><th>说明</th></tr></thead><tbody><tr><td>Tab</td><td>テキスト読取</td><td>Step2 字段读取 tab</td></tr><tr><td>Tab</td><td>テーブル情報読取</td><td>Step2 表格读取 tab（无 QR）</td></tr><tr><td>模式切换</td><td>OCR設定 / QR設定</td><td>仅字段读取 tab 内轻量切换</td></tr><tr><td>区域标题</td><td>QRソース</td><td>QR 源条标题</td></tr><tr><td>空态</td><td>Step1 でテンプレートをアップロードしてください</td><td>无 Step1 template</td></tr><tr><td>空态</td><td>読取中…</td><td>QR 扫描进行中</td></tr><tr><td>空态</td><td>QR を検出できませんでした。「QRスキャン」で再試行できます</td><td>扫描无检出</td></tr><tr><td>表头</td><td>番号 / 項目名 / 必須 / タイプ / QRソース / 取値方法 / 区切り文字 / 順序</td><td>字段映射表列；界面列名 タイプ = 字段类别</td></tr><tr><td>下拉占位</td><td>未選択（OCR）</td><td>QR 源下拉；未选则该字段 OCR</td></tr><tr><td>取値方法说明</td><td>OFF：QR 解码全文をそのままフィールドに書き込みます。ON：区切り文字と順序を入力し、指定した 1 段だけを取得します。</td><td>取値方法列 i 提示；OFF=全文 / ON=分割取 1 段</td></tr><tr><td>分隔符说明</td><td>区切り文字で split します。連続する区切り（例：$$）の間は空フィールドです。段内が空文字または空値占位の場合も空として扱います。</td><td>仅取値方法 ON 时生效；连续分隔符→空段</td></tr><tr><td>字段排序说明</td><td>分割時に QR 解码串から取る位置（1 起）。同一 QR ソース内で重複不可。</td><td>仅取値方法 ON 时生效；1 起、同源不重复</td></tr><tr><td>順序校验报错</td><td>順序を入力してください / 最大値を超えています / 順序が連番ではありません / 順序が重複しています</td><td>取値方法 ON 时 順序 列；空值、超上限、非连号、重复</td></tr><tr><td>分隔符校验报错</td><td>区切り文字を入力してください</td><td>取値方法 ON 时 区切り文字 列为空</td></tr><tr><td>タイプ（字段类别）说明</td><td>OCR設定で定義した項目タイプを表示します。QR読取では編集できません。</td><td>タイプ（字段类别）列 i 提示</td></tr><tr><td>QR源说明</td><td>QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1、QR2… と検出数に応じて割り当てます。テンプレート変更後は「QRスキャン」で再実行できます。</td><td>仅生成 QRソース目录；字段映射须手动</td></tr><tr><td>QR扫描重扫确认</td><td>既にフィールド映射が設定されています。QRスキャンを再実行すると、フィールド映射がクリアされ、QRソース目録が上書きされます。続行しますか？</td><td>映射表已有字段选 QRソース 时再次点击 QRスキャン；确认后清空字段映射并重扫目录；按钮「続行」「キャンセル」</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-按钮step2-qr">按钮（Step2 · QR）</h4>
-<table><thead><tr><th>按钮</th><th>界面文案（日语）</th><th>启用条件</th><th>点击后</th></tr></thead><tbody><tr><td>QR扫描</td><td>QRスキャン</td><td>Step1 有 template</td><td>仅重扫并更新 QRソース目录（QR1、QR2…）；不自动填写字段映射表的 QRソース / 取値方法 / 区切り文字 / 順序。已有目录时点击可提示确认后重扫；按钮「続行」「キャンセル」</td></tr></tbody></table>
+<table><thead><tr><th>按钮</th><th>界面文案（日语）</th><th>启用条件</th><th>点击后</th></tr></thead><tbody><tr><td>QR扫描</td><td>QRスキャン</td><td>Step1 有 template</td><td>仅重扫并更新 QRソース目录（QR1、QR2…）；不自动填写字段映射表的 QRソース / 取値方法 / 区切り文字 / 順序。已有字段 QR 映射时点击弹窗确认后先清空映射再重扫；无映射时直接扫描；按钮「続行」「キャンセル」</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-异常与边界">异常与边界</h4>
-<table><thead><tr><th>场景</th><th>条件</th><th>用户提示 / 处理</th></tr></thead><tbody><tr><td>Step1 · 运行时分类置信度低</td><td>classificationConfidence 低于 Step1 阈值</td><td>进入集约确认</td></tr><tr><td>Step2 · QR 扫描无检出</td><td>template 上未检测到 QR</td><td>空态：「QR を検出できませんでした。「QRスキャン」で再試行できます」，提示再次扫描</td></tr><tr><td>Step2 · QR扫描重扫</td><td>已有 QRソース目录时再次点击 QR扫描</td><td>弹窗确认；按钮「続行」「キャンセル」</td></tr><tr><td>Step2 · 順序/分隔符校验失败</td><td>取値方法 ON 时順序为空、重复或非同源连号；分隔符为空</td><td>输入框标红，hover时tooltip报错（「最大値を超えています」「順序が連番ではありません」「順序が重複しています」）；阻断保存</td></tr><tr><td>Step3 · 正常条件不完整</td><td><code>number</code> / <code>enum</code> タイプ 且已选比较模式但阈值缺失，或 min&gt;max</td><td>输入框标红，报错</td></tr><tr><td>运行时 · 后处理执行失败</td><td>Step3 処理ルール 执行失败</td><td><code>ocrStatus=failed</code>；案件异常；不进 OCR 确认</td></tr><tr><td>运行时 · 正常条件未通过（规则 6）</td><td>后处理越界；OCR·兜底且 OCR 置信低于阈值，或 QR 写值越界</td><td><code>reviewRequired</code> → OCR 确认（规则 6）</td></tr></tbody></table>
+<table><thead><tr><th>场景</th><th>条件</th><th>用户提示 / 处理</th></tr></thead><tbody><tr><td>Step1 · 运行时分类置信度低</td><td>classificationConfidence 低于 Step1 阈值</td><td>进入集约确认</td></tr><tr><td>Step2 · QR 扫描无检出</td><td>template 上未检测到 QR</td><td>空态：「QR を検出できませんでした。「QRスキャン」で再試行できます」，提示再次扫描</td></tr><tr><td>Step2 · QR扫描重扫</td><td>映射表已有字段配置 QRソース 时再次点击 QR扫描</td><td>弹窗：「既にフィールド映射が設定されています。QRスキャンを再実行すると、フィールド映射がクリアされ、QRソース目録が上書きされます。続行しますか？」；确认后清空字段映射并重扫目录；按钮「続行」「キャンセル」；无映射时直接扫描</td></tr><tr><td>Step2 · 順序/分隔符校验失败</td><td>取値方法 ON 时順序为空、重复或非同源连号；分隔符为空</td><td>输入框标红，hover时tooltip报错（「順序を入力してください」「区切り文字を入力してください」「最大値を超えています」「順序が連番ではありません」「順序が重複しています」）；阻断保存</td></tr><tr><td>Step3 · 正常条件不完整</td><td>処理ルール 允许配置且已选比较模式但阈值缺失，或 min&gt;max</td><td>输入框标红，报错</td></tr><tr><td>运行时 · 后处理执行失败</td><td>Step3 処理ルール 执行失败</td><td><code>ocrStatus=failed</code>；案件异常；不进 OCR 确认</td></tr><tr><td>运行时 · 正常条件未通过（规则 6）</td><td>后处理越界；OCR·兜底且 OCR 置信低于阈值，或 QR 写值越界</td><td><code>reviewRequired</code> → OCR 确认（规则 6）</td></tr></tbody></table>
 <h3 id="sec-6-04" class="section-heading">6.04 我的任务</h3>
 <h4 class="subsection-heading" id="fig-功能点本期增量">功能点（本期增量）</h4>
-<ol><li>读取模型弹窗确认规则扩展为六项（前五项为读取置信/Master 等既有规则，第六项为「低置信且超出正常值范围」）；多选 OR，默认勾选规则 6；六项任一命中 → OCR 抽出确认待办。</li><li>画像不正 preprocessResult=reviewRequired → 人工确认待办（非 OCR 抽出确认页）。</li><li>前处理确认页脱敏预览与字段展示（待确认）。</li><li>OCR 抽出确认执行页：要確認字段高亮 + 可编辑；不展示要確認原因、范围结论、配置区间、读取来源（范围结论仅 Step5 / 案件日志）。</li><li>QR 不单独产生待办类型；QR 与 OCR 路径汇合后按 6.04 适用矩阵 判定（QR 写值不适用规则 1、2；规则 6 为越界 alone）。</li></ol>
+<ol><li>读取模型弹窗确认规则扩展为六项（前五项为读取置信/Master 等既有规则，第六项为「低信頼度かつ正常値範囲を超えています」）；复选框多选 OR；默认仅勾选规则 6；admin 可追加 1～5 或改为其他组合；任一已勾选规则命中 → OCR 抽出确认待办（多选细则见下节）。</li><li>画像不正 preprocessResult=reviewRequired → 前处理人工确认待办（非 OCR 抽出确认页）。</li><li>前处理确认页脱敏预览与字段展示（待确认）。</li><li>OCR 抽出确认执行页：要確認字段高亮 + 可编辑；不展示要確認原因、范围结论、配置区间、读取来源（读取来源仅账票类别设定 Step5 / 案件日志）。</li><li>QR 不单独产生待办类型；QR 与 OCR 路径汇合后按 6.04 适用矩阵 判定（QR 写值不适用规则 1、2；规则 6 为越界 alone）。</li></ol>
 <p>办结仍校验必填与正常值；未通过则阻断。</p>
-<h4 class="subsection-heading" id="fig-ocr-抽出确认规则六项">OCR 抽出确认规则（六项）</h4>
-<div class="figure-row figure-row--single">
-<figure class="screenshot-figure">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/read-model-hitl-rules.png?v=1788262766572" data-caption="业务规则配置 · 読取モデル設定 · 人工確認ルール（六项 OR 多选，含「低信頼度かつ正常値範囲を超えています」）">
-    <img src="assets/read-model-hitl-rules.png?v=1788262766572" alt="业务规则配置 · 読取モデル設定 · 人工確認ルール（六项 OR 多选，含「低信頼度かつ正常値範囲を超えています」）" loading="lazy" />
-  </button>
-  <figcaption>业务规则配置 · 読取モデル設定 · 人工確認ルール（六项 OR 多选，含「低信頼度かつ正常値範囲を超えています」）</figcaption>
-</figure>
-</div>
+<h4 class="subsection-heading" id="fig-人工确认规则六项">人工确认规则（六项）</h4>
 <p>配置入口：业务规则配置 → モデル設定 → 读取模型设置弹窗（人工确认触发规则，多选 OR，默认勾选规则 6）。</p>
 <table><thead><tr><th>序号</th><th>规则</th><th>判定对象</th><th>典型场景</th></tr></thead><tbody><tr><td>1</td><td>信頼度が閾値未満</td><td>OCR 模型读取置信度（仅 OCR / QR→OCR 兜底路径）</td><td>诊断书手写区域 OCR 仅 62%，低于读取模型阈值</td></tr><tr><td>2</td><td>多モデル結果不一致</td><td>主模型与校验模型输出</td><td>主模型读「齊藤」、校验模型读「斎藤」</td></tr><tr><td>3</td><td>Master照合類似度が低い</td><td>Step3 Master 照合后相似度</td><td>伤病情报与 ICD-10 词典最佳匹配低于阈值</td></tr><tr><td>4</td><td>Master照合結果が空</td><td>Step3 Master 照合无命中</td><td>医疗机构名在 Master 中查无结果</td></tr><tr><td>5</td><td>Master照合信頼度が低い</td><td>Master 照合返回置信度</td><td>照合有候选但置信度不足</td></tr><tr><td>6</td><td>低信頼度かつ正常値範囲を超えています</td><td>Step3 正常条件越界；QR 写值越界可单独命中；OCR 读取须 OCR 读取置信低于阈值 且 越界</td><td>QR：通院日数 QR 读值 <code>20</code> 超出 <code>1</code>～<code>15</code>；OCR：同字段置信 62% 且越界</td></tr></tbody></table>
 <p>六项为 OR 关系：账票级任一字段命中 → 该账票合并为一条 OCR 抽出确认待办。</p>
 <h4 class="subsection-heading" id="fig-ocr設定-与-qr設定-下的规则适用">OCR設定 与 QR設定 下的规则适用</h4>
 <table><thead><tr><th>读取模式</th><th>字段取值路径</th><th>具体场景</th><th>规则 1（读取置信）</th><th>规则 2（多モデル）</th><th>规则 3～5（Master）</th><th>规则 6（正常值）</th><th>进 OCR 抽出确认</th></tr></thead><tbody><tr><td>OCR設定</td><td>OCR写值</td><td>Step2 选 OCR設定；或 QR設定 但无有效 QR 映射或QR检出失败出发OCR兜底</td><td>适用（OCR 置信）</td><td>适用</td><td>适用</td><td>适用（低置信+越界）</td><td>六项任一命中</td></tr><tr><td>QR設定</td><td>QR 写值</td><td>对应 QR 扫描成功，映射写值完成</td><td>不适用（无 OCR 读取置信）</td><td>不适用（未走 OCR 多模型）</td><td>适用</td><td>适用</td><td>规则 3～6 命中</td></tr></tbody></table>
 <p>说明：</p>
-<ul><li>QR 成功写值路径不产生 OCR 模型读取置信度，规则 1、2 不适用；规则 6 在 QR 写值上为正常条件越界 alone 即命中（与 OCR·兜底的「低置信且越界」分流）。规则 2 亦仅 OCR / QR→OCR 兜底路径适用。</li><li>Master 照合字段走 OCR 确认规则 3～5。</li><li>QR 兜底字段与纯 OCR 路径相同，规则 1、2、6 按 OCR·兜底口径（规则 6 须低置信且越界）；全部 QR 未扫到即为所有已映射字段兜底，不单独设路由分支。</li></ul>
+<ul><li>QR 成功写值路径不产生 OCR 模型读取置信度，规则 1、2 不适用；规则 6 在 QR 写值上为正常条件越界 alone 即命中（与 OCR·兜底的「低置信且越界」分流）。规则 2 亦仅 OCR / QR→OCR 兜底路径适用。</li><li>Master 照合字段走 OCR 确认规则 3～5。</li><li>QR 兜底字段与纯 OCR 路径相同，规则 1、2、6 按 OCR口径（规则 6 须低置信且越界）；全部 QR 未扫到即为所有已映射字段兜底，不单独设路由分支。</li></ul>
 <hr />
       </article>
     </main>

@@ -21,10 +21,21 @@
         <div class="global-logo-area">
           <img src="logo-CWaP-1CB.png" alt="Logo" />
         </div>
-        <button type="button" class="global-user-menu" title="ユーザー">
-          <span>管理者</span>
-          <span>⌄</span>
-        </button>
+        <div class="global-topbar-actions">
+          <button
+            type="button"
+            class="global-lang-toggle"
+            data-no-translate
+            :title="uiLanguage === 'zh' ? '日本語に切替' : '切换中文'"
+            @click="toggleUiLanguage"
+          >
+            {{ uiLanguage === 'zh' ? '日本語' : '中文' }}
+          </button>
+          <button type="button" class="global-user-menu" title="ユーザー">
+            <span>管理者</span>
+            <span>⌄</span>
+          </button>
+        </div>
       </header>
       <div class="body-row idp-body" :class="{ 'is-editor-surface': inspectorExpanded && currentModule === 'case-workflow', 'is-workflow-setup-fullscreen': workflowSetupFullscreen && currentModule === 'case-workflow' }">
         <aside v-show="!workflowSetupFullscreen" class="global-nav">
@@ -374,7 +385,7 @@
                                     </el-tooltip>
                                   </span>
                                 </th>
-                            <th>プロンプト</th>
+                            <th>{{ t('プロンプト') }}</th>
                                 <th>
                                   <span class="fixed-doc-th-label">
                                     正解サンプル
@@ -516,14 +527,14 @@
                                     区切り文字
                                     <el-tooltip placement="top" :show-after="200">
                                       <template #content>
-                                        区切り文字で split します。連続する区切り（例：$$）の間は空フィールドです。段内が空文字または空値占位の場合も空として扱います。
+                                        区切り文字で切分します。連続する区切り文字（例：$$）の間は空フィールドです。段内が空文字または空値占位の場合も空として扱います。
                                       </template>
                                       <span class="fixed-doc-info" tabindex="0">i</span>
                                     </el-tooltip>
                                   </th>
                                   <th class="fixed-doc-qr-index-col">
                                     順序
-                                    <el-tooltip placement="top" :show-after="200" content="分割時に QR 解码串から取る位置（1 起）。同一 QR ソース内で重複不可。">
+                                    <el-tooltip placement="top" :show-after="200" content="区切り時に QR 解码串から取る位置（1 起）。同一 QR ソース内で重複不可。">
                                       <span class="fixed-doc-info" tabindex="0">i</span>
                                     </el-tooltip>
                                   </th>
@@ -564,7 +575,7 @@
                                       :model-value="isFixedDocQrSplitExtractMethod(row)"
                                       size="small"
                                       class="fixed-doc-qr-split-switch"
-                                      active-text="分割"
+                                      active-text="区切り"
                                       inactive-text="全文"
                                       @change="setFixedDocQrSplitEnabled(row.fieldId, $event)"
                                     ></el-switch>
@@ -671,7 +682,7 @@
                                         </el-tooltip>
                                       </span>
                                     </th>
-                                    <th>列プロンプト</th>
+                                    <th>{{ t('列プロンプト') }}</th>
                                     <th>
                                       <span class="fixed-doc-th-label">
                                         正解サンプル
@@ -759,7 +770,7 @@
                             <th v-if="fixedDocShowNormalConditionColumn" class="fixed-doc-normal-condition-col">
                               <span class="fixed-doc-th-label">
                                 正常条件
-                                <el-tooltip placement="top" :show-after="200" content="処理ルール後の正常値範囲を判定。">
+                                <el-tooltip placement="top" :show-after="200" content="処理ルール後の値の正常範囲を判定。">
                                   <span class="fixed-doc-info" tabindex="0">i</span>
                                 </el-tooltip>
                               </span>
@@ -939,7 +950,7 @@
                                 <th v-if="shouldShowFixedDocTableNormalConditionColumn(table)" class="fixed-doc-normal-condition-col">
                                   <span class="fixed-doc-th-label">
                                     正常条件
-                                    <el-tooltip placement="top" :show-after="200" content="処理ルール後の正常値範囲を判定。">
+                                    <el-tooltip placement="top" :show-after="200" content="処理ルール後の値の正常範囲を判定。">
                                       <span class="fixed-doc-info" tabindex="0">i</span>
                                     </el-tooltip>
                                   </span>
