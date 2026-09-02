@@ -22,8 +22,12 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(html, /class="global-nav-subitem" @click="openReadModelSettings">モデル設定<\/button>/);
   assert.match(html, /v-model="readModelSettingsVisible"[\s\S]*title="読取モデル設定"[\s\S]*人工確認ルール[\s\S]*readModelHitlRules/);
   assert.match(html, /人工確認ルール[\s\S]*v-for="rule in readModelHitlRules"[\s\S]*\{\{ rule\.label \}\}/);
+  assert.match(main, /normal_range_exceeded', label: '正常値範囲を超えています'/);
   assert.match(main, /low_confidence_and_range_exceeded', label: '低信頼度かつ正常値範囲を超えています'/);
-  assert.match(main, /hitlRules: \['low_confidence_and_range_exceeded'\]/);
+  assert.match(main, /hitlRules: \['normal_range_exceeded', 'low_confidence_and_range_exceeded'\]/);
+  assert.match(main, /function fieldHasConfiguredNormalCondition\(fieldRule = \{\}\)/);
+  assert.match(main, /hitlRules\.includes\('normal_range_exceeded'\)/);
+  assert.match(main, /!isQrReadPath[\s\S]*hitlRules\.includes\('low_confidence_and_range_exceeded'\)/);
   assert.match(main, /function toggleReadModelHitlRule\(ruleValue, checked\)/);
   assert.match(html, /@change="toggleReadModelHitlRule\(rule\.value, \$event\)"/);
   assert.doesNotMatch(html, /read-model-hitl-rule-list[\s\S]*disabled/);

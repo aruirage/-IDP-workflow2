@@ -71,12 +71,13 @@ const appOptions = {
       { value: 'master_low_similarity', label: 'Master照合類似度が低い' },
       { value: 'master_empty', label: 'Master照合結果が空' },
       { value: 'master_low_confidence', label: 'Master照合信頼度が低い' },
+      { value: 'normal_range_exceeded', label: '正常値範囲を超えています' },
       { value: 'low_confidence_and_range_exceeded', label: '低信頼度かつ正常値範囲を超えています' },
     ];
     const readModelSettings = reactive({
       mainModel: 'neoseeo-local',
       verifyModels: ['tztest'],
-      hitlRules: ['low_confidence_and_range_exceeded'],
+      hitlRules: ['normal_range_exceeded', 'low_confidence_and_range_exceeded'],
     });
     const workflowTestRunning = ref(false);
     const workflowTestTimelineRef = ref(null);
@@ -2598,7 +2599,7 @@ const appOptions = {
       const allowedModes = getFixedDocRangeModeOptionsByRule(rule).map((item) => item.value);
       const currentMode = target.rangeMode || 'between';
       if (!allowedModes.includes(currentMode)) {
-        target.rangeMode = getDefaultFixedDocNormalConditionModeByRule(rule);
+        target.rangeMode = getDefaultFixedDocNormalConditionModeByRule();
         if (target.rangeMode === 'enum') {
           target.rangeMin = '';
           target.rangeMax = '';
@@ -2803,7 +2804,7 @@ const appOptions = {
       }
       const nextMode = getFixedDocTableColumnNormalConditionModeOptions(col).some((option) => option.value === mode)
         ? mode
-        : getDefaultFixedDocNormalConditionModeByRule(col?.rule);
+        : getDefaultFixedDocNormalConditionModeByRule();
       setFixedDocTableColumnRule(tableId, columnRef, { rangeEnabled: true, rangeMode: nextMode });
     }
     function buildFixedDocAiMatchingDraft() {
@@ -3176,11 +3177,11 @@ const appOptions = {
       const fieldRule = fixedDocFieldRules[fieldId] || {};
       const nextMode = getFixedDocNormalConditionModeOptions({ rule: fieldRule.rule }).some((option) => option.value === mode)
         ? mode
-        : getDefaultFixedDocNormalConditionModeByRule(fieldRule.rule);
+        : getDefaultFixedDocNormalConditionModeByRule();
       setFixedDocFieldRule(fieldRef, { rangeEnabled: true, rangeMode: nextMode });
     }
-    function getDefaultFixedDocNormalConditionModeByRule(rule = '') {
-      return isFixedDocNumericRangeRule(rule) ? 'between' : 'enum';
+    function getDefaultFixedDocNormalConditionModeByRule() {
+      return 'between';
     }
     const fixedDocProcessRows = computed(() => {
       ensureFixedDocFieldRules();
@@ -3368,6 +3369,9 @@ const appOptions = {
       if (threshold == null) return 75;
       return threshold > 1 ? threshold : threshold * 100;
     }
+    function fieldHasConfiguredNormalCondition(fieldRule = {}) {
+      return canFixedDocFieldHaveRange(fieldRule) && fieldRule.rangeEnabled;
+    }
     function evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue, isQrReadPath = false) {
       const range = evaluateFixedDocTestRange(fieldRule, readValue);
       if (hasQrMapping && !qrValue && !ocrValue) {
@@ -3381,10 +3385,18 @@ const appOptions = {
         return { needsReview: true, reason: 'low_confidence', range };
       }
       if (
-        hitlRules.includes('low_confidence_and_range_exceeded')
+        hitlRules.includes('normal_range_exceeded')
         && range.status === 'fail'
-        && canFixedDocFieldHaveRange(fieldRule)
-        && (isQrReadPath || isLowConfidence)
+        && fieldHasConfiguredNormalCondition(fieldRule)
+      ) {
+        return { needsReview: true, reason: 'normal_range_exceeded', range };
+      }
+      if (
+        hitlRules.includes('low_confidence_and_range_exceeded')
+        && !isQrReadPath
+        && isLowConfidence
+        && range.status === 'fail'
+        && fieldHasConfiguredNormalCondition(fieldRule)
       ) {
         return { needsReview: true, reason: 'low_confidence_and_range', range };
       }
