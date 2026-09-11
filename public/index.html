@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/element-plus@2.9.1/dist/index.css" />
-  <link rel="stylesheet" href="style.css?v=700" />
+  <link rel="stylesheet" href="style.css?v=703" />
   <style>[v-cloak] { display: none !important; }</style>
 </head>
 <body>
@@ -45,52 +45,52 @@
           <nav class="global-nav-main" aria-label="メインメニュー">
             <button type="button" class="global-nav-item">
               <span class="global-nav-icon">▣</span>
-              <span>新規アップロード</span>
+              <span>{{ t('新規アップロード') }}</span>
             </button>
             <button type="button" class="global-nav-item">
               <span class="global-nav-icon">▤</span>
-              <span>案件一覧</span>
+              <span>{{ t('案件一覧') }}</span>
             </button>
             <button type="button" class="global-nav-item">
               <span class="global-nav-icon">⌂</span>
-              <span>マイタスク</span>
+              <span>{{ t('マイタスク') }}</span>
             </button>
             <button type="button" class="global-nav-item global-nav-item--group is-open">
               <span class="global-nav-icon">▥</span>
-              <span>業務ルール設定</span>
+              <span>{{ t('業務ルール設定') }}</span>
               <span class="global-nav-chevron">⌃</span>
             </button>
             <div class="global-nav-submenu">
               <button type="button" class="global-nav-subitem" :class="{ 'is-active': currentModule === 'fixed-doc' }" @click="openFixedDocSettingsFromMenu">
-                帳票タイプ設定
+                {{ t('帳票タイプ設定') }}
               </button>
               <button type="button" class="global-nav-subitem" :class="{ 'is-active': currentModule === 'case-workflow' }" @click="switchModule('case-workflow')">
-                業務シーン設定
+                {{ t('業務シーン設定') }}
               </button>
               <button type="button" class="global-nav-subitem" :class="{ 'is-active': currentModule === 'master-match-config' }" @click="switchModule('master-match-config')">
-                マスターデータ設定
+                {{ t('マスターデータ設定') }}
               </button>
               <button type="button" class="global-nav-subitem" :class="{ 'is-active': currentModule === 'data-mapping-config' }" @click="switchModule('data-mapping-config')">
-                データマッピング設定
+                {{ t('データマッピング設定') }}
               </button>
               <button type="button" class="global-nav-subitem" :class="{ 'is-active': currentModule === 'ai-verify-config' }" @click="switchModule('ai-verify-config')">
-                AI検証設定
+                {{ t('AI検証設定') }}
               </button>
-              <button type="button" class="global-nav-subitem" @click="openReadModelSettings">モデル設定</button>
-              <button type="button" class="global-nav-subitem">API設定</button>
+              <button type="button" class="global-nav-subitem" @click="openReadModelSettings">{{ t('モデル設定') }}</button>
+              <button type="button" class="global-nav-subitem">{{ t('API設定') }}</button>
             </div>
           </nav>
           <div class="global-nav-foot">
             <button type="button" class="global-nav-item global-nav-item--group">
               <span class="global-nav-icon">▥</span>
-              <span>システム設定</span>
+              <span>{{ t('システム設定') }}</span>
               <span class="global-nav-chevron">⌄</span>
             </button>
           </div>
         </aside>
         <div v-show="currentModule === 'case-workflow' && !workflowSetupFullscreen" class="scene-list-col" :class="{ 'is-collapsed': sceneSidebarCollapsed }">
           <div v-show="sceneSidebarCollapsed" class="scene-tags-row">
-            <button type="button" class="scene-collapse-btn" :title="sceneSidebarCollapsed ? '展開' : '折りたたむ'" @click="toggleSceneSidebar">
+            <button type="button" class="scene-collapse-btn" :title="sceneSidebarCollapsed ? t('展開') : t('折りたたむ')" @click="toggleSceneSidebar">
               {{ sceneSidebarCollapsed ? '›' : '‹' }}
             </button>
           </div>
@@ -404,8 +404,8 @@
                                 </th>
                                 <th>
                                   <span class="fixed-doc-th-label">
-                                    マスク
-                                    <el-tooltip placement="top" :show-after="200" content="この項目は前処理の個人情報脱敏（マスキング）対象フィールドの指定に使用されます。">
+                                    HITL
+                                    <el-tooltip placement="top" :show-after="200" content="当該フィールドを人工確認の対象にするかを指定します。">
                                       <span class="fixed-doc-info" tabindex="0">i</span>
                                     </el-tooltip>
                                   </span>
@@ -435,9 +435,9 @@
                                 <td><el-switch :model-value="row.required" size="small"></el-switch></td>
                                 <td class="fixed-doc-mask-cell">
                                   <el-switch
-                                    :model-value="row.mask"
+                                    :model-value="row.hitl"
                                     size="small"
-                                    @change="toggleFixedDocFieldMask(row.fieldId, $event)"
+                                    @change="toggleFixedDocFieldHitl(row.fieldId, $event)"
                                   ></el-switch>
                                 </td>
                                 <td class="fixed-doc-row-actions-col">
@@ -701,8 +701,8 @@
                                     </th>
                                     <th>
                                       <span class="fixed-doc-th-label">
-                                        マスク
-                                        <el-tooltip placement="top" :show-after="200" content="この列は前処理の個人情報脱敏（マスキング）対象フィールドの指定に使用されます。">
+                                        HITL
+                                        <el-tooltip placement="top" :show-after="200" content="当該列を人工確認の対象にするかを指定します。">
                                           <span class="fixed-doc-info" tabindex="0">i</span>
                                         </el-tooltip>
                                       </span>
@@ -725,7 +725,7 @@
                                     <td><el-input v-model="col.sample" size="small"></el-input></td>
                                     <td class="fixed-doc-mask-cell"><el-switch v-model="col.required" size="small"></el-switch></td>
                                     <td class="fixed-doc-mask-cell">
-                                      <el-switch v-model="col.mask" size="small"></el-switch>
+                                      <el-switch v-model="col.hitl" size="small"></el-switch>
                                     </td>
                                     <td class="fixed-doc-row-actions-col">
                                       <div class="fixed-doc-row-actions">
@@ -1349,7 +1349,7 @@
               @click="goToWorkflowSetupStep(1)"
             >
               <span class="wf-setup-step-index">1</span>
-              <span class="wf-setup-step-label">業務シーン・案件集約</span>
+              <span class="wf-setup-step-label">{{ t('業務シーン・案件集約') }}</span>
             </button>
             <span class="wf-setup-step-line" aria-hidden="true"></span>
             <button
@@ -1359,7 +1359,7 @@
               @click="goToWorkflowSetupStep(2)"
             >
               <span class="wf-setup-step-index">2</span>
-              <span class="wf-setup-step-label">ワークフロー設定</span>
+              <span class="wf-setup-step-label">{{ t('ワークフロー設定') }}</span>
             </button>
             <span class="wf-setup-step-line" aria-hidden="true"></span>
             <button
@@ -1369,7 +1369,7 @@
               @click="goToWorkflowSetupStep(3)"
             >
               <span class="wf-setup-step-index">3</span>
-              <span class="wf-setup-step-label">通知設定</span>
+              <span class="wf-setup-step-label">{{ t('通知設定') }}</span>
             </button>
             <span class="wf-setup-step-line" aria-hidden="true"></span>
             <button
@@ -1379,7 +1379,7 @@
               @click="goToWorkflowSetupStep(4)"
             >
               <span class="wf-setup-step-index">4</span>
-              <span class="wf-setup-step-label">エクスポート設定</span>
+              <span class="wf-setup-step-label">{{ t('エクスポート設定') }}</span>
             </button>
             </div>
             <div class="wf-setup-stepper-actions">
@@ -1412,7 +1412,7 @@
               type="button"
               class="wf-setup-fullscreen-btn"
               :class="{ 'is-active': workflowSetupFullscreen }"
-              :title="workflowSetupFullscreen ? '全画面を解除' : '全画面'"
+              :title="workflowSetupFullscreen ? t('全画面を解除') : t('全画面')"
               @click="toggleWorkflowSetupFullscreen"
             >
               <span class="wf-setup-fullscreen-icon" aria-hidden="true"></span>
@@ -1576,6 +1576,7 @@
                             <div class="case-aggregate-pair-row">
                               <span class="case-aggregate-pair-index">3.{{ pairIndex + 1 }}</span>
                               <div class="case-aggregate-rule-title case-aggregate-pair-matrix">
+                                <template v-if="isSceneSetupAggregateDetailOpen(group)">
                                 <el-select
                                   :model-value="group.sourceDocType"
                                   class="case-aggregate-title-select"
@@ -1605,6 +1606,12 @@
                                     :disabled="doc.type === group.sourceDocType"
                                   />
                                 </el-select>
+                                </template>
+                                <template v-else>
+                                  <span class="case-aggregate-title-static">{{ getDocDisplayLabel(group.sourceDocType) }}</span>
+                                  <span class="case-aggregate-title-arrow" aria-hidden="true">⇄</span>
+                                  <span class="case-aggregate-title-static">{{ getDocDisplayLabel(group.targetDocType) }}</span>
+                                </template>
                               </div>
                               <div class="case-aggregate-rule-actions">
                                 <button
@@ -1739,7 +1746,7 @@
                         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.8 6V2.8H6M10 2.8h3.2V6M13.2 10v3.2H10M6 13.2H2.8V10" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg>
                       </button>
                     </div>
-                    <template v-if="sceneSetupNetworkLayout.nodes.length">
+                    <template v-if="sceneSetupHeavyUiReady && sceneSetupNetworkLayout.nodes.length">
                       <div
                         class="wf-network-scale-space"
                         :style="{ width: sceneSetupNetworkScaledSize.width + 'px', height: sceneSetupNetworkScaledSize.height + 'px' }"
@@ -2338,7 +2345,7 @@
               <span class="idp-panel-expand-icon">‹</span>
               <span class="idp-panel-expand-label">設定</span>
             </button>
-            <aside v-show="!inspectorPanelCollapsed && !wfCanvasMaximized" class="idp-inspector" :class="{ 'is-editor-surface': inspectorExpanded }">
+            <aside v-if="!inspectorPanelCollapsed && !wfCanvasMaximized" class="idp-inspector" :class="{ 'is-editor-surface': inspectorExpanded }">
               <div v-if="inspectorExpanded" class="idp-editor-surface-head">
                 <button type="button" class="idp-editor-back" @click="collapseInspectorEditor">
                   <span aria-hidden="true">←</span>
@@ -2662,11 +2669,11 @@
                 <!-- 前処理 -->
                 <div v-show="inspectorPanel === 'image'" class="inspector-panel-section">
                   <inspector-module>
-                    <inspector-module-card title="前処理設定">
+                    <inspector-module-card :title="t('前処理設定')">
                       <!-- 各モジュールを ON にし、対象帳票を指定（未指定時は関連帳票すべて） -->
                       <div class="preprocess-settings-list">
                         <div
-                          v-for="item in PREPROCESS_SETTING_ITEMS"
+                          v-for="item in localizedPreprocessSettingItems"
                           :key="item.key"
                           class="preprocess-setting-row"
                           :class="{ 'is-on': isPreprocessSettingOn(item), 'is-always-on': item.alwaysOn }"
@@ -2688,10 +2695,11 @@
                             </button>
                           </div>
                           <div
-                            v-if="showPreprocessSettingDetail(item) && item.docTypesKey"
+                            v-if="showPreprocessSettingDetail(item)"
                             class="preprocess-setting-row__detail"
                           >
                             <el-select
+                              v-if="item.docTypesKey && item.key !== 'fraudDetect'"
                               v-model="processingForm.image[item.docTypesKey]"
                               multiple
                               collapse-tags
@@ -2713,10 +2721,72 @@
                                 :value="t"
                               />
                             </el-select>
+                            <div
+                              v-if="item.key === 'fraudDetect'"
+                              class="preprocess-fraud-detectors"
+                            >
+                              <div
+                                v-for="detector in localizedFraudDetectDetectorOptions"
+                                :key="'fraud-det-' + detector.key"
+                                class="preprocess-fraud-detector-block"
+                              >
+                                <div class="preprocess-fraud-detector-row">
+                                  <div class="preprocess-fraud-detector-title">
+                                    <span class="preprocess-fraud-detector-label">{{ detector.label }}</span>
+                                    <el-tooltip
+                                      v-if="detector.hint"
+                                      :content="detector.hint"
+                                      placement="top"
+                                      :show-after="200"
+                                    >
+                                      <button type="button" class="inspector-field-tip" aria-label="説明">i</button>
+                                    </el-tooltip>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="preprocess-module-switch-btn"
+                                    :aria-pressed="isFraudDetectDetectorOn(detector.key)"
+                                    :aria-label="detector.label + (isFraudDetectDetectorOn(detector.key) ? ' ON' : ' OFF')"
+                                    @click="toggleFraudDetectDetector(detector.key)"
+                                  >
+                                    <span
+                                      class="workflow-module-toggle-switch"
+                                      :class="{ 'is-on': isFraudDetectDetectorOn(detector.key) }"
+                                    >
+                                      <span class="workflow-module-toggle-knob"></span>
+                                    </span>
+                                  </button>
+                                </div>
+                                <el-select
+                                  v-if="isFraudDetectDetectorOn(detector.key)"
+                                  :model-value="getFraudDetectDetectorDocTypes(detector.key)"
+                                  multiple
+                                  collapse-tags
+                                  collapse-tags-tooltip
+                                  :max-collapse-tags="1"
+                                  size="small"
+                                  placeholder="対象帳票（未指定時は全帳票）"
+                                  class="inspector-field-control inspector-multi-select preprocess-doc-select"
+                                  :disabled="!sceneDocTypes.length"
+                                  teleported
+                                  placement="bottom-start"
+                                  popper-class="idp-inspector-select-popper"
+                                  :popper-options="{ strategy: 'fixed' }"
+                                  @update:model-value="setFraudDetectDetectorDocTypes(detector.key, $event)"
+                                >
+                                  <el-option
+                                    v-for="t in sceneDocTypes"
+                                    :key="'fraud-det-doc-' + detector.key + '-' + t"
+                                    :label="getDocDisplayLabel(t)"
+                                    :value="t"
+                                  />
+                                </el-select>
+                              </div>
+                            </div>
                             <p
                               v-if="item.key === 'piiDetect' && isPreprocessSettingOn(item) && !piiDetectEligibleDocTypes.length"
                               class="inspector-field-hint preprocess-pii-empty-hint"
-                            >Step2 でマスク ON の帳票がありません。帳票タイプ設定 Step2 OCR 読取でマスク対象フィールドを設定してください。</p>
+                            >マスク設定は帳票タイプ Step4 へ移行予定です（本期対象だが要件未確定のため、当面追加しません）。対象帳票は Step1 関連帳票から選択できます。</p>
                           </div>
                         </div>
                       </div>
@@ -4095,9 +4165,9 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://unpkg.com/element-plus@2.9.1/dist/index.full.min.js"></script>
   <script src="https://unpkg.com/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
-  <script src="scripts/workflow-core.js?v=683"></script>
-  <script src="scripts/mock-data.js?v=678"></script>
-  <script src="scripts/scene-config.js?v=675"></script>
-  <script src="main.js?v=714"></script>
+  <script src="scripts/workflow-core.js?v=686"></script>
+  <script src="scripts/mock-data.js?v=727"></script>
+  <script src="scripts/scene-config.js?v=680"></script>
+  <script src="main.js?v=727"></script>
 </body>
 </html>

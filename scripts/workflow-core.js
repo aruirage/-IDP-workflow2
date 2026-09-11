@@ -1515,7 +1515,7 @@ const PREPROCESS_SETTING_ITEMS = [
   },
   {
     key: 'piiDetect',
-    label: '敏感情報脱敏',
+    label: '敏感情報検出',
     switchKey: 'piiDetect',
     docTypesKey: 'piiDetectDocTypes',
   },
@@ -1574,9 +1574,20 @@ function buildPreprocessCanvasSummaryChips(imageConfig = {}) {
   return PREPROCESS_SETTING_ITEMS
     .filter((item) => imageConfig[item.switchKey])
     .map((item) => {
+      const short = PREPROCESS_CANVAS_SHORT_LABELS[item.key] || item.label;
+      if (item.key === 'fraudDetect') {
+        const detectors = imageConfig.fraudDetectDetectors || {};
+        const enabledKeys = Object.keys(detectors).filter((key) =>
+          isFraudDetectDetectorEnabled(detectors, key));
+        if (!enabledKeys.length) return short;
+        const union = new Set();
+        enabledKeys.forEach((key) => {
+          readFraudDetectDetectorDocTypes(detectors, key).forEach((t) => union.add(t));
+        });
+        return union.size > 0 ? `${short} ${union.size}件` : `${short} ${enabledKeys.length}種`;
+      }
       const types = imageConfig[item.docTypesKey];
       const count = Array.isArray(types) && types.length ? types.length : 0;
-      const short = PREPROCESS_CANVAS_SHORT_LABELS[item.key] || item.label;
       return count > 0 ? `${short} ${count}件` : item.label;
     });
 }
@@ -4445,7 +4456,7 @@ function shouldMigrateCaseWorkflowToDefault(workflow) {
   if (!workflow?.nodes?.length) return true;
   if (workflow.topologyCustomized) return false;
   if (isDefaultCaseWorkflowTemplate(workflow)) return true;
-  if (isMinimalPlaceholderCaseWorkflow(workflow)) return false;
+  if (isMinimalPlaceholderCaseWorkflow(workflow)) return true;
   if (hasCanonicalDefaultCaseWorkflowNodes(workflow)) {
     return !workflow.templateVersion || workflow.templateVersion < CASE_WORKFLOW_TEMPLATE_VERSION;
   }
@@ -4525,7 +4536,7 @@ function ensureFormWorkflows(form, { force = false } = {}) {
     form.workflows.case = normalizeWorkflow(form.workflows.case, 'case');
     return;
   }
-  form.workflows = { case: buildMinimalCaseWorkflow() };
+  form.workflows = { case: buildDefaultCaseWorkflow() };
 }
 
 function migrateQrReadNodesToFraudDetect(workflow) {

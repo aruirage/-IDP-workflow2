@@ -2,26 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-test('initializes the workflow canvas with only the fixed start node', async () => {
+test('initializes the workflow canvas with the default assembled case workflow', async () => {
   const sceneConfig = await readFile(new URL('../scripts/scene-config.js', import.meta.url), 'utf8');
-  const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
 
-  assert.doesNotMatch(sceneConfig, /case: buildDefaultCaseWorkflow\(\)/);
-  assert.equal((sceneConfig.match(/case: buildMinimalCaseWorkflow\(\)/g) || []).length, 2);
+  assert.equal((sceneConfig.match(/case: buildDefaultCaseWorkflow\(\)/g) || []).length, 2);
+  assert.doesNotMatch(sceneConfig, /case: buildMinimalCaseWorkflow\(\)/);
   assert.match(main, /initialForm\.workflows\.case = buildDefaultCaseWorkflow\(\)/);
   assert.doesNotMatch(main, /initialForm\.workflows\.case = buildMinimalCaseWorkflow\(\)/);
 });
 
-test('keeps new drafts minimal and restores accidentally cleared published workflows', async () => {
+test('migrates minimal placeholder drafts to the default workflow and restores published clearances', async () => {
   const workflowCore = await readFile(new URL('../scripts/workflow-core.js', import.meta.url), 'utf8');
 
-  assert.match(workflowCore, /if \(isMinimalPlaceholderCaseWorkflow\(workflow\)\) return false;/);
+  assert.match(workflowCore, /if \(isMinimalPlaceholderCaseWorkflow\(workflow\)\) return true;/);
   assert.match(workflowCore, /if \(isDefaultCaseWorkflowTemplate\(workflow\)\) return true;/);
   assert.match(workflowCore, /function shouldRestorePublishedWorkflow\(form\)/);
   assert.match(workflowCore, /form\?\.scene\?\.publishStatus === 'published'/);
   assert.match(workflowCore, /if \(shouldRestorePublishedWorkflow\(form\)\) \{\s*form\.workflows\.case = buildDefaultCaseWorkflow\(\);/s);
-  assert.doesNotMatch(workflowCore, /shouldMigrateCaseWorkflowToDefault\(form\.workflows\.case\)\) \{\s*form\.workflows\.case = buildMinimalCaseWorkflow\(\);/s);
+  assert.match(workflowCore, /form\.workflows = \{ case: buildDefaultCaseWorkflow\(\) \};/);
 });
 
 test('labels the built-in workflow test fixture as mock data', async () => {
@@ -82,12 +81,12 @@ test('hides the uncompiled Vue template until mount', async () => {
   assert.match(index, /<div id="app" v-cloak>/);
 });
 
-test('always opens the prototype in Japanese', async () => {
+test('persists UI language preference with Japanese default', async () => {
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
 
-  assert.match(main, /localStorage\.setItem\('neosai-idp-ui-language', 'ja'\);/);
-  assert.match(main, /const uiLanguage = ref\('ja'\);/);
-  assert.doesNotMatch(main, /ref\(localStorage\.getItem\('neosai-idp-ui-language'\)/);
+  assert.match(main, /const storedUiLanguage = localStorage\.getItem\('neosai-idp-ui-language'\);/);
+  assert.match(main, /const uiLanguage = ref\(storedUiLanguage === 'zh' \? 'zh' : 'ja'\);/);
+  assert.match(main, /localStorage\.setItem\('neosai-idp-ui-language', uiLanguage\.value\);/);
 });
 
 test('uses a compact required badge for the scene name', async () => {

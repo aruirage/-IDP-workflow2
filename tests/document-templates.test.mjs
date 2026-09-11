@@ -52,15 +52,16 @@ test('uses exported field names in document templates', async () => {
   assert.ok(templates.get('人間ドック').includes('総合判定'));
 });
 
-test('does not create initial aggregate field relations', async () => {
+test('seeds default aggregate field relations on migrate', async () => {
   const sceneConfig = await readFile(new URL('../scripts/scene-config.js', import.meta.url), 'utf8');
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
 
   assert.match(sceneConfig, /scene\.docFieldLinks = normalizeDocFieldLinks\(scene\.docFieldLinks, documents\);/);
-  assert.doesNotMatch(sceneConfig, /normalized\.length\s*\?[\s\S]*buildDefaultDocFieldLinks/);
-  assert.doesNotMatch(main, /if \(!sceneSetupDraft\.docFieldLinks\.length && sceneSetupDraft\.documents\.length >= 2\)/);
-  assert.match(sceneConfig, /const AGGREGATE_RULE_DATA_VERSION = 'ten-documents-clean-links-v2';/);
-  assert.match(sceneConfig, /scene\.docFieldLinks = \[\];/);
+  assert.match(sceneConfig, /buildDefaultDocFieldLinks\(documents, scene\.mainDocTypes\)/);
+  assert.match(sceneConfig, /const AGGREGATE_RULE_DATA_VERSION = 'ten-documents-complete-links-v5';/);
+  assert.match(sceneConfig, /findFallbackDefaultFieldPair/);
+  assert.match(sceneConfig, /受診者氏名/);
+  assert.match(main, /if \(linkErr \|\| !sceneSetupDraft\.docFieldLinks\.length\)/);
 });
 
 test('loads all ten templates as the initial scene documents', async () => {

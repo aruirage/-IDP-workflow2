@@ -13,6 +13,12 @@
         "caption": "账票类型 Step2 · 字段读取 tab · OCR設定（タイプ：string / number / enum、マスク列）"
       }
     ],
+    "step2-hitl-列": [
+      {
+        "file": "fixed-doc-step2-hitl.png",
+        "caption": "账票类型 Step2 · 字段读取 tab · OCR設定 · HITL 列（字段级人工确认对象开关）"
+      }
+    ],
     "step2-字段读取-qr-映射": [
       {
         "file": "fixed-doc-step2-qr.png",
@@ -34,7 +40,7 @@
     "step2-工作流画布本期增量": [
       {
         "file": "wf-preprocess-inspector.png",
-        "caption": "业务场景 Step2 · 前処理节点右侧配置（画像不正検知、敏感情報脱敏及 P1 三项子模块）"
+        "caption": "业务场景 Step2 · 前処理节点右侧配置（画像不正検知二级检测各自选账票、敏感情報検出、回転/補正）"
       }
     ],
     "人工确认规则七项": [

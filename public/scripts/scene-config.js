@@ -30,6 +30,10 @@ function normalizeImageConfig(image, documents, legacy = {}) {
   return {
     fraudDetect,
     fraudDetectDocTypes: defaultImageDocTypes(fraudDetect, fraudDocTypesRaw, allowedTypes),
+    fraudDetectDetectors: normalizeFraudDetectDetectors(
+      image?.fraudDetectDetectors,
+      defaultImageDocTypes(fraudDetect, fraudDocTypesRaw, allowedTypes),
+    ),
     piiDetect,
     piiDetectDocTypes: defaultImageDocTypes(piiDetect, piiDocTypesRaw, piiEligibleTypes),
     rotate,
@@ -667,10 +671,18 @@ function normalizeSceneAggregate(scene, documents, legacyOutput) {
   }
   if (!docTypes.includes(mainDocType)) mainDocType = '';
   if (!mainDocType && docTypes.length) mainDocType = docTypes[0];
+  const mainFields = getDocSchema(mainDocType).fields || [];
+  let primaryKey = mainFields.includes(scene?.primaryKey) ? scene.primaryKey : '';
+  if (!primaryKey && mainFields.length) {
+    primaryKey = mainFields.find((field) => /請求番号|証券番号|契約番号|案件番号/.test(field))
+      || mainFields.find((field) => /(氏名|被保険者)/.test(field))
+      || mainFields[0]
+      || '';
+  }
   return {
     mainDocTypes: mainDocType ? [mainDocType] : [],
     aggregateDocType: mainDocType,
-    primaryKey: (getDocSchema(mainDocType).fields || []).includes(scene?.primaryKey) ? scene.primaryKey : '',
+    primaryKey,
     secondaryKeys: [],
   };
 }
@@ -765,7 +777,7 @@ const AI_DOC_FIELD_LINK_PROMPT_TEMPLATE = `# 任务
 要求：仅输出 JSON；日语；字段名和账票名必须从输入中原样复制；禁止解释；禁止输出 Schema 外字段。`;
 
 const AI_FIELD_EQUIVALENCE_GROUPS = [
-  ['氏名', '被保険者氏名', '患者氏名', '請求者氏名', '契約者氏名', 'ご契約者氏名'],
+  ['氏名', '被保険者氏名', '患者氏名', '受診者氏名', '請求者氏名', '契約者氏名', 'ご契約者氏名'],
   ['氏名（カナ）', '被保険者氏名（カナ）', 'ご契約者氏名（カナ）'],
   ['生年月日', '被保険者生年月日', '患者生年月日'],
   ['証券番号', '契約番号', '保険証券番号'],
@@ -922,41 +934,118 @@ function recommendDocFieldLinksByAiRules({ sceneName, documents, mainDocType, ma
   return result;
 }
 
+function getDefaultLinkableFields(docType) {
+  const excludedFieldPattern = /(住所|所在地|発行日|記入日|請求日|証明年月日|作成日|届出日)/;
+  const localIdentifierFieldPattern = /(患者番号|カルテ番号|明細管理番号|収納管理番号|医療機関番号)/;
+  return (getDocSchema(docType).fields || []).filter((field) =>
+    !excludedFieldPattern.test(field) && !localIdentifierFieldPattern.test(field));
+}
+
+function findFallbackDefaultFieldPair(sourceDocType, targetDocType, mainKey = '') {
+  const sourceFields = getDefaultLinkableFields(sourceDocType);
+  const targetFields = getDefaultLinkableFields(targetDocType);
+  const recommended = findRecommendedFieldPair(sourceFields, targetFields, mainKey);
+  if (recommended) return recommended;
+  if (sourceFields[0] && targetFields[0]) {
+    return {
+      sourceField: sourceFields[0],
+      targetField: targetFields[0],
+      confidence: 0.55,
+      reason: '默认关联（保证全账票可达）',
+    };
+  }
+  const rawSource = (getDocSchema(sourceDocType).fields || [])[0];
+  const rawTarget = (getDocSchema(targetDocType).fields || [])[0];
+  if (rawSource && rawTarget) {
+    return {
+      sourceField: rawSource,
+      targetField: rawTarget,
+      confidence: 0.4,
+      reason: '默认关联（兜底字段）',
+    };
+  }
+  return null;
+}
+
 function buildDefaultDocFieldLinks(documents, mainDocTypes) {
   const docTypes = (documents || []).map((d) => d.type);
   if (docTypes.length < 2) return [];
   const hubs = (Array.isArray(mainDocTypes) ? mainDocTypes : [mainDocTypes])
     .filter((t) => docTypes.includes(t));
-  const hubList = hubs.length ? hubs : [docTypes[0]];
-  const links = [];
-  const seen = new Set();
-  hubList.forEach((hub) => {
-    const hubFields = getDocSchema(hub).fields || [];
-    docTypes.forEach((other) => {
-      if (other === hub) return;
-      const otherFieldSet = new Set(getDocSchema(other).fields || []);
-      hubFields.forEach((field) => {
-        if (!otherFieldSet.has(field)) return;
-        const key = `${hub}|${field}|${other}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        links.push({
-          id: `link-${hub}-${other}-${field}`,
-          sourceDocType: hub,
-          sourceField: field,
-          targetDocType: other,
-          targetField: field,
-          conditionGroupId: `group-${hub}-${other}-1`,
-          groupOperator: 'or',
-        });
-      });
-    });
+  const mainDocType = hubs[0] || docTypes[0];
+  const mainFields = getDocSchema(mainDocType).fields || [];
+  const mainKey = mainFields.find((field) => /請求番号|証券番号|契約番号|案件番号/.test(field))
+    || mainFields.find((field) => /(氏名|被保険者)/.test(field))
+    || mainFields[0]
+    || '';
+  const recommended = recommendDocFieldLinksByAiRules({
+    sceneName: '',
+    documents,
+    mainDocType,
+    mainKey,
+    existingRelations: [],
   });
+  let links = normalizeDocFieldLinks(recommended.relations || [], documents);
+  const seenPairs = new Set(links.map((link) => unorderedDocPairKey(link.sourceDocType, link.targetDocType)));
+  let guard = 0;
+  while (guard < docTypes.length + 4) {
+    guard += 1;
+    const stats = computeSceneLinkStats(documents, [mainDocType], links);
+    if (!stats.unlinkedCount) break;
+    const targetDocType = stats.unlinkedDocs[0];
+    const sourceCandidates = [
+      mainDocType,
+      ...docTypes.filter((docType) =>
+        docType !== targetDocType
+        && docType !== mainDocType
+        && !stats.unlinkedDocs.includes(docType)),
+    ];
+    let attached = false;
+    for (const sourceDocType of sourceCandidates) {
+      const pairKey = unorderedDocPairKey(sourceDocType, targetDocType);
+      if (seenPairs.has(pairKey)) continue;
+      const pair = findFallbackDefaultFieldPair(
+        sourceDocType,
+        targetDocType,
+        sourceDocType === mainDocType ? mainKey : '',
+      );
+      if (!pair) continue;
+      seenPairs.add(pairKey);
+      links.push({
+        id: `link-default-${sourceDocType}-${targetDocType}-${pair.sourceField}`,
+        sourceDocType,
+        sourceField: pair.sourceField,
+        targetDocType,
+        targetField: pair.targetField,
+        conditionGroupId: `group-${sourceDocType}-${targetDocType}-1`,
+        groupOperator: 'or',
+        confidence: pair.confidence,
+        reason: pair.reason,
+      });
+      links = normalizeDocFieldLinks(links, documents);
+      attached = true;
+      break;
+    }
+    if (!attached) break;
+  }
   return links;
 }
 
 function applySceneDocFieldLinks(scene, documents) {
+  if (scene.__seedDefaultDocFieldLinks) {
+    scene.docFieldLinks = buildDefaultDocFieldLinks(documents, scene.mainDocTypes);
+    delete scene.__seedDefaultDocFieldLinks;
+    return;
+  }
   scene.docFieldLinks = normalizeDocFieldLinks(scene.docFieldLinks, documents);
+  const docList = documents || [];
+  if (docList.length < 2) return;
+  const mainDocType = getSceneMainDocType(scene);
+  if (!mainDocType) return;
+  const stats = computeSceneLinkStats(docList, [mainDocType], scene.docFieldLinks);
+  if (!scene.docFieldLinks.length || stats.unlinkedCount > 0 || stats.noRelationCount > 0) {
+    scene.docFieldLinks = buildDefaultDocFieldLinks(docList, scene.mainDocTypes);
+  }
 }
 
 function normalizeOutputConfig(output, documents, masterMappings, knowledgeSource) {
@@ -1201,7 +1290,7 @@ const SCENE_TEMPLATES = {
   },
 };
 
-const AGGREGATE_RULE_DATA_VERSION = 'ten-documents-clean-links-v2';
+const AGGREGATE_RULE_DATA_VERSION = 'ten-documents-complete-links-v5';
 
 function normalizeSceneDocuments(documents) {
   const seen = new Set();
@@ -1238,8 +1327,8 @@ function ensureInitialSceneDocuments(documents) {
 
 function migrateInitialAggregateRules(scene) {
   if (scene.aggregateRuleDataVersion === AGGREGATE_RULE_DATA_VERSION) return;
-  scene.docFieldLinks = [];
   scene.aggregateRuleDataVersion = AGGREGATE_RULE_DATA_VERSION;
+  scene.__seedDefaultDocFieldLinks = true;
 }
 
 const SCENE_FILE_SPLIT_DEFAULT = {
@@ -1314,7 +1403,7 @@ function sceneForm(sceneOrId) {
   data.output = normalizeOutputConfig(data.output, data.scene.documents, data.master.mappings, data.master.knowledgeSource);
   syncOcrExtractTypesOnForm(data);
   data.workflows = {
-    case: buildMinimalCaseWorkflow(),
+    case: buildDefaultCaseWorkflow(),
   };
   data.workflowTestCase = typeof cloneWorkflowTestCaseDefault === 'function'
     ? cloneWorkflowTestCaseDefault()
@@ -1349,7 +1438,7 @@ function sceneFormByScene(scene) {
   data.output = normalizeOutputConfig(data.output, data.scene.documents, data.master.mappings, data.master.knowledgeSource);
   syncOcrExtractTypesOnForm(data);
   data.workflows = {
-    case: buildMinimalCaseWorkflow(),
+    case: buildDefaultCaseWorkflow(),
   };
   data.workflowTestCase = typeof cloneWorkflowTestCaseDefault === 'function'
     ? cloneWorkflowTestCaseDefault()

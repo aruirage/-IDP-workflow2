@@ -52,6 +52,12 @@ const WORKFLOW_DEFAULTS = {
   image: {
     fraudDetect: true,
     fraudDetectDocTypes: [],
+    fraudDetectDetectors: {
+      ps: { enabled: true, docTypes: [] },
+      aiGenerate: { enabled: true, docTypes: [] },
+      feature: { enabled: true, docTypes: [] },
+      handwriting: { enabled: true, docTypes: [] },
+    },
     piiDetect: true,
     piiDetectDocTypes: [],
     rotate: true,
@@ -82,6 +88,80 @@ const WORKFLOW_DEFAULTS = {
     enabledTypes: [],
   },
 };
+
+/** 画像不正検知 · 二级检测开关（模块 ON 时生效） */
+const FRAUD_DETECT_DETECTOR_OPTIONS = [
+  {
+    key: 'ps',
+    label: 'PS検出',
+    hint: 'Photoshop等の編集痕跡、再圧縮、異常エッジなど改ざん痕跡を検出します。',
+  },
+  {
+    key: 'aiGenerate',
+    label: 'AI生成検出',
+    hint: 'AI生成画像や合成の痕跡を検出します。',
+  },
+  {
+    key: 'feature',
+    label: '帳票特徴検出',
+    hint: '帳票の版面・テンプレート特徴との不一致や欠落を検出します。',
+  },
+  {
+    key: 'handwriting',
+    label: '筆跡検出',
+    hint: '署名・手書き文字の不自然さや偽造の疑いを検出します。',
+  },
+];
+
+const FRAUD_DETECT_DETECTOR_DEFAULTS = {
+  ps: { enabled: true, docTypes: [] },
+  aiGenerate: { enabled: true, docTypes: [] },
+  feature: { enabled: true, docTypes: [] },
+  handwriting: { enabled: true, docTypes: [] },
+};
+
+function normalizeFraudDetectDetectorEntry(raw, fallbackDocTypes = []) {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const enabled = raw.enabled !== false;
+    const docTypes = Array.isArray(raw.docTypes) ? raw.docTypes.filter(Boolean) : [];
+    return {
+      enabled,
+      docTypes: enabled
+        ? (docTypes.length ? docTypes : [...(fallbackDocTypes || [])])
+        : docTypes,
+    };
+  }
+  const enabled = raw !== false;
+  return {
+    enabled,
+    docTypes: enabled ? [...(fallbackDocTypes || [])] : [],
+  };
+}
+
+function normalizeFraudDetectDetectors(raw, fallbackDocTypes = []) {
+  const allowed = Array.isArray(fallbackDocTypes) ? fallbackDocTypes.filter(Boolean) : [];
+  const next = {};
+  Object.keys(FRAUD_DETECT_DETECTOR_DEFAULTS).forEach((key) => {
+    const entry = normalizeFraudDetectDetectorEntry(
+      raw && typeof raw === 'object' ? raw[key] : undefined,
+      allowed,
+    );
+    entry.docTypes = filterImageDocTypes(entry.docTypes, allowed.length ? allowed : entry.docTypes);
+    if (entry.enabled && !entry.docTypes.length && allowed.length) {
+      entry.docTypes = [...allowed];
+    }
+    next[key] = entry;
+  });
+  return next;
+}
+
+function isFraudDetectDetectorEnabled(detectors, key) {
+  return !!normalizeFraudDetectDetectorEntry(detectors?.[key]).enabled;
+}
+
+function readFraudDetectDetectorDocTypes(detectors, key) {
+  return normalizeFraudDetectDetectorEntry(detectors?.[key]).docTypes;
+}
 
 /** @deprecated 旧 UI 互換 */
 const FRAUD_DETECT_METHOD_OPTIONS = [
