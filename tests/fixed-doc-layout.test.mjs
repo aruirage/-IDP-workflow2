@@ -19,7 +19,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(html, /class="global-nav-tools"[\s\S]*class="global-nav-collapse"/);
   assert.match(css, /\.global-topbar\s*\{[\s\S]*height:\s*var\(--logo-height\);/);
   assert.match(css, /\.global-logo-area img\s*\{[\s\S]*height:\s*32px;/);
-  assert.match(html, /class="global-nav-subitem" @click="openReadModelSettings">モデル設定<\/button>/);
+  assert.match(html, /class=\"global-nav-subitem\" @click=\"openReadModelSettings\">\{\{ t\('モデル設定'\) \}\}<\/button>/);
   assert.match(html, /v-model="readModelSettingsVisible"[\s\S]*title="読取モデル設定"[\s\S]*人工確認ルール[\s\S]*readModelHitlRules/);
   assert.match(html, /人工確認ルール[\s\S]*v-for="rule in readModelHitlRules"[\s\S]*\{\{ rule\.label \}\}/);
   assert.match(main, /normal_range_exceeded', label: '正常値範囲を超えています'/);
