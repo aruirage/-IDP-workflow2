@@ -229,6 +229,30 @@ body {
   margin-top: auto;
   padding-top: 10px;
 }
+.global-nav {
+  transition: width 0.15s ease, flex-basis 0.15s ease;
+}
+.global-nav.is-collapsed {
+  width: 56px;
+  flex: 0 0 56px;
+  padding: 0 8px 18px;
+}
+.global-nav.is-collapsed .global-nav-tools {
+  justify-content: center;
+  margin: 0 -8px 8px;
+  padding: 0 2px;
+}
+.global-nav.is-collapsed .global-nav-label,
+.global-nav.is-collapsed .global-nav-chevron,
+.global-nav.is-collapsed .global-nav-submenu {
+  display: none;
+}
+.global-nav.is-collapsed .global-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
 
 .language-toggle-btn {
   height: 28px;
@@ -6854,7 +6878,8 @@ code.export-config-meta-value {
 .fixed-doc-table--read th:nth-child(3) { width: 110px; }
 .fixed-doc-table--read th:nth-child(6) { width: 86px; }
 .fixed-doc-table--read th:nth-child(7) { width: 72px; }
-.fixed-doc-table--read th:nth-child(8) { width: 100px; }
+.fixed-doc-table--read th:nth-child(8) { width: 72px; }
+.fixed-doc-table--read th:nth-child(9) { width: 100px; }
 .fixed-doc-pii-common {
   display: flex;
   flex-wrap: wrap;
@@ -7501,7 +7526,8 @@ code.export-config-meta-value {
 .fixed-doc-table--table-read th:nth-child(3) { width: 108px; }
 .fixed-doc-table--table-read th:nth-child(6) { width: 76px; }
 .fixed-doc-table--table-read th:nth-child(7) { width: 82px; }
-.fixed-doc-table--table-read th:nth-child(8) { width: 64px; }
+.fixed-doc-table--table-read th:nth-child(8) { width: 82px; }
+.fixed-doc-table--table-read th:nth-child(9) { width: 64px; }
 .fixed-doc-table--table-config .el-input,
 .fixed-doc-table--table-config .el-select,
 .fixed-doc-table--table-qr .el-input,
@@ -8304,6 +8330,17 @@ code.export-config-meta-value {
   max-width: none;
   margin: 20px 0 0;
   padding: 0 4px;
+}
+.fixed-doc-file-input {
+  display: none;
+}
+.fixed-doc-preview-file-name {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #475569;
+  font-size: 12px;
 }
 .fixed-doc-test-card {
   padding: 16px 18px 14px;

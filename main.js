@@ -1445,6 +1445,7 @@ const appOptions = {
       detectionTarget: '印鑑',
       threshold: 80,
     });
+    const globalNavCollapsed = ref(true);
     const sceneSidebarCollapsed = ref(true);
     const sceneSidebarBeforeExpand = ref(null);
     const libraryPanelCollapsed = ref(false);
@@ -1873,7 +1874,7 @@ const appOptions = {
             sample: '2025-09-08',
             required: false,
             hitl: true,
-            qrSourceId: 'QR2',
+            mask: false,            qrSourceId: 'QR2',
             qrExtractMethod: '文字列分割',
             qrDelimiter: '$',
             fetchIndex: 3,
@@ -1893,7 +1894,7 @@ const appOptions = {
             sample: '調剤技術料',
             required: false,
             hitl: true,
-            qrSourceId: 'QR3',
+            mask: false,            qrSourceId: 'QR3',
             qrExtractMethod: '文字列分割',
             qrDelimiter: '$',
             fetchIndex: 7,
@@ -1913,7 +1914,7 @@ const appOptions = {
             sample: '24',
             required: false,
             hitl: true,
-            qrSourceId: 'QR3',
+            mask: false,            qrSourceId: 'QR3',
             qrExtractMethod: '文字列分割',
             qrDelimiter: '$',
             fetchIndex: 11,
@@ -1933,7 +1934,7 @@ const appOptions = {
             sample: '3',
             required: false,
             hitl: true,
-            qrSourceId: '',
+            mask: false,            qrSourceId: '',
             qrExtractMethod: '文字列分割',
             qrDelimiter: '$',
             fetchIndex: 0,
@@ -1953,7 +1954,7 @@ const appOptions = {
             sample: '720',
             required: false,
             hitl: true,
-            qrSourceId: '',
+            mask: false,            qrSourceId: '',
             qrExtractMethod: '文字列分割',
             qrDelimiter: '$',
             fetchIndex: 0,
@@ -1973,7 +1974,7 @@ const appOptions = {
             sample: '2025-09-10',
             required: false,
             hitl: true,
-            qrSourceId: 'QR2',
+            mask: false,            qrSourceId: 'QR2',
             qrExtractMethod: '文字列分割',
             qrDelimiter: '$',
             fetchIndex: 3,
@@ -1996,6 +1997,15 @@ const appOptions = {
       }
       return fixedDocFieldHitlByType[key];
     }
+    /** Step2 マスク：ON=前処理の個人情報脱敏（マスキング）対象；OFF=対象外；デフォルト OFF */
+    const fixedDocFieldMaskByType = reactive({});
+    function getFixedDocMaskBucket(typeId = getFixedDocActiveTypeId()) {
+      const key = typeId || FIXED_DOC_DEFAULT_TYPE;
+      if (!fixedDocFieldMaskByType[key]) {
+        fixedDocFieldMaskByType[key] = {};
+      }
+      return fixedDocFieldMaskByType[key];
+    }
     function getFixedDocFieldNamesForDocType(typeId) {
       const activeType = fixedDocTypeItems.value.find((item) => item.id === typeId);
       const fields = activeType?.fields || getDocSchema(typeId).fields || getDocSchema('診断書').fields || [];
@@ -2014,6 +2024,15 @@ const appOptions = {
         const fieldId = getFixedDocStableFieldIdForType(name, typeId);
         if (!Object.prototype.hasOwnProperty.call(bucket, fieldId)) {
           bucket[fieldId] = true;
+        }
+      });
+    }
+    function ensureFixedDocFieldMaskForType(typeId = getFixedDocActiveTypeId()) {
+      const bucket = getFixedDocMaskBucket(typeId);
+      getFixedDocFieldNamesForDocType(typeId).forEach((name) => {
+        const fieldId = getFixedDocStableFieldIdForType(name, typeId);
+        if (!Object.prototype.hasOwnProperty.call(bucket, fieldId)) {
+          bucket[fieldId] = false;
         }
       });
     }
@@ -2084,6 +2103,14 @@ const appOptions = {
       ensureFixedDocFieldHitl();
       const fieldId = getFixedDocFieldMeta(fieldRef)?.fieldId || fieldRef;
       getFixedDocHitlBucket()[fieldId] = !!enabled;
+    }
+    function ensureFixedDocFieldMask() {
+      ensureFixedDocFieldMaskForType(getFixedDocActiveTypeId());
+    }
+    function toggleFixedDocFieldMask(fieldRef, enabled) {
+      ensureFixedDocFieldMask();
+      const fieldId = getFixedDocFieldMeta(fieldRef)?.fieldId || fieldRef;
+      getFixedDocMaskBucket()[fieldId] = !!enabled;
     }
     function setFixedDocFieldType(fieldRef, type) {
       const fieldId = getFixedDocFieldMeta(fieldRef)?.fieldId || fieldRef;
@@ -2192,6 +2219,7 @@ const appOptions = {
         sample: samples[name] || EXPORT_FIELD_SAMPLE_VALUES[name] || '',
         required: false,
         hitl: getFixedDocHitlBucket()[getFixedDocStableFieldId(name)] !== false,
+        mask: getFixedDocMaskBucket()[getFixedDocStableFieldId(name)] === true,
       }));
     });
     const fixedDocProcessRuleOptions = [
@@ -2908,11 +2936,19 @@ const appOptions = {
       applyFixedDocNormalConditionErrors(tableId, columnId, validateFixedDocNormalConditionTarget(col));
     }
     function revalidateAllFixedDocNormalConditions() {
+      // マスク設定された行・列は正常条件の対象外のため、残存エラーをクリアする
+      fixedDocTextRows.value.forEach((row) => {
+        if (row.mask) clearFixedDocNormalConditionErrors('text', row.fieldId);
+      });
       fixedDocProcessRows.value.forEach((row) => {
         if (canFixedDocRowHaveNormalCondition(row)) revalidateFixedDocTextNormalCondition(row.fieldId);
       });
       fixedDocReadTables.forEach((table) => {
         table.columns.forEach((col) => {
+          if (col.mask) {
+            clearFixedDocNormalConditionErrors(table.id, col.columnId);
+            return;
+          }
           if (canFixedDocTableColumnHaveNormalCondition(col)) {
             revalidateFixedDocTableColumnNormalCondition(table.id, col.columnId);
           }
@@ -2932,10 +2968,11 @@ const appOptions = {
       return '';
     }
     function getFixedDocTableColumnEntries() {
+      // マスク設定された列は後処理の対象外
       const entries = [];
       fixedDocReadTables.forEach((table) => {
         table.columns.forEach((col) => {
-          entries.push({ tableId: table.id, tableName: table.name, col });
+          if (!col.mask) entries.push({ tableId: table.id, tableName: table.name, col });
         });
       });
       return entries;
@@ -2984,7 +3021,10 @@ const appOptions = {
     }
     function buildFixedDocAiMatchingDraft() {
       ensureFixedDocFieldRules();
-      return fixedDocTextRows.value.map((row) => {
+      // マスク設定された項目は AI マッチングの対象外
+      return fixedDocTextRows.value
+        .filter((row) => !row.mask)
+        .map((row) => {
         const current = fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name);
         const rule = inferFixedDocAiMatchingRule(row.name) || current.rule || '';
         return {
@@ -3360,16 +3400,22 @@ const appOptions = {
     }
     const fixedDocProcessRows = computed(() => {
       ensureFixedDocFieldRules();
-      return fixedDocTextRows.value.map((row) => ({
-        ...row,
-        ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)),
-      }));
+      // マスク設定された項目は読取値が保持されないため、後処理（Step3）の対象から除外する
+      return fixedDocTextRows.value
+        .filter((row) => !row.mask)
+        .map((row) => ({
+          ...row,
+          ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)),
+        }));
     });
     const fixedDocShowNormalConditionColumn = computed(() => (
       fixedDocProcessRows.value.some((row) => canFixedDocRowHaveNormalCondition(row))
     ));
+    function getFixedDocConfigurableTableColumns(table) {
+      return (table?.columns || []).filter((col) => !col.mask);
+    }
     function shouldShowFixedDocTableNormalConditionColumn(table) {
-      return (table?.columns || []).some((col) => canFixedDocTableColumnHaveNormalCondition(col));
+      return getFixedDocConfigurableTableColumns(table).some((col) => canFixedDocTableColumnHaveNormalCondition(col));
     }
     const fixedDocFieldNameOptions = computed(() => getFixedDocFieldNameList().map((name) => ({ value: name, label: name })));
     const fixedDocQrSourceOptions = computed(() => fixedDocQrSourceCatalog.map((slot) => ({
@@ -3685,7 +3731,7 @@ const appOptions = {
       const rowMap = Object.fromEntries(fixedDocTextRows.value.map((row) => [row.name, row]));
       return FIXED_DOC_TEST_FIELD_NAMES.map((fieldName, idx) => {
         const row = rowMap[fieldName];
-        if (!row) return null;
+        if (!row || row.mask) return null;
         const baseRule = { ...row, ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)) };
         const {
           rule: fieldRule,
@@ -3710,7 +3756,42 @@ const appOptions = {
         };
       }).filter(Boolean);
     });
+    function isFixedDocTestTableFieldMasked(table, fieldName) {
+      // 効果テストではマスク設定された列の値を表示しない
+      return (table?.columns || []).some((col) => col.key === fieldName && col.mask);
+    }
     const fixedDocTableTestRows = FIXED_DOC_TABLE_TEST_ROWS;
+    // --- 効果テスト（Step5）のファイル選択・テスト実行モック ---
+    // 既定では組み込みのサンプル帳票（診断書）を使用し、結果は常に表示される。
+    // ファイルを選択した場合は自動でテストを再実行する。
+    const fixedDocTestFileInput = ref(null);
+    const fixedDocTestFileName = ref('');
+    const fixedDocTestFileUrl = ref('');
+    const fixedDocTestRunning = ref(false);
+    const fixedDocTestFileLabel = computed(() => (
+      fixedDocTestFileName.value || (fixedDocPreviewTitle.value + '_サンプル.png')
+    ));
+    function triggerFixedDocTestFileSelect() {
+      fixedDocTestFileInput.value?.click();
+    }
+    function onFixedDocTestFileChange(event) {
+      const file = event?.target?.files?.[0];
+      if (!file) return;
+      if (fixedDocTestFileUrl.value) URL.revokeObjectURL(fixedDocTestFileUrl.value);
+      fixedDocTestFileName.value = file.name;
+      fixedDocTestFileUrl.value = file.type && file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+      ElementPlus.ElMessage.success(`ファイル「${file.name}」を選択しました`);
+      event.target.value = '';
+      runFixedDocEffectTest();
+    }
+    function runFixedDocEffectTest() {
+      if (fixedDocTestRunning.value) return;
+      fixedDocTestRunning.value = true;
+      setTimeout(() => {
+        fixedDocTestRunning.value = false;
+        ElementPlus.ElMessage.success('効果テストが完了しました');
+      }, 900);
+    }
     const selectedMasterDataSourceId = ref('dict:icd10');
     const selectedWorkflowNodeId = ref(null);
     const selectedDataMappingRuleId = ref(null);
@@ -9437,6 +9518,10 @@ const appOptions = {
       if (node && map[node.type]) currentNode.value = map[node.type];
     }
 
+    function toggleGlobalNav() {
+      globalNavCollapsed.value = !globalNavCollapsed.value;
+    }
+
     function toggleSceneSidebar() {
       sceneSidebarCollapsed.value = !sceneSidebarCollapsed.value;
     }
@@ -13288,6 +13373,14 @@ const appOptions = {
       fixedDocReadMode,
       fixedDocRuleTab,
       fixedDocTestTab,
+      fixedDocTestFileInput,
+      fixedDocTestFileName,
+      fixedDocTestFileUrl,
+      fixedDocTestRunning,
+      fixedDocTestFileLabel,
+      triggerFixedDocTestFileSelect,
+      onFixedDocTestFileChange,
+      runFixedDocEffectTest,
       fixedDocTypeId,
       fixedDocPreviewTitle,
       fixedDocPreviewImage,
@@ -13324,6 +13417,7 @@ const appOptions = {
       fixedDocTextRows,
       fixedDocHitlStats,
       toggleFixedDocFieldHitl,
+      toggleFixedDocFieldMask,
       setFixedDocFieldType,
       setFixedDocTableColumnType,
       deleteFixedDocTextField,
@@ -13335,7 +13429,9 @@ const appOptions = {
       fixedDocTextFieldDropTargetId,
       fixedDocProcessRows,
       fixedDocShowNormalConditionColumn,
+      getFixedDocConfigurableTableColumns,
       shouldShowFixedDocTableNormalConditionColumn,
+      isFixedDocTestTableFieldMasked,
       fixedDocQrReadRows,
       fixedDocProcessRuleOptions,
       isFixedDocMasterRule,
@@ -13596,6 +13692,8 @@ const appOptions = {
       dataMappingConfiguredRuleCount,
       dataMappingConflictRuleCount,
 
+      globalNavCollapsed,
+      toggleGlobalNav,
       sceneSidebarCollapsed,
       toggleSceneSidebar,
       libraryPanelCollapsed,

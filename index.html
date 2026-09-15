@@ -38,26 +38,26 @@
         </div>
       </header>
       <div class="body-row idp-body" :class="{ 'is-editor-surface': inspectorExpanded && currentModule === 'case-workflow', 'is-workflow-setup-fullscreen': workflowSetupFullscreen && currentModule === 'case-workflow' }">
-        <aside v-show="!workflowSetupFullscreen" class="global-nav">
+        <aside v-show="!workflowSetupFullscreen" class="global-nav" :class="{ 'is-collapsed': globalNavCollapsed }">
           <div class="global-nav-tools">
-            <button type="button" class="global-nav-collapse" title="メニュー">≡</button>
+            <button type="button" class="global-nav-collapse" :title="globalNavCollapsed ? t('展開') : t('折りたたむ')" @click="toggleGlobalNav">≡</button>
           </div>
           <nav class="global-nav-main" aria-label="メインメニュー">
-            <button type="button" class="global-nav-item">
+            <button type="button" class="global-nav-item" :title="globalNavCollapsed ? t('新規アップロード') : null">
               <span class="global-nav-icon">▣</span>
-              <span>{{ t('新規アップロード') }}</span>
+              <span class="global-nav-label">{{ t('新規アップロード') }}</span>
             </button>
-            <button type="button" class="global-nav-item">
+            <button type="button" class="global-nav-item" :title="globalNavCollapsed ? t('案件一覧') : null">
               <span class="global-nav-icon">▤</span>
-              <span>{{ t('案件一覧') }}</span>
+              <span class="global-nav-label">{{ t('案件一覧') }}</span>
             </button>
-            <button type="button" class="global-nav-item">
+            <button type="button" class="global-nav-item" :title="globalNavCollapsed ? t('マイタスク') : null">
               <span class="global-nav-icon">⌂</span>
-              <span>{{ t('マイタスク') }}</span>
+              <span class="global-nav-label">{{ t('マイタスク') }}</span>
             </button>
-            <button type="button" class="global-nav-item global-nav-item--group is-open">
+            <button type="button" class="global-nav-item global-nav-item--group is-open" :title="globalNavCollapsed ? t('業務ルール設定') : null">
               <span class="global-nav-icon">▥</span>
-              <span>{{ t('業務ルール設定') }}</span>
+              <span class="global-nav-label">{{ t('業務ルール設定') }}</span>
               <span class="global-nav-chevron">⌃</span>
             </button>
             <div class="global-nav-submenu">
@@ -81,9 +81,9 @@
             </div>
           </nav>
           <div class="global-nav-foot">
-            <button type="button" class="global-nav-item global-nav-item--group">
+            <button type="button" class="global-nav-item global-nav-item--group" :title="globalNavCollapsed ? t('システム設定') : null">
               <span class="global-nav-icon">▥</span>
-              <span>{{ t('システム設定') }}</span>
+              <span class="global-nav-label">{{ t('システム設定') }}</span>
               <span class="global-nav-chevron">⌄</span>
             </button>
           </div>
@@ -214,7 +214,7 @@
                         <div class="fixed-doc-preview-image-wrap">
                           <img
                             class="fixed-doc-preview-image"
-                            :src="fixedDocPreviewImage"
+                            :src="fixedDocTestFileUrl || fixedDocPreviewImage"
                             :alt="fixedDocPreviewTitle"
                             draggable="false"
                           />
@@ -244,8 +244,16 @@
                     </div>
                   </div>
                   <div v-if="fixedDocSetupStep === 1 || fixedDocSetupStep === 5" class="fixed-doc-preview-actions">
-                    <el-button type="primary">ファイル選択</el-button>
-                    <el-button v-if="fixedDocSetupStep === 5" type="primary">テスト</el-button>
+                    <input
+                      ref="fixedDocTestFileInput"
+                      type="file"
+                      accept="image/*,.pdf"
+                      class="fixed-doc-file-input"
+                      @change="onFixedDocTestFileChange"
+                    />
+                    <span class="fixed-doc-preview-file-name" :title="fixedDocTestFileLabel">{{ fixedDocTestFileLabel }}</span>
+                    <el-button type="primary" @click="triggerFixedDocTestFileSelect">ファイル選択</el-button>
+                    <el-button v-if="fixedDocSetupStep === 5" type="primary" :loading="fixedDocTestRunning" @click="runFixedDocEffectTest">テスト</el-button>
                   </div>
                 </aside>
 
@@ -404,6 +412,14 @@
                                 </th>
                                 <th>
                                   <span class="fixed-doc-th-label">
+                                    マスク
+                                    <el-tooltip placement="top" :show-after="200" content="この項目に個人情報脱敏（マスキング）を適用するかどうかを指定します。">
+                                      <span class="fixed-doc-info" tabindex="0">i</span>
+                                    </el-tooltip>
+                                  </span>
+                                </th>
+                                <th>
+                                  <span class="fixed-doc-th-label">
                                     HITL
                                     <el-tooltip placement="top" :show-after="200" content="当該フィールドを人工確認の対象にするかを指定します。">
                                       <span class="fixed-doc-info" tabindex="0">i</span>
@@ -433,6 +449,13 @@
                             <td><el-input :model-value="row.prompt"></el-input></td>
                             <td><el-input :model-value="row.sample"></el-input></td>
                                 <td><el-switch :model-value="row.required" size="small"></el-switch></td>
+                                <td class="fixed-doc-mask-cell">
+                                  <el-switch
+                                    :model-value="row.mask"
+                                    size="small"
+                                    @change="toggleFixedDocFieldMask(row.fieldId, $event)"
+                                  ></el-switch>
+                                </td>
                                 <td class="fixed-doc-mask-cell">
                                   <el-switch
                                     :model-value="row.hitl"
@@ -701,6 +724,14 @@
                                     </th>
                                     <th>
                                       <span class="fixed-doc-th-label">
+                                        マスク
+                                        <el-tooltip placement="top" :show-after="200" content="この列に個人情報脱敏（マスキング）を適用するかどうかを指定します。">
+                                          <span class="fixed-doc-info" tabindex="0">i</span>
+                                        </el-tooltip>
+                                      </span>
+                                    </th>
+                                    <th>
+                                      <span class="fixed-doc-th-label">
                                         HITL
                                         <el-tooltip placement="top" :show-after="200" content="当該列を人工確認の対象にするかを指定します。">
                                           <span class="fixed-doc-info" tabindex="0">i</span>
@@ -724,6 +755,9 @@
                                     <td><el-input v-model="col.prompt" size="small"></el-input></td>
                                     <td><el-input v-model="col.sample" size="small"></el-input></td>
                                     <td class="fixed-doc-mask-cell"><el-switch v-model="col.required" size="small"></el-switch></td>
+                                    <td class="fixed-doc-mask-cell">
+                                      <el-switch v-model="col.mask" size="small"></el-switch>
+                                    </td>
                                     <td class="fixed-doc-mask-cell">
                                       <el-switch v-model="col.hitl" size="small"></el-switch>
                                     </td>
@@ -959,7 +993,7 @@
                               </tr>
                             </thead>
                             <tbody>
-                              <tr v-for="col in table.columns" :key="table.id + '-rule-col-' + col.no">
+                              <tr v-for="col in getFixedDocConfigurableTableColumns(table)" :key="table.id + '-rule-col-' + col.no">
                                 <td>{{ col.no }}</td>
                                 <td>{{ col.key }}</td>
                                 <td class="fixed-doc-rule-col">
@@ -1174,11 +1208,11 @@
                               class="fixed-doc-test-table-row"
                             >
                               <el-input :model-value="row.区分" readonly size="small"></el-input>
-                              <div class="fixed-doc-test-table-cell" :class="{ 'is-error': row.error && row.errorField === '項目名' }">
-                                <el-input :model-value="row.項目名" readonly size="small"></el-input>
+                              <div class="fixed-doc-test-table-cell" :class="{ 'is-error': row.error && row.errorField === '項目名' && !isFixedDocTestTableFieldMasked(table, '項目名') }">
+                                <el-input :model-value="isFixedDocTestTableFieldMasked(table, '項目名') ? '***' : row.項目名" readonly size="small"></el-input>
                               </div>
-                              <div class="fixed-doc-test-table-cell" :class="{ 'is-error': row.error && row.errorField === '点数' }">
-                                <el-input :model-value="row.点数" readonly size="small"></el-input>
+                              <div class="fixed-doc-test-table-cell" :class="{ 'is-error': row.error && row.errorField === '点数' && !isFixedDocTestTableFieldMasked(table, '点数') }">
+                                <el-input :model-value="isFixedDocTestTableFieldMasked(table, '点数') ? '***' : row.点数" readonly size="small"></el-input>
                               </div>
                             </div>
                           </div>
