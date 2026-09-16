@@ -8373,6 +8373,14 @@ code.export-config-meta-value {
   color: #e31b54;
   font-size: 13px;
 }
+.fixed-doc-test-card .fixed-doc-test-error-rule {
+  color: #e31b54;
+  font-weight: 600;
+}
+.fixed-doc-test-card .fixed-doc-test-range-rule {
+  color: #667085;
+  font-size: 12px;
+}
 .fixed-doc-test-table-list {
   display: flex;
   flex-direction: column;

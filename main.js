@@ -1851,11 +1851,12 @@ const appOptions = {
     const fixedDocSplitRule = ref('証明日および医療機関が同一であり、広告ページと説明ページを除外した画像を結合し、ページ番号または連番がある場合は連続性も確認する。それ以外は分割する。');
     const fixedDocClassificationConfidenceThreshold = ref(80);
     const fixedDocCommonPrompt = ref('ここに全体の背景と共通ルールを入力してください（例：一般的な請求書です。原文のまま抽出し、内容を捏造しないでください）。特定の項目に対する抽出ルールは、下記のリストに入力してください');
+    const FIXED_DOC_TEST_OCR_REVIEW_MESSAGE = '信頼度が閾値未満';
     const FIXED_DOC_TABLE_TEST_ROWS = [
       { 区分: '初・再診料', 項目名: '外来管理加算', 点数: '74', error: false, errorField: '', errorMessage: '' },
-      { 区分: '初・再診料', 項目名: '特定疾患腫瘍管理料', 点数: '52', error: true, errorField: '項目名', errorMessage: '自信度が閾値未満である' },
+      { 区分: '初・再診料', 項目名: '特定疾患腫瘍管理料', 点数: '52', error: true, errorField: '項目名', errorMessage: FIXED_DOC_TEST_OCR_REVIEW_MESSAGE },
       { 区分: '医学管理等', 項目名: '外来管理加算', 点数: '225', error: false, errorField: '', errorMessage: '' },
-      { 区分: '医学管理等', 項目名: '特定疾患腫瘍管理料', 点数: '400', error: true, errorField: '点数', errorMessage: '自信度が閾値未満である' },
+      { 区分: '医学管理等', 項目名: '特定疾患腫瘍管理料', 点数: '400', error: true, errorField: '点数', errorMessage: FIXED_DOC_TEST_OCR_REVIEW_MESSAGE },
       { 区分: '医学管理等', 項目名: '生活習慣病管理料', 点数: '106', error: false, errorField: '', errorMessage: '' },
     ];
     const fixedDocReadTables = reactive([
@@ -3592,7 +3593,12 @@ const appOptions = {
     function evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue, isQrReadPath = false) {
       const range = evaluateFixedDocTestRange(fieldRule, readValue);
       if (hasQrMapping && !qrValue && !ocrValue) {
-        return { needsReview: true, reason: 'empty', range };
+        // QR 未読取 → 空值は人工確認ルール 7 項の対象外：QR 失敗ルールが「要確認（HITL）」のときのみ要確認（空文字を出力などは通常の空値表示）
+        const failureRule = fieldRule.qrDetail?.failureRule || '空文字を出力';
+        if (failureRule === '要確認（HITL）') {
+          return { needsReview: true, reason: 'empty', range };
+        }
+        return { needsReview: false, reason: '', range };
       }
       const hitlRules = readModelSettings.hitlRules || [];
       const confidence = parseFixedDocConfidencePercent(fieldRule.confidence);
@@ -3618,6 +3624,19 @@ const appOptions = {
         return { needsReview: true, reason: 'low_confidence_and_range', range };
       }
       return { needsReview: false, reason: '', range };
+    }
+    const FIXED_DOC_TEST_REVIEW_REASON_LABELS = {
+      empty: '読取値が空',
+      low_confidence: '信頼度が閾値未満',
+      normal_range_exceeded: '正常値範囲を超えています',
+      low_confidence_and_range: '低信頼度かつ正常値範囲を超えています',
+    };
+    function getFixedDocTestReviewReasonLabel(reason) {
+      return FIXED_DOC_TEST_REVIEW_REASON_LABELS[reason] || '';
+    }
+    function buildFixedDocTestRangeConclusion(range) {
+      if (!range || range.status === 'skip') return '';
+      return range.detail ? `${range.label}（${range.detail}）` : (range.label || '');
     }
     function evaluateFixedDocTestRange(row, value) {
       const canRange = canFixedDocFieldHaveRange(row);
@@ -3745,6 +3764,9 @@ const appOptions = {
         const processedValue = readValue || '—';
         const review = evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue, useQrPreview);
         const sourceLabel = getFixedDocTestSourceLabel(useQrPreview);
+        // 超過側の範囲結論（赤）は範囲系人工確認ルール（ルール 6/7）の命中時のみ表示。未チェックのルールは Step5 に表示しない
+        const rangeRuleHit = review.reason === 'normal_range_exceeded' || review.reason === 'low_confidence_and_range';
+        const rangeFailed = review.range.status === 'fail';
         return {
           no: idx + 1,
           name: row.name,
@@ -3752,15 +3774,40 @@ const appOptions = {
           postProcess,
           sourceLabel,
           error: review.needsReview,
+          rangeConclusion: rangeFailed && !rangeRuleHit ? '' : buildFixedDocTestRangeConclusion(review.range),
+          rangeFail: rangeFailed && rangeRuleHit,
+          reviewReasonLabel: getFixedDocTestReviewReasonLabel(review.reason),
           fieldRule,
         };
       }).filter(Boolean);
     });
     function isFixedDocTestTableFieldMasked(table, fieldName) {
-      // 効果テストではマスク設定された列の値を表示しない
+      // マスク設定された列は効果テストの対象外（OCR 未読のため値が存在しない）
       return (table?.columns || []).some((col) => col.key === fieldName && col.mask);
     }
-    const fixedDocTableTestRows = FIXED_DOC_TABLE_TEST_ROWS;
+    const FIXED_DOC_TABLE_TEST_COLUMNS = [
+      { key: '区分', label: '区分', width: '120px' },
+      { key: '項目名', label: '項目名', width: 'minmax(0, 1fr)' },
+      { key: '点数', label: '点数', width: '88px' },
+    ];
+    function getFixedDocTableTestVisibleColumns(table) {
+      // 効果テストではマスク設定された列自体を表示しない（Step3/Step5 から除外）
+      return FIXED_DOC_TABLE_TEST_COLUMNS.filter((col) => !isFixedDocTestTableFieldMasked(table, col.key));
+    }
+    function getFixedDocTableTestGridStyle(table) {
+      const columns = getFixedDocTableTestVisibleColumns(table);
+      return { gridTemplateColumns: columns.map((col) => col.width).join(' ') };
+    }
+    // Step5 表格错误行同样只展示已勾选的人工確認ルール命中（mock 错误＝ルール 1：信頼度が閾値未満）
+    const fixedDocTableTestRows = computed(() => {
+      const hitlRules = readModelSettings.hitlRules || [];
+      const lowConfidenceEnabled = hitlRules.includes('low_confidence');
+      return FIXED_DOC_TABLE_TEST_ROWS.map((row) => ({
+        ...row,
+        error: !!row.error && lowConfidenceEnabled,
+        errorMessage: row.error && lowConfidenceEnabled ? row.errorMessage : '',
+      }));
+    });
     // --- 効果テスト（Step5）のファイル選択・テスト実行モック ---
     // 既定では組み込みのサンプル帳票（診断書）を使用し、結果は常に表示される。
     // ファイルを選択した場合は自動でテストを再実行する。
@@ -13432,6 +13479,8 @@ const appOptions = {
       getFixedDocConfigurableTableColumns,
       shouldShowFixedDocTableNormalConditionColumn,
       isFixedDocTestTableFieldMasked,
+      getFixedDocTableTestVisibleColumns,
+      getFixedDocTableTestGridStyle,
       fixedDocQrReadRows,
       fixedDocProcessRuleOptions,
       isFixedDocMasterRule,

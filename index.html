@@ -1172,10 +1172,12 @@
                       >
                         <header class="fixed-doc-test-card-head">
                           <strong>#{{ row.no }}</strong>
-                          <span class="fixed-doc-test-source-tag">{{ row.sourceLabel }}</span>
+                          <span v-if="row.sourceLabel" class="fixed-doc-test-source-tag">{{ row.sourceLabel }}</span>
                         </header>
                         <label>{{ row.name }}</label>
                         <el-input :model-value="row.value" readonly></el-input>
+                        <p v-if="row.rangeConclusion" :class="row.rangeFail ? 'fixed-doc-test-error-rule' : 'fixed-doc-test-range-rule'">{{ row.rangeConclusion }}</p>
+                        <p v-if="row.reviewReasonLabel" class="fixed-doc-test-error-rule">{{ row.reviewReasonLabel }}</p>
                       </article>
                     </div>
                     <div v-else class="fixed-doc-test-table-list">
@@ -1197,23 +1199,21 @@
                         </header>
                         <div v-show="table.expanded" class="fixed-doc-test-table-body">
                           <div class="fixed-doc-test-table-grid">
-                            <div class="fixed-doc-test-table-row fixed-doc-test-table-row--head">
-                              <span>区分</span>
-                              <span>項目名</span>
-                              <span>点数</span>
+                            <div class="fixed-doc-test-table-row fixed-doc-test-table-row--head" :style="getFixedDocTableTestGridStyle(table)">
+                              <span v-for="col in getFixedDocTableTestVisibleColumns(table)" :key="'fd-test-table-col-' + col.key">{{ col.label }}</span>
                             </div>
                             <div
                               v-for="(row, rowIndex) in fixedDocTableTestRows"
                               :key="'fd-test-table-row-' + table.id + '-' + rowIndex"
                               class="fixed-doc-test-table-row"
+                              :style="getFixedDocTableTestGridStyle(table)"
                             >
-                              <el-input :model-value="row.区分" readonly size="small"></el-input>
-                              <div class="fixed-doc-test-table-cell" :class="{ 'is-error': row.error && row.errorField === '項目名' && !isFixedDocTestTableFieldMasked(table, '項目名') }">
-                                <el-input :model-value="isFixedDocTestTableFieldMasked(table, '項目名') ? '***' : row.項目名" readonly size="small"></el-input>
-                              </div>
-                              <div class="fixed-doc-test-table-cell" :class="{ 'is-error': row.error && row.errorField === '点数' && !isFixedDocTestTableFieldMasked(table, '点数') }">
-                                <el-input :model-value="isFixedDocTestTableFieldMasked(table, '点数') ? '***' : row.点数" readonly size="small"></el-input>
-                              </div>
+                              <template v-for="col in getFixedDocTableTestVisibleColumns(table)" :key="'fd-test-table-cell-' + table.id + '-' + rowIndex + '-' + col.key">
+                                <div class="fixed-doc-test-table-cell" :class="{ 'is-error': row.error && row.errorField === col.key }">
+                                  <el-input :model-value="row[col.key]" readonly size="small"></el-input>
+                                  <p v-if="row.error && row.errorField === col.key && row.errorMessage" class="fixed-doc-test-error">{{ row.errorMessage }}</p>
+                                </div>
+                              </template>
                             </div>
                           </div>
                         </div>

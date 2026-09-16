@@ -10,13 +10,13 @@
     "step2-脱敏列": [
       {
         "file": "fixed-doc-step2-ocr-mask.png",
-        "caption": "账票类型 Step2 · 字段读取 tab · OCR設定（タイプ：string / number / enum、マスク列）"
+        "caption": "账票类型 Step2 · 字段读取 tab · OCR設定 · マスク列（红框：マスク / HITL 并列开关；マスク=ON 不参与 OCR 读取，下游 Step3/Step5 直接排除）"
       }
     ],
     "step2-hitl-列": [
       {
         "file": "fixed-doc-step2-hitl.png",
-        "caption": "账票类型 Step2 · 字段读取 tab · OCR設定 · HITL 列（字段级人工确认对象开关）"
+        "caption": "账票类型 Step2 · 字段读取 tab · OCR設定 · マスク / HITL 列（HITL：字段级人工确认对象开关，与 マスク 并列）"
       }
     ],
     "step2-字段读取-qr-映射": [
