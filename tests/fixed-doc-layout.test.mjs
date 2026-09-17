@@ -263,7 +263,9 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(html, /必須項目[\s\S]*content="項目の読み取り結果が空の場合は、確認画面で赤く表示されます。"/);
   assert.match(html, /必須[\s\S]*content="列の読み取り結果が空の場合は、確認画面で赤く表示されます。"/);
   assert.match(html, /マスク[\s\S]*content="この項目に個人情報脱敏（マスキング）を適用するかどうかを指定します。"/);
-  assert.match(html, /マスク[\s\S]*content="この列に個人情報脱敏（マスキング）を適用するかどうかを指定します。"/);
+  // マスクはテキスト読取の項目単位設定。テーブル情報読取 の列定義にはマスク列を置かない
+  assert.doesNotMatch(html, /この列に個人情報脱敏（マスキング）を適用するかどうかを指定します。/);
+  assert.doesNotMatch(html, /マスク[\s\S]{0,200}v-model="col\.mask"/);
   assert.match(html, /<td><el-switch :model-value="row\.required" size="small"><\/el-switch><\/td>/);
   assert.doesNotMatch(html, /class="fixed-doc-table-qr-panel"/);
   assert.doesNotMatch(html, /class="fixed-doc-table-qr-read"/);
@@ -291,9 +293,15 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(main, /function getFixedDocTableTestVisibleColumns\(table\)/);
   assert.match(html, /class="fixed-doc-test-error-rule">\{\{ row\.reviewReasonLabel \}\}/);
   assert.match(main, /failureRule === '要確認（HITL）'/);
-  assert.match(main, /rangeRuleHit = review\.reason === 'normal_range_exceeded' \|\| review\.reason === 'low_confidence_and_range'/);
-  assert.match(main, /rangeConclusion: rangeFailed && !rangeRuleHit \? '' : buildFixedDocTestRangeConclusion\(review\.range\)/);
-  assert.match(main, /rangeFail: rangeFailed && rangeRuleHit/);
+  assert.doesNotMatch(html, /row\.rangeConclusion|row\.rangeFail/);
+  assert.doesNotMatch(main, /rangeConclusion|buildFixedDocTestRangeConclusion|rangeFail/);
+  assert.match(main, /hitlRules\.includes\('normal_range_exceeded'\)/);
+  assert.match(main, /hitlRules\.includes\('low_confidence_and_range_exceeded'\)/);
+  // Step5 的测试对象与 Step2/Step3 相同（同一字段集合，Step2 中被マスク的字段除外）
+  // 卡片番号沿用字段行番号（fixedDocTextRows 的 row.no），并按其行序展示
+  assert.doesNotMatch(main, /FIXED_DOC_TEST_FIELD_NAMES/);
+  assert.match(main, /fixedDocTextRows\.value\s*\n\s*\.filter\(\(row\) => !row\.mask\)/);
+  assert.match(main, /no: row\.no,/);
   assert.match(main, /const fixedDocTableTestRows = computed\(/);
   assert.match(main, /hitlRules\.includes\('low_confidence'\)/);
   assert.match(main, /function getFixedDocFieldId\(fieldName, index = -1\)/);

@@ -2937,7 +2937,7 @@ const appOptions = {
       applyFixedDocNormalConditionErrors(tableId, columnId, validateFixedDocNormalConditionTarget(col));
     }
     function revalidateAllFixedDocNormalConditions() {
-      // マスク設定された行・列は正常条件の対象外のため、残存エラーをクリアする
+      // マスク設定された項目は正常条件の対象外のため、残存エラーをクリアする
       fixedDocTextRows.value.forEach((row) => {
         if (row.mask) clearFixedDocNormalConditionErrors('text', row.fieldId);
       });
@@ -2946,10 +2946,6 @@ const appOptions = {
       });
       fixedDocReadTables.forEach((table) => {
         table.columns.forEach((col) => {
-          if (col.mask) {
-            clearFixedDocNormalConditionErrors(table.id, col.columnId);
-            return;
-          }
           if (canFixedDocTableColumnHaveNormalCondition(col)) {
             revalidateFixedDocTableColumnNormalCondition(table.id, col.columnId);
           }
@@ -2969,11 +2965,10 @@ const appOptions = {
       return '';
     }
     function getFixedDocTableColumnEntries() {
-      // マスク設定された列は後処理の対象外
       const entries = [];
       fixedDocReadTables.forEach((table) => {
         table.columns.forEach((col) => {
-          if (!col.mask) entries.push({ tableId: table.id, tableName: table.name, col });
+          entries.push({ tableId: table.id, tableName: table.name, col });
         });
       });
       return entries;
@@ -3413,7 +3408,7 @@ const appOptions = {
       fixedDocProcessRows.value.some((row) => canFixedDocRowHaveNormalCondition(row))
     ));
     function getFixedDocConfigurableTableColumns(table) {
-      return (table?.columns || []).filter((col) => !col.mask);
+      return table?.columns || [];
     }
     function shouldShowFixedDocTableNormalConditionColumn(table) {
       return getFixedDocConfigurableTableColumns(table).some((col) => canFixedDocTableColumnHaveNormalCondition(col));
@@ -3634,10 +3629,6 @@ const appOptions = {
     function getFixedDocTestReviewReasonLabel(reason) {
       return FIXED_DOC_TEST_REVIEW_REASON_LABELS[reason] || '';
     }
-    function buildFixedDocTestRangeConclusion(range) {
-      if (!range || range.status === 'skip') return '';
-      return range.detail ? `${range.label}（${range.detail}）` : (range.label || '');
-    }
     function evaluateFixedDocTestRange(row, value) {
       const canRange = canFixedDocFieldHaveRange(row);
       const buildDetail = (override = {}) => {
@@ -3712,15 +3703,6 @@ const appOptions = {
         ],
       },
     ];
-    const FIXED_DOC_TEST_FIELD_NAMES = [
-      '被保険者氏名',
-      '生年月日',
-      '傷病名',
-      '診断名',
-      'ICD10コード',
-      '通院日数',
-      '医療機関名',
-    ];
     /** Step5 mock：覆盖部分字段的读取路径，便于展示 QR / 兜底 / 纯 OCR 与要確認 */
     const FIXED_DOC_TEST_READ_SCENARIOS = {
       ICD10コード: { path: 'ocr' },
@@ -3747,52 +3729,46 @@ const appOptions = {
       return { rule, hasQrMapping, qrValue, ocrValue, useQrPreview, readValue };
     }
     const fixedDocTestRows = computed(() => {
-      const rowMap = Object.fromEntries(fixedDocTextRows.value.map((row) => [row.name, row]));
-      return FIXED_DOC_TEST_FIELD_NAMES.map((fieldName, idx) => {
-        const row = rowMap[fieldName];
-        if (!row || row.mask) return null;
-        const baseRule = { ...row, ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)) };
-        const {
-          rule: fieldRule,
-          hasQrMapping,
-          qrValue,
-          ocrValue,
-          useQrPreview,
-          readValue,
-        } = resolveFixedDocTestReadContext(fieldName, baseRule, row);
-        const postProcess = fieldRule.rule || 'OCR読取';
-        const processedValue = readValue || '—';
-        const review = evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue, useQrPreview);
-        const sourceLabel = getFixedDocTestSourceLabel(useQrPreview);
-        // 超過側の範囲結論（赤）は範囲系人工確認ルール（ルール 6/7）の命中時のみ表示。未チェックのルールは Step5 に表示しない
-        const rangeRuleHit = review.reason === 'normal_range_exceeded' || review.reason === 'low_confidence_and_range';
-        const rangeFailed = review.range.status === 'fail';
-        return {
-          no: idx + 1,
-          name: row.name,
-          value: processedValue,
-          postProcess,
-          sourceLabel,
-          error: review.needsReview,
-          rangeConclusion: rangeFailed && !rangeRuleHit ? '' : buildFixedDocTestRangeConclusion(review.range),
-          rangeFail: rangeFailed && rangeRuleHit,
-          reviewReasonLabel: getFixedDocTestReviewReasonLabel(review.reason),
-          fieldRule,
-        };
-      }).filter(Boolean);
+      // Step5 のテスト対象は Step2（読取モデル設定）・Step3 と同じ字段集合（Step2 でマスクした字段のみ除外）。
+      // 番号と並び順は Step2・Step3 の行番号（row.no）に揃える。
+      return fixedDocTextRows.value
+        .filter((row) => !row.mask)
+        .map((row) => {
+          const baseRule = { ...row, ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)) };
+          const {
+            rule: fieldRule,
+            hasQrMapping,
+            qrValue,
+            ocrValue,
+            useQrPreview,
+            readValue,
+          } = resolveFixedDocTestReadContext(row.name, baseRule, row);
+          const postProcess = fieldRule.rule || 'OCR読取';
+          const processedValue = readValue || '—';
+          const review = evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue, useQrPreview);
+          const sourceLabel = getFixedDocTestSourceLabel(useQrPreview);
+          // Step5 の赤字は Step2 読取モデル設定でチェック済みの人工確認ルール命中時のみ、そのルール名（reviewReasonLabel）を表示する。
+          // 範囲結論（正常値範囲超過 / 範囲OK）行は表示しない。
+          return {
+            no: row.no,
+            name: row.name,
+            value: processedValue,
+            postProcess,
+            sourceLabel,
+            error: review.needsReview,
+            reviewReasonLabel: getFixedDocTestReviewReasonLabel(review.reason),
+            fieldRule,
+          };
+        });
     });
-    function isFixedDocTestTableFieldMasked(table, fieldName) {
-      // マスク設定された列は効果テストの対象外（OCR 未読のため値が存在しない）
-      return (table?.columns || []).some((col) => col.key === fieldName && col.mask);
-    }
     const FIXED_DOC_TABLE_TEST_COLUMNS = [
       { key: '区分', label: '区分', width: '120px' },
       { key: '項目名', label: '項目名', width: 'minmax(0, 1fr)' },
       { key: '点数', label: '点数', width: '88px' },
     ];
     function getFixedDocTableTestVisibleColumns(table) {
-      // 効果テストではマスク設定された列自体を表示しない（Step3/Step5 から除外）
-      return FIXED_DOC_TABLE_TEST_COLUMNS.filter((col) => !isFixedDocTestTableFieldMasked(table, col.key));
+      // マスクは項目（テキスト読取のフィールド）単位の設定であり、テーブル列には及ばない
+      return FIXED_DOC_TABLE_TEST_COLUMNS;
     }
     function getFixedDocTableTestGridStyle(table) {
       const columns = getFixedDocTableTestVisibleColumns(table);
@@ -13478,7 +13454,6 @@ const appOptions = {
       fixedDocShowNormalConditionColumn,
       getFixedDocConfigurableTableColumns,
       shouldShowFixedDocTableNormalConditionColumn,
-      isFixedDocTestTableFieldMasked,
       getFixedDocTableTestVisibleColumns,
       getFixedDocTableTestGridStyle,
       fixedDocQrReadRows,

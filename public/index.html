@@ -724,14 +724,6 @@
                                     </th>
                                     <th>
                                       <span class="fixed-doc-th-label">
-                                        マスク
-                                        <el-tooltip placement="top" :show-after="200" content="この列に個人情報脱敏（マスキング）を適用するかどうかを指定します。">
-                                          <span class="fixed-doc-info" tabindex="0">i</span>
-                                        </el-tooltip>
-                                      </span>
-                                    </th>
-                                    <th>
-                                      <span class="fixed-doc-th-label">
                                         HITL
                                         <el-tooltip placement="top" :show-after="200" content="当該列を人工確認の対象にするかを指定します。">
                                           <span class="fixed-doc-info" tabindex="0">i</span>
@@ -755,9 +747,6 @@
                                     <td><el-input v-model="col.prompt" size="small"></el-input></td>
                                     <td><el-input v-model="col.sample" size="small"></el-input></td>
                                     <td class="fixed-doc-mask-cell"><el-switch v-model="col.required" size="small"></el-switch></td>
-                                    <td class="fixed-doc-mask-cell">
-                                      <el-switch v-model="col.mask" size="small"></el-switch>
-                                    </td>
                                     <td class="fixed-doc-mask-cell">
                                       <el-switch v-model="col.hitl" size="small"></el-switch>
                                     </td>
@@ -1176,7 +1165,6 @@
                         </header>
                         <label>{{ row.name }}</label>
                         <el-input :model-value="row.value" readonly></el-input>
-                        <p v-if="row.rangeConclusion" :class="row.rangeFail ? 'fixed-doc-test-error-rule' : 'fixed-doc-test-range-rule'">{{ row.rangeConclusion }}</p>
                         <p v-if="row.reviewReasonLabel" class="fixed-doc-test-error-rule">{{ row.reviewReasonLabel }}</p>
                       </article>
                     </div>
