@@ -59,7 +59,7 @@ const INSPECTOR_HINTS = {
   nodeOutputVerify: '処理状態と処理結果を出力します。状態は実行の成否、結果は業務上の通過/要確認です。',
   nodeOutputStart: '案件 ID（caseId）とファイル一覧（files[]）のみ。帳票タイプは条件ノードで Step1 から直接選択。',
   nodeOutputEnd: '終了ノードは出力変数なし。設定項目なし。',
-  nodeOutputHitl: '人工確認の処理状態（hitlStatus）のみ。分岐は画布三出口で直接接続。',
+  nodeOutputHitl: '目検チェックの処理状態（hitlStatus）のみ。分岐は画布三出口で直接接続。',
   nodeOutputQrRead: 'QR 読取の処理状態（qrReadStatus）のみ。解析結果は OCR フィールドへ反映し、要確認は OCR と同様 HITL へ進みます。',
   nodeOutputFraudDetect: '処理状態（fraudDetectStatus）と処理結果（fraudDetectResult）を出力します。\n\n・処理状態：ノード実行の成否（processing / success / failed）。対象外帳票は success。\n・処理結果：業務結論（passed / reviewRequired）。モデルは二値判定（通過/不通過）のみを返し、リスクスコアや閾値はありません。「不通過」のとき reviewRequired となり、条件分岐または人工確認へ進めます。',
   nodeOutputPiiMask: '敏感情報検出の処理状態（piiMaskStatus）のみ。検出・マスク結果はファイル／フィールド内容へ反映します。',
@@ -232,8 +232,8 @@ const CASE_FLOW_NODE_GROUPS = [
   {
     category: '制御 Node',
     nodes: [
-      { type: 'decision', label: '条件判断' },
-      { type: 'hitl_gate', label: '人工確認', defaultHitlContext: 'ocr' },
+      { type: 'decision', label: '条件分岐' },
+      { type: 'hitl_gate', label: '目検チェック', defaultHitlContext: 'ocr' },
     ],
   },
   {
@@ -619,7 +619,7 @@ const WORKFLOW_NODE_META = {
   },
   decision: {
     icon: 'IF',
-    title: '条件判断',
+    title: '条件分岐',
     desc: 'IF / ELIF / ELSE・変数で分岐',
     tasks: [],
     input: 'Node Result',
@@ -628,7 +628,7 @@ const WORKFLOW_NODE_META = {
   },
   hitl_gate: {
     icon: '人',
-    title: '人工確認',
+    title: '目検チェック',
     desc: '完了・補件・案件中止',
     tasks: [],
     input: 'Process Result',
@@ -1009,7 +1009,7 @@ const WORKFLOW_NODE_OUTPUT_VAR_DEFS = {
     { id: 'case.verifyResult', label: '処理結果', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.processResult, description: '業務結論。通過は主フローへ進み、要確認（不足書類など）は人工確認または補件へ進む。' },
   ],
   hitl_gate: [
-    { id: 'case.hitlStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.nodeStatus, description: '人工確認の処理状態。待機中または提出中は processing、提出と書き戻し成功は success、作成・提出・書き戻し・ルーティング失敗は failed。' },
+    { id: 'case.hitlStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.nodeStatus, description: '目検チェックの処理状態。待機中または提出中は processing、提出と書き戻し成功は success、作成・提出・書き戻し・ルーティング失敗は failed。' },
   ],
   code: [
     { id: 'case.codeStatus', label: '処理状態', scope: '案件', type: 'Enum', valueSpec: WORKFLOW_OUTPUT_VALUE_SPECS.codeStatus, description: 'JavaScript の処理状態。実行中 processing、正常終了 success、異常/タイムアウト/戻り値不正 failed。' },
@@ -1638,7 +1638,7 @@ function formatHitlGateCanvasRoleLabel(role) {
 }
 
 function buildHitlGateCanvasSummary(node, workflow = null) {
-  const targetLabel = getHitlGatePreset(node, workflow)?.label || '人工確認';
+  const targetLabel = getHitlGatePreset(node, workflow)?.label || '目検チェック';
   const roleLabel = formatHitlGateCanvasRoleLabel(node?.role);
   return joinWorkflowCanvasSummary(targetLabel, roleLabel);
 }
@@ -1796,7 +1796,7 @@ const WORKFLOW_NODE_PICKER_DESCRIPTIONS = {
   ai_verify: '必須フィールド、必要書類、テキスト検証、データ検証、標準データ整合性、署名・印鑑検証を実行します。',
   pii_mask: 'Step2 マスク ON フィールドを対象に PII を検出し、实例画像を黒塗り等で脱敏してから OCR へ渡します。固定前処理モジュール（実行成否のみ；二値判定・待办なし）。',
   decision: '条件式と入力値に基づいて後続処理を分岐します。',
-  hitl_gate: '人工確認タスクを作成し、指定ロールの処理を待ちます。',
+  hitl_gate: '人による確認タスクを作成し、指定ロールの処理を待ちます。',
   code: '入力変数を参照し、JavaScript を実行します。',
   end: 'Workflow の実行を終了します。',
 };
@@ -2601,7 +2601,7 @@ function normalizeHitlGateNode(node, workflow = null) {
     ...node,
     type: 'hitl_gate',
     hitlContext,
-    label: node.label || '人工確認',
+    label: node.label || '目検チェック',
     role: normalizeHitlGateRole(node.role, getHitlGateDefaultRole(hitlContext)),
     actions: normalizeHitlGateActions(node.actions),
     description: node.description || '',
@@ -4134,7 +4134,7 @@ function buildDefaultCaseWorkflow() {
       node = normalizeHitlGateNode({
         id,
         type,
-        label: label || '人工確認',
+        label: label || '目検チェック',
         x: 0,
         y: 0,
         hitlContext: hitlContext || 'ocr',
@@ -4153,7 +4153,7 @@ function buildDefaultCaseWorkflow() {
       node = normalizeDecisionNode({
         id,
         type,
-        label: label || '条件判断',
+        label: label || '条件分岐',
         x: 0,
         y: 0,
         judgmentContext: judgmentContext || 'custom',
@@ -4209,12 +4209,12 @@ function buildDefaultCaseWorkflow() {
 
   place({ id: 'wf-start', type: 'start', label: '開始' });
   place({ id: 'wf-pp', type: 'preprocess', label: '前処理' });
-  place({ id: 'wf-d-pre', type: 'decision', label: '条件判断', judgmentContext: 'custom' });
+  place({ id: 'wf-d-pre', type: 'decision', label: '条件分岐', judgmentContext: 'custom' });
   place({ id: 'wf-oc', type: 'ocr', label: 'OCR抽出' });
-  place({ id: 'wf-d-ocr', type: 'decision', label: '条件判断', judgmentContext: 'custom' });
+  place({ id: 'wf-d-ocr', type: 'decision', label: '条件分岐', judgmentContext: 'custom' });
   place({ id: 'wf-map', type: 'data_mapping', label: 'データマッピング' });
   place({ id: 'wf-ai', type: 'ai_verify', label: 'AI検証' });
-  place({ id: 'wf-d-final', type: 'decision', label: '条件判断', judgmentContext: 'custom' });
+  place({ id: 'wf-d-final', type: 'decision', label: '条件分岐', judgmentContext: 'custom' });
   place({
     id: 'wf-hu-pre',
     type: 'hitl_gate',
@@ -5640,7 +5640,7 @@ function buildWorkflowEndFlowSummaryNotes(workflow, pathIds) {
   (workflow?.nodes || []).forEach((node) => {
     if (!pathIds.has(node.id) || !isHitlGateNode(node)) return;
     const preset = getHitlGatePreset(node);
-    const title = preset?.label || node.label || '人工確認';
+    const title = preset?.label || node.label || '目検チェック';
     notes.push(`${title}：必要（${node.label || title}へ）`);
   });
   return notes;

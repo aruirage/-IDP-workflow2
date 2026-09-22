@@ -124,7 +124,7 @@ const appOptions = {
       ['OCR 抽出フィールドと標準フィールド（データマッピング）が未設定です。Workflow で OCR 抽出またはデータマッピングを設定してから再度開いてください。', '尚未配置 OCR 抽出字段与标准字段（数据映射）。请在 Workflow 中设置 OCR 抽出或数据映射后再打开。'],
       ['本ノードの実行進捗。対象ファイルなし、または設定 OFF の場合も success とし、skip は別値として出力しない。業務上通過したかは「処理結果」を見る。', '本节点执行进度。无适用文件或配置关闭时记为成功，不另写 skip。业务是否通过看「处理结果」。'],
       ['本ノードの実行進捗。対象ルールなし、または設定 OFF の場合も success とし、skip は別値として出力しない。業務上通過したかは「処理結果」を見る。', '本节点执行进度。无适用规则或配置关闭时记为成功，不另写 skip。业务是否通过看「处理结果」。'],
-      ['人工確認の処理状態。待機中または提出中は processing、提出と書き戻し成功は success、作成・提出・書き戻し・ルーティング失敗は failed。', '人工确认处理状态。等待中或提交中为 processing，提交并写回成功为 success，创建/提交/写回/路由失败为 failed。'],
+      ['目検チェックの処理状態。待機中または提出中は processing、提出と書き戻し成功は success、作成・提出・書き戻し・ルーティング失敗は failed。', '目视检查处理状态。等待中或提交中为 processing，提交并写回成功为 success，创建/提交/写回/路由失败为 failed。'],
       ['集約済み案件のテスト用スナップショットを編集し、保存すると次回以降も利用できます。缺件・検証結果は Workflow 実行時に AI検証ノードで判定します。', '可编辑集约済み案件检查快照，保存后下次可继续使用。缺件与检证结果在 Workflow 执行时由 AI 检证节点判定。'],
       ['開始ノード（入力）から 前処理 → OCR → 外部API → AI検証 → 出力 の順を推奨。編集モードで N キーまたはツールバー + でノード追加。', '建议从开始节点（输入）按 前处理 → OCR → 外部API → AI检证 → 输出 的顺序配置。编辑模式下可用 N 键或工具栏 + 添加节点。'],
       ['起始ノード（入力）から 前処理 → OCR → 外部API → AI検証 → 出力 の順を推奨。編集モードで N キーまたはツールバー + でノード追加。', '建议从起始节点（输入）开始，按前处理 → OCR → 外部 API → AI 校验 → 输出的顺序配置。编辑模式下可用 N 键或工具栏 + 添加节点。'],
@@ -861,7 +861,7 @@ const appOptions = {
       ['上游汇总完了', '上游汇总完成'],
       ['診断名・所見', '诊断名・所见'],
       ['診療科コード', '诊疗科代码'],
-      ['人工確認状態', '人工确认状态'],
+      ['目検チェック状態', '目视检查状态'],
       ['人工触点去重', '人工触点去重'],
       ['正解サンプル', '正确样例'],
       ['切り替え中文', '切换中文'],
@@ -1045,6 +1045,7 @@ const appOptions = {
       ['条件分岐', '条件分支'],
       ['新規起動', '新建启动'],
       ['新規上传', '新建上传'],
+      ['目検チェック', '目视检查'],
       ['人工確認', '人工确认'],
       ['生年月日', '出生日期'],
       ['請求金額', '请求金额'],
@@ -4640,7 +4641,7 @@ const appOptions = {
       { value: 'ocr', label: 'OCR抽出' },
       { value: 'data_mapping', label: 'データマッピング' },
       { value: 'ai_verify', label: 'AI検証' },
-      { value: 'hitl_gate', label: '人工確認' },
+      { value: 'hitl_gate', label: '目検チェック' },
     ];
 
     const WORKFLOW_NOTIFICATION_STATUS_VALUES = ['processing', 'success', 'failed'];
@@ -4865,7 +4866,7 @@ const appOptions = {
         { value: 'mappingStatus', label: 'mappingStatus', desc: 'ノード出力定義 · データマッピング status' },
         { value: 'verifyStatus', label: 'verifyStatus', desc: 'ノード出力定義 · AI検証 status' },
         { value: 'verifyResult', label: 'verifyResult', desc: 'ノード出力定義 · AI検証 result' },
-        { value: 'hitlStatus', label: 'hitlStatus', desc: 'ノード出力定義 · 人工確認 status' },
+        { value: 'hitlStatus', label: 'hitlStatus', desc: 'ノード出力定義 · 目検チェック status' },
       ];
       const seen = new Set();
       return [...systemOptions, ...nodeOptions].filter((option) => {
@@ -6121,8 +6122,8 @@ const appOptions = {
       if (inspectorPanel.value === 'data_mapping') return 'データマッピング';
       if (inspectorPanel.value === 'ocr') return 'OCR抽出';
       if (inspectorPanel.value === 'image') return '前処理';
-      if (inspectorPanel.value === 'decision') return 'IF/ELSE';
-      if (inspectorPanel.value === 'hitl_gate') return '人工確認';
+      if (inspectorPanel.value === 'decision') return '条件分岐';
+      if (inspectorPanel.value === 'hitl_gate') return '目検チェック';
       if (inspectorPanel.value === 'notify') return '通知';
       if (inspectorPanel.value === 'code') return 'カスタム関数';
       if (inspectorPanel.value === 'start') return '開始';
@@ -6202,7 +6203,7 @@ const appOptions = {
         standardFields: '標準フィールド',
         verifyStatus: 'AI検証状態',
         verifyResult: 'AI検証結果',
-        hitlStatus: '人工確認状態',
+        hitlStatus: '目検チェック状態',
         fraudDetectStatus: '画像不正検知状態',
         fraudDetectResult: '画像不正検知結果',
         piiMaskStatus: '敏感情報脱敏状態',
@@ -7361,7 +7362,7 @@ const appOptions = {
       } else if (type === 'end') {
         node = normalizeEndNode({ ...base, isEnd: true });
       } else if (type === 'decision') {
-        node = normalizeDecisionNode({ ...base, label: '条件判断', judgmentContext: 'custom' }, getActiveWf(), form.verify);
+        node = normalizeDecisionNode({ ...base, label: '条件分岐', judgmentContext: 'custom' }, getActiveWf(), form.verify);
       } else if (type === 'hitl_gate') node = normalizeHitlGateNode(base);
       else if (type === 'notify') node = normalizeNotifyNode(base, getActiveWf());
       else if (type === 'code') node = normalizeCodeNode(base, getActiveWf());
@@ -7715,7 +7716,7 @@ const appOptions = {
           type: 'decision',
           x,
           y: y + 12,
-          label: '条件判断',
+          label: '条件分岐',
           judgmentContext: 'custom',
           conditionType: 'custom',
         }, wf, form.verify);
@@ -7728,7 +7729,7 @@ const appOptions = {
           x,
           y,
           hitlContext: payload.defaultPreset || preset.value,
-          label: '人工確認',
+          label: '目検チェック',
         }, wf);
       }
       if (payload.type === 'notify') {
@@ -7888,7 +7889,7 @@ const appOptions = {
           type: 'decision',
           x: to.x - WF_NODE_GAP,
           y: to.y + 12,
-          label: '条件判断',
+          label: '条件分岐',
           judgmentContext: 'custom',
           conditionType: 'custom',
         }, wf, form.verify);
@@ -7900,7 +7901,7 @@ const appOptions = {
           x: to.x - WF_NODE_GAP,
           y: to.y,
           hitlContext: payload.defaultPreset || preset.value,
-          label: '人工確認',
+          label: '目検チェック',
         }, wf);
       } else if (payload.type === 'notify') {
         newNode = normalizeNotifyNode({
@@ -8038,7 +8039,7 @@ const appOptions = {
           type: 'decision',
           x: from.x + fromSize.w + WF_NODE_GAP,
           y: from.y + 12,
-          label: '条件判断',
+          label: '条件分岐',
           judgmentContext: 'custom',
           conditionType: 'custom',
         }, wf, form.verify);
@@ -8050,7 +8051,7 @@ const appOptions = {
           x: from.x + fromSize.w + WF_NODE_GAP,
           y: from.y,
           hitlContext: payload.defaultPreset || preset.value,
-          label: '人工確認',
+          label: '目検チェック',
         }, wf);
       } else if (payload.type === 'notify') {
         newNode = normalizeNotifyNode({
