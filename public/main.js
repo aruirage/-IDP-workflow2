@@ -2412,8 +2412,8 @@ const appOptions = {
     })));
     /**
      * 読取の完全性。ゲートにするのは「QR から連結して書き込む値の数 === 項目総数」のみ。
-     * 検出枠数（6/6）はゲートにしない —— 欠けた枠は連結値のトークン数に直結するため、
-     * 値数が項目総数に満たなければ自ずと不完全になる（赤枠でどの QR が未検出か診断表示する）。
+     * 欠けた枠は連結値のトークン数に直結するため、値数が項目総数に満たなければ
+     * 自ずと不完全になる（赤枠でどの QR が未検出か診断表示する）。
      */
     const fixedDocQrReadStatus = computed(() => {
       const enabled = fixedDocQrReadEnabled.value;
@@ -3691,10 +3691,10 @@ const appOptions = {
         const status = fixedDocQrReadStatus.value;
         if (options.silent) return status.ok;
         if (status.ok) {
-          ElementPlus.ElMessage.success(`QR を ${status.detected} / ${status.expected} 検出しました`);
+          ElementPlus.ElMessage.success('QR の読み取りが完了しました');
         } else {
           ElementPlus.ElMessage.warning(
-            `QR の検出数が不足しています（${status.detected} / ${status.expected}）。画像を再アップロードして再スキャンしてください`,
+            'QR の読み取りが不完全です。画像を再アップロードして再スキャンしてください',
           );
         }
         return status.ok;

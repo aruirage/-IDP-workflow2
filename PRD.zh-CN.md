@@ -15,7 +15,7 @@
 <del class="change-deleted">| QR 源    | QRソース          | 账票级逻辑槽位（QR1、QR2…）；配置端在固定账票下方扫描区域内从左到右检出；检出几个生成几个；目录仅展示扫描结果，不可手动删改                                                                                |</del>
 <del class="change-deleted">| 取值方法    | 取値方法           | 字段级 QR 分隔开关：关闭时全文取值（QR扫描到的内容全部填入该字段），开启时按分隔符与字段排序取值                                                                                              |</del>
 | <ins class="change-added">QR 連結読取</ins> | <ins class="change-added">QR読取（連結）</ins> | <ins class="change-added">LIAJ 診断書模板专用的读取方式：把多个数据 QR 的解码结果按槽位顺序接成一长串，用 `$` 和 `^` 两个同级分隔符切开，再照字段表的顺序一个字段填一个值。切出来的值有几个，就叫「写入值数」；写入值数必须刚好等于该模板的 QR 仕样值数（A01 为 407），对不上就整份诊断书改走 OCR</ins> |
-| <ins class="change-added">QR 槽位</ins> | <ins class="change-added">QR1、QR2…（槽位）</ins> | <ins class="change-added">固定账票下方扫描区从左到右检出的 QR 位置（QR1、QR2…）。LIAJ A01 有 6 个、K01 有 9 个。槽位数量只用来展示检出情况，不决定走 QR 还是 OCR</ins> |
+| <ins class="change-added">QR 槽位</ins> | <ins class="change-added">QR1、QR2…（槽位）</ins> | <ins class="change-added">固定账票下方扫描区从左到右检出的 QR 位置（QR1、QR2…）。LIAJ A01 有 6 个、K01 有 9 个。槽位顺序只在运行时用于拼接，配置端不展示，也不决定走 QR 还是 OCR</ins> |
 <del class="change-deleted">| 分隔符     | 区切り文字          | 分隔模式下用于切分 QR 解码串的分隔符；连续分隔符之间视为空字段；段内空串或空值占位亦视为空                                                                                                  |</del>
 <del class="change-deleted">| 字段排序    | 順序             | 分隔模式下，从 QR 解码串中取第几个片段（1 起）；同一 QR 源内 N=该源分隔映射字段总数，順序须为 1～N 连号且不重复                                                                                 |</del>
 | 正常范围    | 正常範囲           | Step3 正常条件：按 **処理ルール**（后处理规则）决定可否配置；**マスタ照合**、**テキスト置換** 不可配；其余规则可选；比较对象为 処理ルール 后处理产物                                                         |
@@ -193,13 +193,13 @@
 <del class="change-deleted">旧配置流程：Step1 上传 template → Step2 字段读取 · QR扫描 → QR 源目录 → QR 字段映射 → Step5 test 验收</del>
 
 ```
-Step1 上传 template → Step2 字段读取 · QR 読取 开关 ON → QR スキャン → 写入值数等于字段总数 → Step5 test 验收
+Step1 上传 template → Step2 字段读取 · QR 読取 开关 ON（字段数 = 该模板的 QR 仕样值数） → Step5 test 验收
 ```
 
 1. <del class="change-deleted">admin 在 Step1 上传 template 样张；Step2 字段读取（テキスト読取）切换 QR設定 后，系统扫描样张生成 QRソース目录（QR1、QR2…）；也可点击 QR扫描 手动重扫刷新目录（防止第一次扫描漏检或重新上传样例后漏检的情况）。</del>
 2. <del class="change-deleted">QR扫描仅生成或刷新 QR 源目录，不自动写入字段映射。admin 在映射表逐字段可选配置 QRソース、取値方法、区切り文字、順序；未选 QRソース 的字段运行时走 OCR（OCR 模式维护項目名/タイプ/HITL/必须/字段排序/删减操作；上述主数据在 QR 模式只读）。テーブル情報読取 不参与 QR。</del>
-3. <ins class="change-added">admin 在 Step1 上传 template 样张；Step2 字段读取（テキスト読取）内打开 QR 読取 开关（默认 OFF，需 admin 手动开启），系统扫描样张下方扫描区的全部 QR 槽位（A01 为 6 个）并逐槽解码。扫描要花时间，槽位从左到右逐个出结果，全部出完前不显示路径徽标；也可点击 QR スキャン 手动重扫（防止第一次扫描漏检或重新上传样例后漏检的情况）。</ins>
-4. <ins class="change-added">挑出数据码：数据码的串里用 `$` 分隔各个字段值；ID 类码（上传 ID、受理类 ID 等）整串没有 `$`，跟字段无关。判定很简单，看解码结果里有没有 `$`，没有就丢掉这个槽位。把留下的数据码按槽位顺序接成一长串，用 `$` 和 `^` 两个同级分隔符切开，再照 Step2 字段表的顺序一个字段填一个值。全程不用逐字段配映射。</ins>
+3. <ins class="change-added">admin 在 Step1 上传 template 样张；Step2 字段读取（テキスト読取）内打开 QR 読取 开关（默认 OFF，需 admin 手动开启）。打开时只做一项静态校验：本模板字段数必须等于该模板类型的 QR 仕样值数（A01 为 407），不一致就提示并弹回 OFF。配置端不扫描样张、不显示槽位、也不显示走哪条路径。</ins>
+4. <ins class="change-added">运行时挑出数据码：数据码的串里用 `$` 分隔各个字段值；ID 类码（上传 ID、受理类 ID 等）整串没有 `$`，跟字段无关。判定很简单，看解码结果里有没有 `$`，没有就丢掉。把留下的数据码按扫描顺序接成一长串，用 `$` 和 `^` 两个同级分隔符切开，再照 Step2 字段表的顺序一个字段填一个值。全程不用逐字段配映射。</ins>
 5. <ins class="change-added">走哪条路径：写入值数等于该模板的字段总数（A01 是 407）就整份按 QR 写值；不够就整份改走 OCR，不会只写一部分字段。</ins>
 6. Step5 test：每字段卡片右上角展示读取来源标签（QR読取 或 OCR読取，仅两种）；HITL=ON 且规则命中时输入框标红；HITL=OFF 字段不标要確認。
 7. 业务场景 OCR 抽出节点仍为开关 + 对象账票；引擎执行时读取上述账票配置，画布无 QR 专用节点。
@@ -210,7 +210,7 @@ Step1 上传 template → Step2 字段读取 · QR 読取 开关 ON → QR ス�
 2. <del class="change-deleted">QR設定 下字段已选 QRソース 且对应 QR 扫描有效（含解码后为空值）：按映射写值；空值仍视为有效 QR 写值，不触发 OCR 兜底。</del>
 3. <del class="change-deleted">QR設定 下字段已选 QRソース 但对应 QR 扫描无效（未扫出）：该字段 OCR 兜底。</del>
 4. <ins class="change-added">非 LIAJ 診断書模板：无 QR 路径，全部字段 OCR。</ins>
-5. <ins class="change-added">LIAJ 診断書模板（連結読取）：开关 OFF → 整份 OCR；开关 ON 且写入值数等于模板字段总数 → 全部字段走 QR 写值；写入值数不够 → 整份改走 OCR。这条路径不看单个字段，槽位检出数只作展示。</ins>
+5. <ins class="change-added">LIAJ 診断書模板（連結読取）：开关 OFF → 整份 OCR；开关 ON 且写入值数等于该模板的 QR 仕样值数 → 全部字段走 QR 写值；写入值数不够 → 整份改走 OCR。这条路径不看单个字段，只看写入值数。</ins>
 6. 写值与后处理汇合后：仅 HITL=ON 字段评估人工确认规则；HITL=OFF 字段不参与人工确认。
 
 ---
@@ -314,7 +314,7 @@ OCR 抽出节点为开关 + 对象账票；引擎对该节点 ON 的账票，读
 2. <del class="change-deleted">已选且对应 QR 扫描有效（含解码后为空值）→ 按映射 QR 写值；空值仍为有效写值，不触发 OCR 兜底。</del>
 3. <del class="change-deleted">已选但对应 QR 扫描无效（未扫出）→ 该字段 OCR 兜底。</del>
 4. <ins class="change-added">QR 読取 开关 OFF → 本账票全部字段 OCR。</ins>
-5. <ins class="change-added">开关 ON 且写入值数等于模板字段总数 → 全部字段按字段顺序 QR 写值；写入值数不够 → 整份诊断书改走 OCR。</ins>
+5. <ins class="change-added">开关 ON 且写入值数等于该模板的 QR 仕样值数 → 全部字段按字段顺序 QR 写值；写入值数不够 → 整份诊断书改走 OCR。</ins>
 6. マスク=ON 的字段：读值后跳过 Step3 処理ルール（AI匹配草案与正常条件校验不适用），不进确认画面；Step5 効果テスト 文本卡片隐藏。
 7. 写值与后处理汇合后（仅 マスク=OFF 字段），确认路径顺序：HITL → 已勾选人工确认规则 →（仅当勾选规则 6/7 时）正常条件比较 → 规则 OR 判定；命中则将该 HITL=ON 字段纳入 OCR 抽出确认待办。HITL=OFF 或未勾选依赖正常条件的规则时，不做正常条件比较。
 
@@ -368,7 +368,7 @@ flowchart TD
 
 | 步骤    | 读取配置                   | 行为                                                                                      |
 | ----- | ---------------------- | --------------------------------------------------------------------------------------- |
-| 路由    | 账票 Step2 字段读取 tab · QR 読取 开关 | <del class="change-deleted">OCR設定 → 全字段 OCR；QR設定 → 逐字段：未选 QRソース 走 OCR，已选且扫描有效（含空值）写值，仅扫描无效（未扫出）才 OCR 兜底。</del><ins class="change-added">LIAJ 診断書模板：开关 ON 且写入值数等于模板字段总数 → 全部字段按字段顺序 QR 写值；开关 OFF 或写入值数不够 → 整份 OCR。其他模板没有 QR 路径，全字段 OCR。</ins>テーブル情報読取 始终 OCR |
+| 路由    | 账票 Step2 字段读取 tab · QR 読取 开关 | <del class="change-deleted">OCR設定 → 全字段 OCR；QR設定 → 逐字段：未选 QRソース 走 OCR，已选且扫描有效（含空值）写值，仅扫描无效（未扫出）才 OCR 兜底。</del><ins class="change-added">LIAJ 診断書模板：开关 ON 且写入值数等于该模板的 QR 仕样值数 → 全部字段按字段顺序 QR 写值；开关 OFF 或写入值数不够 → 整份 OCR。其他模板没有 QR 路径，全字段 OCR。</ins>テーブル情報読取 始终 OCR |
 | 后处理   | 账票 Step3 処理ルール         | 固定规则标准化（含 QRコード，见下方）；用于顶部单码等 Step2 底部扫描覆盖不到的场景 |
 | マスク排除 | 账票 Step2 マスク列（テキスト読取 字段表） | マスク=ON 的字段不进 Step3 规则/正常条件与确认画面；Step5 文本卡片隐藏（与 HITL 相互独立） |
 | 1 字段 HITL | 账票 Step2 HITL 列 | 先看：OFF = 本字段不进确认路径；ON = 进入下一步 |
@@ -391,7 +391,7 @@ flowchart TD
 | 字段/参数       | 界面文案（日语） | 控件   | 必填  | 校验            | 下游消费                    |
 | ----------- | -------- | ---- | --- | ------------- | ----------------------- |
 | 分类置信度阈值     | 分類信頼度閾値  | 数字输入 | 是   | 0～100 整数，后缀 % | 案件集约 · 画像分类；低于阈值 → 集约确认 |
-| template 样张 | —        | 文件上传 | 否   | 换样张后重新 <del class="change-deleted">QR扫描</del><mark class="change-modified">QR スキャン</mark>   | Step2 QR 扫描             |
+| template 样张 | —        | 文件上传 | 否   | 换样张后重新上传；配置端不扫描、不产出 QR 源目录   | <del class="change-deleted">Step2 QR 扫描</del><ins class="change-added">—</ins>             |
 
 
 界面文案：分類信頼度閾値 旁 i 提示「案件集約時の画像分類信頼度」；必填标记「必須」。
@@ -408,7 +408,7 @@ flowchart TD
 
 #### Step2 按钮（读取 · OCR）
 
-<del class="change-deleted">AI自動生成 不生成 QR 源目录、字段 QR 映射、取値方法、区切り文字、順序；QR 源目录由扫描 / **QR扫描** 生成，字段映射及相关列须用户手动配置。</del><ins class="change-added">AI自動生成 不生成 QR 相关配置；QR 槽位由 QR スキャン 扫描生成，只读展示，不可手动编辑。</ins>
+<del class="change-deleted">AI自動生成 不生成 QR 源目录、字段 QR 映射、取値方法、区切り文字、順序；QR 源目录由扫描 / **QR扫描** 生成，字段映射及相关列须用户手动配置。</del><ins class="change-added">AI自動生成 不生成任何 QR 相关配置 —— 分隔符与取值顺序全部内置，AI 只按模板生成字段表。</ins>
 
 
 | 按钮     | 界面文案（日语） | 显示条件                   | 点击后                                                                                                                 |
@@ -564,21 +564,21 @@ Step2 AI 读取分 テキスト読取 / テーブル情報読取 两个 tab；HI
 
 #### LIAJ 連結読取 · 功能点
 
-<ins class="change-added">1. QR 読取 开关：字段读取 tab 内的账票级开关，默认 OFF；ON 时本账票走 QR 連結読取，OFF 时全部字段走 OCR。打开前应先核对项目数：必须等于该模板类型的 QR 仕样值数（A01 为 407），不一致就提示并保持 OFF（见「异常与边界」）。</ins>
+<ins class="change-added">1. QR 読取 开关：字段读取 tab 内的账票级开关，默认 OFF；ON 时本账票走 QR 連結読取，OFF 时全部字段走 OCR。</ins>
 
-<ins class="change-added">2. QR 扫描：扫描样张下方扫描区的全部 QR 槽位（A01 有 6 个、K01 有 9 个），每个槽位单独解码。进入 Step2 且开关 ON 时自动扫一次，也可以点 QR スキャン 重扫。扫描出的值数必须等于该模板的 QR 仕样值数（A01 为 407），对不上就整份改走 OCR。</ins>
+<ins class="change-added">2. 打开开关时只做一项静态校验：本模板字段数必须等于该模板类型的 QR 仕样值数（A01 为 407）。不一致就提示并保持 OFF。这是配置端唯一的校验，见「异常与边界」。</ins>
 
-<ins class="change-added">3. 扫描要花时间：槽位不是一次全出来，而是从左到右逐个出结果。还没出结果的槽位显示为虚线灰底，条内显示「スキャン中…」；6 个槽位全部出完之前不显示路径徽标，也不判定走哪条路径（读一半就报「不足」会误报）。扫描出的值数必须等于该模板的 QR 仕样值数（A01 为 407），对不上就整份改走 OCR。</ins>
+<ins class="change-added">3. 配置端到此为止。不做样张扫描，不显示槽位条与槽位检出数，也没有「QR 不足」这种中间态。条内只有 2 个状态：开关 ON → 徽标「QR 読取優先パス適用中」；开关 OFF（或静态校验不通过弹回）→ 徽标「無効 — OCR のみで読取」。徽标只是展示用（让 admin 一眼看出本帐票当前是不是 QR 模式），不参与任何判定。逐份文档实际跑哪条路径是运行时的事，不回写到配置端。</ins>
 
-<ins class="change-added">4. 挑出数据码：数据码的串里用 `$` 分隔各个字段值；ID 类码（上传 ID、受理类 ID 等）整串没有 `$`，跟字段无关。判定很简单，看解码结果里有没有 `$`，没有就丢掉这个槽位，不参与后面的拼接。</ins>
+<ins class="change-added">4. 运行时挑出数据码：数据码的串里用 `$` 分隔各个字段值；ID 类码（上传 ID、受理类 ID 等）整串没有 `$`，跟字段无关。判定很简单，看解码结果里有没有 `$`，没有就丢掉，不参与后面的拼接。</ins>
 
-<ins class="change-added">5. 拼接与切开：把留下的数据码按槽位顺序接成一长串，再用 `$` 和 `^` 两个同级分隔符切开。字段值内部不会出现这两个符号，所以切出来的段数就是字段值个数，下面记作「写入值数」。写入值数必须等于该模板类型的 QR 仕样值数（A01 为 407），对不上就整份诊断书改走 OCR。</ins>
+<ins class="change-added">5. 运行时拼接与切开：把留下的数据码按扫描顺序接成一长串，再用 `$` 和 `^` 两个同级分隔符切开。字段值内部不会出现这两个符号，所以切出来的段数就是字段值个数，下面记作「写入值数」。</ins>
 
-<ins class="change-added">6. 写值：照 Step2 字段表的顺序，一个字段填一个值。空字段靠连续分隔符表示（`a$$b` 切成 `a`、空、`b`），切出来是一个空值，照样占一个位置，所以写入值数不会因为空字段而对不上。要跟「缺值」分开：某个槽位整串读不出内容，该槽位整个被丢掉，写入值数会变少。</ins>
+<ins class="change-added">6. 运行时写值：照 Step2 字段表的顺序，一个字段填一个值。空字段靠连续分隔符表示（`a$$b` 切成 `a`、空、`b`），切出来是一个空值，照样占一个位置，所以写入值数不会因为空字段而对不上。</ins>
 
-<ins class="change-added">7. 走哪条路径只看一件事：写入值数是否等于该模板的 QR 仕样值数（A01 是 407）。相等就整份按 QR 写值；不相等就整份改走 OCR，不会只写一部分字段。项目数在打开开关时已经校验过，所以到这一步还对不上，基本只剩扫描缺槽位这一种原因。</ins>
+<ins class="change-added">7. 运行时走哪条路径只看一件事：写入值数是否等于该模板的 QR 仕样值数（A01 是 407）。相等就整份按 QR 写值；不相等就整份改走 OCR，不会只写一部分字段。这一步不回写到配置端 —— 逐份文档的扫描质量不是配置问题。</ins>
 
-<ins class="change-added">8. 槽位检出数（如 6/6）只是展示，不决定路径。缺了哪个槽位从界面上看不出来，所以完整性只看写入值数是否等于 QR 仕样值数。</ins>
+<ins class="change-added">8. 不足时不要静默回落：写入值数不足而整份改走 OCR 时，在案件侧留一个「OCR 回落」标记，Step5 效果测试与案件详情能看到，便于发现帐票侧的系统性问题。</ins>
 
 <ins class="change-added">9. 后续衔接：QR 写值和 OCR 写值一样进 Step3 処理ルール，再按字段 HITL 与已勾选的人工确认规则判定。</ins>
 
@@ -586,47 +586,39 @@ Step2 AI 读取分 テキスト読取 / テーブル情報読取 两个 tab；HI
 
 <ins class="change-added">入口：账票类型设置 Step2 字段读取 tab（界面：テキスト読取），AI 输入栏下方、字段表上方；表格读取 tab 不展示。</ins>
 
-<ins class="change-added">条内元素从左到右：标题 QR 読取、i 提示、开关、槽位条、路径徽标、QR スキャン 按钮。开关 OFF 时槽位条隐藏，只显示「無効 — OCR のみで読取」；扫描期间槽位条显示 6 个未定槽位、路径徽标位置显示「スキャン中…」；扫描结束后才出路径徽标；写入值数不够时条下方出现提示行。</ins>
+<ins class="change-added">条内元素从左到右：标题 QR 読取、i 提示、开关、路径徽标。徽标只有 2 态，且只是展示用：开关 OFF 时「無効 — OCR のみで読取」；开关 ON 且静态校验通过时「QR 読取優先パス適用中」（绿色）。徽标不参与路径判定。没有「QR 不足」这一态。槽位条与槽位检出数不展示。</ins>
 
-<ins class="change-added">默认是开关 OFF。刚进字段读取 tab 只能看到标题、i 提示、开关和「無効 — OCR のみで読取」，槽位条与路径徽标都不显示；admin 打开开关时先核对项目数（应与 QR 仕样值数一致，不一致则弹回 OFF），通过后立即开始扫描，槽位从左到右逐个出结果，全部出完才显示路径徽标与 QR スキャン 结果。</ins>
+<ins class="change-added">默认是开关 OFF。刚进字段读取 tab 只能看到标题、i 提示、开关和徽标「無効 — OCR のみで読取」；admin 打开开关时先做静态校验（字段数应与 QR 仕样值数一致，不一致则提示并弹回 OFF，徽标留在无效态），通过后开关保持 ON，徽标切到「QR 読取優先パス適用中」。</ins>
 
 #### LIAJ 連結読取 · 按钮与启用条件
 
 | <ins class="change-added">按钮</ins> | <ins class="change-added">界面文案（日语）</ins> | <ins class="change-added">启用条件</ins> | <ins class="change-added">点击后</ins> |
 | ---- | ---- | ---- | ---- |
-| <ins class="change-added">QR 読取</ins> | <ins class="change-added">QR 読取</ins> | <ins class="change-added">—</ins> | <ins class="change-added">打开或关闭本账票的 QR 連結読取；打开后立即扫描一次；关闭后全部字段走 OCR，槽位条隐藏，正在跑的扫描也一并中止</ins> |
-| <ins class="change-added">QR 扫描</ins> | <ins class="change-added">QR スキャン</ins> | <ins class="change-added">QR 読取 开关 ON；扫描中禁用并显示加载中</ins> | <ins class="change-added">重新扫描样张下方扫描区，刷新槽位检出结果与写入值数</ins> |
+| <ins class="change-added">QR 読取</ins> | <ins class="change-added">QR 読取</ins> | <ins class="change-added">—</ins> | <ins class="change-added">打开或关闭本账票的 QR 連結読取；打开时做一次静态校验（字段数 vs QR 仕样值数）；关闭后全部字段走 OCR</ins> |
 
 #### LIAJ 連結読取 · 字段与参数规格
 
 | <ins class="change-added">字段/参数</ins> | <ins class="change-added">界面文案（日语）</ins> | <ins class="change-added">控件</ins> | <ins class="change-added">必填</ins> | <ins class="change-added">说明</ins> | <ins class="change-added">下游消费</ins> |
 | ---- | ---- | ---- | ---- | ---- | ---- |
-| <ins class="change-added">QR 読取</ins> | <ins class="change-added">QR 読取</ins> | <ins class="change-added">开关</ins> | <ins class="change-added">—</ins> | <ins class="change-added">默认 OFF；账票级；ON 时槽位条显示，OFF 时槽位条隐藏</ins> | <ins class="change-added">运行时字段路由</ins> |
-| <ins class="change-added">QR 槽位</ins> | <ins class="change-added">QR1、QR2…</ins> | <ins class="change-added">只读</ins> | <ins class="change-added">—</ins> | <ins class="change-added">扫描生成；未出结果的槽位为虚线灰底，未检出的槽位标红；只作展示，不决定走哪条路径</ins> | <ins class="change-added">—</ins> |
-| <ins class="change-added">路径徽标</ins> | <ins class="change-added">QR 読取優先パス適用中</ins> | <ins class="change-added">只读</ins> | <ins class="change-added">—</ins> | <ins class="change-added">写入值数对得上时显示（绿色）；对不上时不显示徽标，改用条下方的提示行说明原因</ins> | <ins class="change-added">—</ins> |
+| <ins class="change-added">QR 読取</ins> | <ins class="change-added">QR 読取</ins> | <ins class="change-added">开关</ins> | <ins class="change-added">—</ins> | <ins class="change-added">默认 OFF；账票级；配置端只有这一个可操作项</ins> | <ins class="change-added">运行时字段路由</ins> |
+| <ins class="change-added">路径徽标</ins> | <ins class="change-added">QR 読取優先パス適用中 / 無効 — OCR のみで読取</ins> | <ins class="change-added">只读</ins> | <ins class="change-added">—</ins> | <ins class="change-added">只有 2 态：开关 ON 且静态校验通过 → 「QR 読取優先パス適用中」（绿色）；开关 OFF 或校验不通过 → 「無効 — OCR のみで読取」。没有「QR 不足」态；纯展示，不参与路径判定</ins> | <ins class="change-added">—</ins> |
 
 #### LIAJ 連結読取 · 界面文案（日语）
 
 | <ins class="change-added">类型</ins> | <ins class="change-added">界面文案（日语）</ins> | <ins class="change-added">说明</ins> |
 | ---- | ---- | ---- |
 | <ins class="change-added">开关</ins> | <ins class="change-added">QR 読取</ins> | <ins class="change-added">账票级 QR 連結読取 开关，默认 OFF</ins> |
-| <ins class="change-added">无效态</ins> | <ins class="change-added">無効 — OCR のみで読取</ins> | <ins class="change-added">开关 OFF；槽位条隐藏</ins> |
-| <ins class="change-added">扫描中</ins> | <ins class="change-added">スキャン中…</ins> | <ins class="change-added">开关 ON 后的扫描期间；路径徽标位置显示，此时不出路径徽标</ins> |
-| <ins class="change-added">路径徽标</ins> | <ins class="change-added">QR 読取優先パス適用中</ins> | <ins class="change-added">写入值数等于 QR 仕样值数；绿色。对不上时不显示徽标，原因由下面的提示行说明</ins> |
+| <ins class="change-added">路径徽标（无效态）</ins> | <ins class="change-added">無効 — OCR のみで読取</ins> | <ins class="change-added">开关 OFF；仅展示</ins> |
+| <ins class="change-added">路径徽标（有効态）</ins> | <ins class="change-added">QR 読取優先パス適用中</ins> | <ins class="change-added">开关 ON 且静态校验（字段数 vs QR 仕样值数）通过；绿色。仅展示，不参与路径判定；没有「QR 不足」态</ins> |
 | <ins class="change-added">i 提示</ins> | <ins class="change-added">LIAJ診断書テンプレート専用。複数の QR の値を項目にマッピングします。QR が 1 つでも解析に失敗すると、診断書全体を OCR 読み取りに切り替えます。</ins> | <ins class="change-added">开关旁 i 图标</ins> |
-| <ins class="change-added">提示行</ins> | <ins class="change-added">QR の読み取りが不完全です。画像を再アップロードして再スキャンしてください。</ins> | <ins class="change-added">写入值数不足 且 有未检出槽位时（扫描侧原因）；不展示技术计数</ins> |
-| <ins class="change-added">提示行</ins> | <ins class="change-added">QR から読み取った値の数が項目数と一致しません。項目の設定を確認してください。</ins> | <ins class="change-added">槽位全部检出但写入值数仍与 QR 仕样值数不符时（字段数侧原因，重扫无济于事）；不展示技术计数</ins> |
-| <ins class="change-added">开关阻断提示</ins> | <ins class="change-added">項目数（N）が QR の値数（M）と一致しません。項目を揃えてから QR 読取 を有効にしてください</ins> | <ins class="change-added">打开 QR 読取 开关时，模板字段数与该模板类型的 QR 仕样值数不一致；开关保持 OFF，不扫描</ins> |
+| <ins class="change-added">开关阻断提示</ins> | <ins class="change-added">項目数（N）が QR の値数（M）と一致しません。項目を揃えてから QR 読取 を有効にしてください</ins> | <ins class="change-added">打开 QR 読取 开关时，模板字段数与该模板类型的 QR 仕样值数不一致；开关保持 OFF</ins> |
 
 #### LIAJ 連結読取 · 异常与边界
 
 | <ins class="change-added">场景</ins> | <ins class="change-added">条件</ins> | <ins class="change-added">用户提示 / 处理</ins> |
 | ---- | ---- | ---- |
-| <ins class="change-added">写入值数不足</ins> | <ins class="change-added">切出来的写入值数不等于该模板的 QR 仕样值数（A01 为 407）</ins> | <ins class="change-added">不显示路径徽标；提示分两种：有未检出槽位 → 「QR の読み取りが不完全です。画像を再アップロードして再スキャンしてください。」；槽位全部检出但值数仍不符 → 「QR から読み取った値の数が項目数と一致しません。項目の設定を確認してください。」；两种情况都整份诊断书改走 OCR</ins> |
-| <ins class="change-added">槽位未检出</ins> | <ins class="change-added">某个槽位解码失败、整串读不出内容，或解码结果里没有 `$`</ins> | <ins class="change-added">该槽位标红；该槽位的值不参与拼接，写入值数因此变少，整份诊断书改走 OCR</ins> |
-| <ins class="change-added">开关关闭</ins> | <ins class="change-added">QR 読取 开关 OFF</ins> | <ins class="change-added">槽位条隐藏，显示「無効 — OCR のみで読取」；全部字段走 OCR</ins> |
-| <ins class="change-added">项目数与 QR 值数不一致</ins> | <ins class="change-added">打开 QR 読取 开关时，模板字段数 ≠ 该模板类型的 QR 仕样值数（A01 为 407）</ins> | <ins class="change-added">提示「項目数（N）が QR の値数（M）と一致しません。項目を揃えてから QR 読取 を有効にしてください」；开关弹回 OFF，不扫描。在设置侧先拦住，运行时写入值数对不上的原因基本只剩扫描侧</ins> |
-| <ins class="change-added">重扫恢复</ins> | <ins class="change-added">值数不足后点击 QR スキャン</ins> | <ins class="change-added">重新扫描；写入值数对得上则显示徽标，恢复 QR 优先路径</ins> |
+| <ins class="change-added">开关关闭</ins> | <ins class="change-added">QR 読取 开关 OFF</ins> | <ins class="change-added">显示「無効 — OCR のみで読取」；全部字段走 OCR</ins> |
+| <ins class="change-added">项目数与 QR 值数不一致</ins> | <ins class="change-added">打开 QR 読取 开关时，模板字段数 ≠ 该模板类型的 QR 仕样值数（A01 为 407）</ins> | <ins class="change-added">提示「項目数（N）が QR の値数（M）と一致しません。項目を揃えてから QR 読取 を有効にしてください」；开关弹回 OFF，徽标留在「無効 — OCR のみで読取」。配置端只拦这一种情况；运行时写入值数对不上见下方「异常与边界」（运行时侧）</ins> |
 
 #### Step3 処理ルール（后处理职责）
 
@@ -751,7 +743,7 @@ Step2 プロンプト（提示词） → 写值 → 固定処理ルール →（
 | 场景                  | 条件                                                | 用户提示 / 处理                                                                                                             |
 | ------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Step1 · 运行时分类置信度低   | classificationConfidence 低于 Step1 阈值              | 进入集约确认                                                                                                                |
-| Step2 · QR 扫描无检出    | template 底部区域未检测到 QR                         | <del class="change-deleted">空态：「QR を検出できませんでした。「QRスキャン」で再試行できます」，提示再次扫描</del><mark class="change-modified">槽位全部未检出 → 写入值数 0，按「写入值数不足」处理：路径徽标转红，整份诊断书改走 OCR</mark> |
+| <del class="change-deleted">Step2 · QR 扫描无检出</del>    | <del class="change-deleted">template 底部区域未检测到 QR</del>                         | <del class="change-deleted">空态：「QR を検出できませんでした。「QRスキャン」で再試行できます」，提示再次扫描；全部未检出 → 写入值数 0，整份诊断书改走 OCR</del><ins class="change-added">配置端不再扫描样张，本场景不存在；运行时一份文档一个数据码都读不到时，按下方「LIAJ · 写入值数不足」处理</ins> |
 <del class="change-deleted">| Step2 · QR扫描重扫      | 映射表已有字段配置 QRソース 时再次点击 QR扫描                        | 弹窗：「既にフィールド映射が設定されています。QRスキャンを再実行すると、フィールド映射がクリアされ、QRソース目録が上書きされます。続行しますか？」；确认后清空字段映射并重扫目录；按钮「続行」「キャンセル」；无映射时直接扫描 |</del>
 | Step2 · QR 写值空       | <del class="change-deleted">QR 扫描有效但解码/分段结果为空</del><ins class="change-added">数据码里用连续分隔符（`$$`）表示该字段为空，不是「槽位读不出」</ins> | 写入空值；不触发 OCR 兜底；后续按空值与必填/正常条件规则处理 |
 <del class="change-deleted">| 运行时 · QR 扫描无效兜底 | 字段已选 QRソース 但对应 QR 未扫出 | <mark class="change-modified">该字段 OCR 兜底</mark> |</del>
@@ -759,9 +751,9 @@ Step2 プロンプト（提示词） → 写值 → 固定処理ルール →（
 | Step3 · 正常条件不完整     | 処理ルール 允许配置且已选比较模式但阈值缺失，或 min>max | 输入框标红，报错                                                                                                              |
 | 运行时 · 后处理执行失败       | Step3 処理ルール 执行失败                                  | `ocrStatus=failed`；案件异常；不进 OCR 确认                                                                                     |
 | 运行时 · 正常条件未通过 | 后处理越界（规则 6）；OCR·兜底低置信（规则 1）或低置信且越界（规则 7）；QR 写值越界（规则 6）；且该字段 HITL=ON | `reviewRequired` → OCR 确认；HITL=OFF 字段不因此进确认 |
-| <ins class="change-added">LIAJ · 写入值数不足</ins> | <ins class="change-added">切出来的写入值数不等于该模板的 QR 仕样值数（A01 为 407）</ins> | <ins class="change-added">不显示路径徽标；提示分两种：有未检出槽位 → 「QR の読み取りが不完全です。画像を再アップロードして再スキャンしてください。」；槽位全部检出但值数仍不符 → 「QR から読み取った値の数が項目数と一致しません。項目の設定を確認してください。」；两种情况都整份诊断书改走 OCR</ins> |
-| <ins class="change-added">LIAJ · 槽位未检出</ins> | <ins class="change-added">某个槽位解码失败、整串读不出内容，或解码结果里没有 `$`（ID 类码，不是数据码）</ins> | <ins class="change-added">该槽位标红；该槽位的值不参与拼接，写入值数因此变少，整份诊断书改走 OCR</ins> |
-| <ins class="change-added">LIAJ · QR 読取 开关关闭</ins> | <ins class="change-added">开关 OFF</ins> | <ins class="change-added">槽位条隐藏，显示「無効 — OCR のみで読取」；全部字段走 OCR</ins> |
+| <ins class="change-added">LIAJ · 写入值数不足</ins> | <ins class="change-added">接出来的写入值数不等于该模板的 QR 仕样值数（A01 为 407）</ins> | <ins class="change-added">整份诊断书改走 OCR，并在案件侧留一个「OCR 回落」标记（Step5 效果测试与案件详情可见）。不反馈到配置端 —— 逐份文档的扫描质量不是配置问题</ins> |
+| <ins class="change-added">LIAJ · 某个码读不出</ins> | <ins class="change-added">某个 QR 解码失败、整串读不出内容，或解码结果里没有 `$`（ID 类码，不是数据码）</ins> | <ins class="change-added">该码不参与拼接，写入值数因此变少，落到「LIAJ · 写入值数不足」处理</ins> |
+| <ins class="change-added">LIAJ · QR 読取 开关关闭</ins> | <ins class="change-added">开关 OFF</ins> | <ins class="change-added">显示「無効 — OCR のみで読取」；全部字段走 OCR</ins> |
 | <ins class="change-added">LIAJ · 项目数与 QR 值数不一致</ins> | <ins class="change-added">打开开关时，模板字段数 ≠ 该模板类型的 QR 仕样值数（A01 为 407）</ins> | <ins class="change-added">提示「項目数（N）が QR の値数（M）と一致しません。項目を揃えてから QR 読取 を有効にしてください」；开关弹回 OFF，不扫描。在设置侧先拦住，运行时写入值数对不上的原因基本只剩扫描侧</ins> |
 
 
@@ -819,8 +811,8 @@ Step2 プロンプト（提示词） → 写值 → 固定処理ルール →（
 | ----- | --------------------------------------------- | --------------- | --------------- | -------------- | ------------- | -------------- | ---------- |
 | <del class="change-deleted">OCR設定</del><mark class="change-modified">OCR 写值</mark> | <del class="change-deleted">Step2 选 OCR設定；或 QR設定 但无有效 QR 映射或QR检出失败出发OCR兜底</del><mark class="change-modified">非 LIAJ 模板（无 QR 路径）；或 LIAJ 診断書模板 QR 読取 开关 OFF / 写入值数不足 → 整份 OCR</mark> | 适用（OCR 置信）      | 适用              | 适用             | 适用            | 适用（低置信+越界）   | HITL=ON 且七项任一命中 |
 <del class="change-deleted">| QR設定  | QR 写值  | 对应 QR 扫描成功，映射写值完成                             | 不适用（无 OCR 读取置信） | 不适用（未走 OCR 多模型） | 适用             | 适用            | 不适用            | HITL=ON 且规则 3～6 命中 |</del>
-| <ins class="change-added">QR 連結読取（LIAJ 診断書）</ins> | <ins class="change-added">QR 写值</ins> | <ins class="change-added">写入值数等于模板字段总数，全部字段按字段顺序写值</ins> | <ins class="change-added">不适用（无 OCR 读取置信）</ins> | <ins class="change-added">不适用（未走 OCR 多模型）</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">不适用</ins> | <ins class="change-added">HITL=ON 且规则 3～6 命中</ins> |
-| <ins class="change-added">QR 連結読取（LIAJ 診断書）</ins> | <ins class="change-added">OCR 兜底</ins> | <ins class="change-added">写入值数不等于模板字段总数 → 整份诊断书转 OCR</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">适用（低置信+越界）</ins> | <ins class="change-added">HITL=ON 且七项任一命中</ins> |
+| <ins class="change-added">QR 連結読取（LIAJ 診断書）</ins> | <ins class="change-added">QR 写值</ins> | <ins class="change-added">写入值数等于该模板的 QR 仕样值数，全部字段按字段顺序写值</ins> | <ins class="change-added">不适用（无 OCR 读取置信）</ins> | <ins class="change-added">不适用（未走 OCR 多模型）</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">不适用</ins> | <ins class="change-added">HITL=ON 且规则 3～6 命中</ins> |
+| <ins class="change-added">QR 連結読取（LIAJ 診断書）</ins> | <ins class="change-added">OCR 兜底</ins> | <ins class="change-added">写入值数不等于该模板的 QR 仕样值数 → 整份诊断书转 OCR</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">适用</ins> | <ins class="change-added">适用（低置信+越界）</ins> | <ins class="change-added">HITL=ON 且七项任一命中</ins> |
 
 
 说明：

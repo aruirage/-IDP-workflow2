@@ -59,7 +59,7 @@ async function setQrReadEnabled(page, enabled) {
     if (!active) break;
     await sleep(150);
   }
-  // スイッチ操作で出る完了トースト（QR を 6 / 6 検出しました）は図の邪魔なので消す。
+  // スイッチ操作で出る完了トースト（QR の読み取りが完了しました）は図の邪魔なので消す。
   await page.evaluate(`document.querySelectorAll('.el-message').forEach((el) => el.remove())`);
   await sleep(300);
 }

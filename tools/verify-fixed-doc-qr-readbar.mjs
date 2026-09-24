@@ -166,7 +166,7 @@ const scanned = await page.evaluate(`(() => {
 console.log('\n[SCAN]', JSON.stringify(scanned));
 check('SCAN: 実行後に loading が解除される', scanned.active === false, scanned.active);
 check('SCAN: 値 407 件で ok', scanned.valueCount === 407 && scanned.ok === true, scanned);
-check('SCAN: 成功メッセージ', /QR を 6 \/ 6 検出しました/.test(scanned.toast || ''), scanned.toast);
+check('SCAN: 成功メッセージ', /QR の読み取りが完了しました/.test(scanned.toast || ''), scanned.toast);
 await page.screenshot({ path: `${OUT}/qr-readbar-scanned.png`, fullPage: true });
 
 // --- 4. OFF ---
