@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIAJ 診断書 QR 版式図例</title>
+<style>
+  :root {
+    --el-color-primary: #175cd3;
+    --primary-soft: #eef4ff;
+    --primary-line: #b2ccff;
+    --text-primary: #101828;
+    --text-secondary: #667085;
+    --text-tertiary: #475467;
+    --border-color: #eaecf0;
+    --border-strong: #e4e7ec;
+    --panel-bg: #ffffff;
+    --page-bg: #fafafa;
+    --warn: #f79009;
+    --warn-soft: #fffaeb;
+    --danger: #e31b54;
+    --danger-soft: #fef3f2;
+    --success: #12b76a;
+    --neutral-chip: #f2f4f7;
+    --radius: 8px;
+    --font: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 24px;
+    background: var(--page-bg);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sheet {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ---------- header ---------- */
+  .sheet-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--text-primary);
+  }
+  .sheet-head h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .sheet-head .sub {
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  .sheet-head .sub-zh {
+    color: #98a2b3;
+    font-size: 12px;
+  }
+
+  /* ---------- conclusion banner ---------- */
+  .verdict {
+    display: flex;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--primary-line);
+    border-left: 4px solid var(--el-color-primary);
+    border-radius: var(--radius);
+    background: var(--primary-soft);
+  }
+  .verdict .badge {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--el-color-primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .verdict div p { margin: 0 0 4px; }
+  .verdict div p:last-child { margin-bottom: 0; }
+  .verdict strong { font-weight: 700; }
+  .verdict .zh {
+    color: #475467;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ---------- summary strip ---------- */
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .strip .cell {
+    padding: 12px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--panel-bg);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+  }
+  .strip .k {
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .strip .v {
+    margin-top: 2px;
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .strip .v small { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+
+  /* ---------- section ---------- */
+  section { display: flex; flex-direction: column; gap: 12px; }
+  .sec-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-strong);
+  }
+  .sec-title .no {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background: var(--neutral-chip);
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .sec-title h2 { margin: 0; font-size: 17px; font-weight: 700; }
+  .sec-title span.zh { color: #98a2b3; font-size: 12px; }
+
+  /* ---------- format cards ---------- */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--panel-bg);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid #eef1f6;
+  }
+  .card-head .tag {
+    display: inline-block;
+    margin-bottom: 6px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--neutral-chip);
+    color: var(--text-tertiary);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .card-head .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--el-color-primary);
+    word-break: break-all;
+  }
+  .card-head .code-zh {
+    margin-top: 3px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 0; }
+  .kv .k,
+  .kv .v {
+    padding: 5px 14px;
+    border-bottom: 1px solid #f4f6f8;
+    font-size: 13px;
+  }
+  .kv .k { color: var(--text-secondary); white-space: nowrap; }
+  .kv .v { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+  .kv .v.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+
+  .card-foot {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    background: #fcfcfd;
+  }
+
+  /* ---------- QR layout schematic ---------- */
+  .schem { display: flex; flex-direction: column; gap: 6px; }
+  .schem-label {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-secondary);
+    font-size: 11.5px;
+  }
+  .chain {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    height: 34px;
+  }
+  .chain .qr {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--primary-line);
+    background: var(--primary-soft);
+    color: var(--el-color-primary);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .chain .qr:first-child { border-radius: 4px 0 0 4px; }
+  .chain .qr:last-child { border-radius: 0 4px 4px 0; }
+  .chain .seam {
+    flex: 0 0 auto;
+    width: 3px;
+    position: relative;
+    background: var(--border-strong);
+  }
+  .chain .seam.is-cut { background: var(--danger); }
+  .chain .seam::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    width: 1px;
+    height: calc(100% + 6px);
+    background: transparent;
+  }
+  .seam-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    color: var(--text-secondary);
+    font-size: 11px;
+  }
+  .seam-legend i {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 4px;
+    border-radius: 2px;
+    vertical-align: -1px;
+  }
+
+  .sample {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 12.5px;
+    color: var(--text-tertiary);
+  }
+  .sample b { color: var(--text-primary); font-weight: 700; }
+
+  /* ---------- verdict chip ---------- */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .chip.is-danger { background: var(--danger-soft); color: var(--danger); }
+  .chip.is-warn { background: var(--warn-soft); color: #b54708; }
+
+  /* ---------- ID anatomy ---------- */
+  .anatomy {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--panel-bg);
+  }
+  .anatomy .part {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 12px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 6px;
+    background: #fcfcfd;
+  }
+  .anatomy .part .txt {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--el-color-primary);
+  }
+  .anatomy .part.p2 .txt { color: #7a5af8; }
+  .anatomy .part.p3 .txt { color: #b54708; }
+  .anatomy .part .lbl { font-size: 12px; font-weight: 700; }
+  .anatomy .part .lbl-zh { font-size: 11px; color: #98a2b3; }
+  .anatomy .sep {
+    align-self: center;
+    color: #d0d5dd;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .anatomy-note {
+    padding: 12px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: #fcfcfd;
+    color: var(--text-tertiary);
+    font-size: 13px;
+  }
+  .anatomy-note code {
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--neutral-chip);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px;
+  }
+
+  /* ---------- evidence list ---------- */
+  .reasons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .reason {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--warn);
+    border-radius: var(--radius);
+    background: var(--warn-soft);
+  }
+  .reason .n {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--warn);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .reason p { margin: 0; font-size: 13px; }
+  .reason p .zh { display: block; color: #b54708; font-size: 11.5px; }
+  .reason b { font-weight: 700; }
+
+  /* ---------- ask ---------- */
+  .ask {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--panel-bg);
+    overflow: hidden;
+  }
+  .ask li {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f4f6f8;
+    list-style: none;
+  }
+  .ask ol { margin: 0; padding: 0; }
+  .ask li:last-child { border-bottom: 0; }
+  .ask .q { font-weight: 700; }
+  .ask .q .zh { display: block; font-weight: 400; color: var(--text-secondary); font-size: 12.5px; }
+  .ask .who {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .ask .who.customer { background: var(--primary-soft); color: var(--el-color-primary); }
+  .ask .who.vendor { background: #f4f3ff; color: #5925dc; }
+
+  .foot {
+    padding-top: 10px;
+    border-top: 1px solid var(--border-strong);
+    color: #98a2b3;
+    font-size: 11.5px;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 980px) {
+    .cards { grid-template-columns: 1fr; }
+    .strip { grid-template-columns: repeat(2, 1fr); }
+    .reasons { grid-template-columns: 1fr; }
+  }
+
+  @media print {
+    body { padding: 0; background: #fff; font-size: 12px; }
+    .sheet { max-width: none; gap: 14px; }
+    .card, .strip .cell, .reason, .ask, .anatomy, .anatomy-note {
+      box-shadow: none;
+      break-inside: avoid;
+    }
+    .cards { grid-template-columns: repeat(3, 1fr); }
+    .sec-title { break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="sheet-head">
+    <h1>LIAJ 診断書 QR 版式図例</h1>
+    <div class="sub">当方で確認できた診断書の版式と、識別に使える情報の一覧です。</div>
+    <div class="sub-zh">我们确认到的诊断书版式及可用于识别的信息一览。</div>
+  </header>
+
+  <div class="verdict">
+    <span class="badge">結論</span>
+    <div>
+      <p><strong>確認できた版式は 3 種。</strong>ただしこの 3 種自体に「欠番」の証拠があり、実際に運用中の版式は 3 種より多いと見ています。</p>
+      <p class="zh">我们只能确认见过这 3 种。但这 3 种本身就带着「缺号」的证据，实际在用的版式应该不止 3 种。<strong>总共有几种，只有掌握帳票仕様的厂家能答。</strong></p>
+    </div>
+  </div>
+
+  <div class="strip">
+    <div class="cell">
+      <div class="k">確認できた版式</div>
+      <div class="v">3 <small>種</small></div>
+    </div>
+    <div class="cell">
+      <div class="k">データ QR の枚数</div>
+      <div class="v">6 <small>/</small> 6 <small>/</small> 9</div>
+    </div>
+    <div class="cell">
+      <div class="k">分割後の段数</div>
+      <div class="v">406 <small>/</small> 301 <small>/</small> 291</div>
+    </div>
+    <div class="cell">
+      <div class="k">分断された項目（実測例）</div>
+      <div class="v">11 <small>例</small></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-title">
+      <span class="no">01</span>
+      <h2>確認できた 3 種</h2>
+      <span class="zh">已确认的 3 种</span>
+    </div>
+
+    <div class="cards">
+
+      <!-- A01 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="tag">版式 ①（最も多く見た）</span>
+          <div class="code">LIAJ045-A01-202104</div>
+          <div class="code-zh">帳票コード 040c1 ／ 枝番 001</div>
+        </div>
+        <div class="kv">
+          <div class="k">データ QR</div><div class="v">6 枚（底行に横一列）</div>
+          <div class="k">分割後の段数</div><div class="v">406 段</div>
+          <div class="k">QR 文字列サイズ</div><div class="v">638 〜 820 byte</div>
+          <div class="k">QR のつなぎ目</div><div class="v">5 箇所</div>
+          <div class="k">サンプル</div><div class="v mono">安達珠美・平田よし子<br>藤島紗織・土谷勝</div>
+        </div>
+        <div class="card-foot">
+          <div class="schem">
+            <div class="schem-label"><span>データ QR の並び</span><span>安達珠美の実測</span></div>
+            <div class="chain">
+              <span class="qr">QR1</span>
+              <span class="seam is-cut"></span>
+              <span class="qr">QR2</span>
+              <span class="seam is-cut"></span>
+              <span class="qr">QR3</span>
+              <span class="seam"></span>
+              <span class="qr">QR4</span>
+              <span class="seam is-cut"></span>
+              <span class="qr">QR5</span>
+              <span class="seam"></span>
+              <span class="qr">QR6</span>
+            </div>
+            <div class="seam-legend">
+              <span><i style="background:#e31b54"></i>実値が切れた（3）</span>
+              <span><i style="background:#e4e7ec"></i>空欄に落ちた（2）</span>
+            </div>
+          </div>
+          <div class="sample">
+            <span>切れた項目の例：<b>3.入院期間①開始_年</b></span>
+            <span>QR1 の末尾 <b>20</b> ＋ QR2 の先頭 <b>26</b> → <b>2026</b></span>
+          </div>
+        </div>
+      </article>
+
+      <!-- A04 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="tag">版式 ②</span>
+          <div class="code">LIAJ045-A04-202104</div>
+          <div class="code-zh">帳票コード 040c2 ／ 枝番 001</div>
+        </div>
+        <div class="kv">
+          <div class="k">データ QR</div><div class="v">6 枚（底行に横一列）</div>
+          <div class="k">分割後の段数</div><div class="v">301 段</div>
+          <div class="k">QR 文字列サイズ</div><div class="v">611 byte</div>
+          <div class="k">QR のつなぎ目</div><div class="v">5 箇所</div>
+          <div class="k">サンプル</div><div class="v mono">服部朱理</div>
+        </div>
+        <div class="card-foot">
+          <div class="schem">
+            <div class="schem-label"><span>データ QR の並び</span><span>つなぎ目 = 5</span></div>
+            <div class="chain">
+              <span class="qr">QR1</span>
+              <span class="seam"></span>
+              <span class="qr">QR2</span>
+              <span class="seam"></span>
+              <span class="qr">QR3</span>
+              <span class="seam"></span>
+              <span class="qr">QR4</span>
+              <span class="seam"></span>
+              <span class="qr">QR5</span>
+              <span class="seam"></span>
+              <span class="qr">QR6</span>
+            </div>
+            <div class="seam-legend">
+              <span>切れる位置は患者ごとに異なります</span>
+            </div>
+          </div>
+          <div class="sample">
+            <span>A01 より項目数が少ない（301 段 vs 406 段）</span>
+            <span>切れた項目の例：<b>6.手術1 手術コード</b>（<b>8</b> ＋ <b>882</b> → <b>8882</b>）</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- K01 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="tag">版式 ③（別シリーズ）</span>
+          <div class="code">LIAJ001-K01-202604</div>
+          <div class="code-zh">帳票コード 040215(04) ／ 枝番 009</div>
+        </div>
+        <div class="kv">
+          <div class="k">データ QR</div><div class="v">9 枚（底行に横一列）</div>
+          <div class="k">分割後の段数</div><div class="v">291 段</div>
+          <div class="k">QR 文字列サイズ</div><div class="v">719 byte</div>
+          <div class="k">QR のつなぎ目</div><div class="v">8 箇所</div>
+          <div class="k">サンプル</div><div class="v mono">塚原明夫</div>
+        </div>
+        <div class="card-foot">
+          <div class="schem">
+            <div class="schem-label"><span>データ QR の並び</span><span>つなぎ目 = 8</span></div>
+            <div class="chain">
+              <span class="qr">QR1</span>
+              <span class="seam"></span>
+              <span class="qr">QR2</span>
+              <span class="seam"></span>
+              <span class="qr">QR3</span>
+              <span class="seam"></span>
+              <span class="qr">QR4</span>
+              <span class="seam"></span>
+              <span class="qr">QR5</span>
+              <span class="seam"></span>
+              <span class="qr">QR6</span>
+              <span class="seam"></span>
+              <span class="qr">QR7</span>
+              <span class="seam"></span>
+              <span class="qr">QR8</span>
+              <span class="seam"></span>
+              <span class="qr">QR9</span>
+            </div>
+            <div class="seam-legend">
+              <span>切れる位置は患者ごとに異なります</span>
+            </div>
+          </div>
+          <div class="sample">
+            <span><b>QR 枚数が A01 より多いのに、文字列は短い</b>（719 vs 820）</span>
+            <span>→ 枚数は帳票ごとの仕様で決まる</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-title">
+      <span class="no">02</span>
+      <h2>版式 ID の読み方</h2>
+      <span class="zh">版式 ID 的读法</span>
+    </div>
+
+    <div class="anatomy">
+      <div class="part p1">
+        <span class="txt">LIAJ045</span>
+        <span class="lbl">帳票シリーズ</span>
+        <span class="lbl-zh">帐票系列</span>
+      </div>
+      <div class="sep">-</div>
+      <div class="part p2">
+        <span class="txt">A01</span>
+        <span class="lbl">版式記号（様式）</span>
+        <span class="lbl-zh">版式记号（样式）</span>
+      </div>
+      <div class="sep">-</div>
+      <div class="part p3">
+        <span class="txt">202104</span>
+        <span class="lbl">版数（適用年月）</span>
+        <span class="lbl-zh">版数（适用年月）</span>
+      </div>
+    </div>
+
+    <div class="anatomy-note">
+      <p style="margin:0 0 6px">
+        <strong>帳票コードは別系統です。</strong>版式 ID とは対応が取れておらず、混在しています。
+      </p>
+      <p style="margin:0">
+        A01 → <code>040c1</code>　／　A04 → <code>040c2</code>　／　K01 → <code>040215(04)</code><br>
+        桁数・書式が 2 種類あるため、帳票コードだけでは版式を特定できません。<br>
+        <span style="color:#98a2b3">帳票代码是另一套编号，与版式 ID 不对应，且格式不统一。</span>
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-title">
+      <span class="no">03</span>
+      <h2>「まだある」と考える根拠</h2>
+      <span class="zh">怀疑还有其它版式的依据</span>
+    </div>
+
+    <div class="reasons">
+      <div class="reason">
+        <span class="n">1</span>
+        <p><b>A01 と A04 の間に A02・A03 が無い</b>
+          <span class="zh">A01 和 A04 之间跳号，缺 A02、A03</span></p>
+      </div>
+      <div class="reason">
+        <span class="n">2</span>
+        <p><b>帳票シリーズが 2 系統ある</b>（LIAJ045 / LIAJ001）
+          <span class="zh">存在两套帐票系列</span></p>
+      </div>
+      <div class="reason">
+        <span class="n">3</span>
+        <p><b>版式記号が 2 系統ある</b>（A 系 / K 系）
+          <span class="zh">存在两种版式记号系列（A 系 / K 系）</span></p>
+      </div>
+      <div class="reason">
+        <span class="n">4</span>
+        <p><b>版数サフィックスが複数ある</b>（202104 / 202604）
+          <span class="zh">版数后缀不止一个，同一版式可能有改订版</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-title">
+      <span class="no">04</span>
+      <h2>ご確認いただきたいこと</h2>
+      <span class="zh">想请贵方确认的事项</span>
+    </div>
+
+    <div class="ask">
+      <ol>
+        <li>
+          <span class="who customer">貴方に伺いたい</span>
+          <span class="q">現在お使いの診断書は、上の 3 種以外にありますか？
+            <span class="zh">现在在用的诊断书，除了上面这 3 种还有别的吗？</span></span>
+        </li>
+        <li>
+          <span class="who customer">貴方に伺いたい</span>
+          <span class="q">この診断書を発行しているソフトは何ですか？導入した業者と担当者はどなたですか？
+            <span class="zh">印刷这些诊断书的是什么软件？是哪家公司装的、担当是谁？</span></span>
+        </li>
+        <li>
+          <span class="who customer">貴方に伺いたい</span>
+          <span class="q">導入時に「帳票仕様書」を受け取っていませんか？
+            <span class="zh">导入时有没有拿到过「帳票仕様書」（版本规格书）？</span></span>
+        </li>
+        <li>
+          <span class="who vendor">帳票ベンダーへ</span>
+          <span class="q">帳票ごとの項目一覧と、QR の分割規則の仕様書
+            <span class="zh">每份帐票的字段一览，以及 QR 分割规则的规格书</span></span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="foot">
+    出典：手元の診断書 6 名分（安達珠美・平田よし子・藤島紗織・土谷勝・服部朱理・塚原明夫）の QR を解析した結果。<br>
+    ※ サンプルは各版式 1 名〜4 名分のみで、全版式を網羅したものではありません。総数は帳票仕様を持つベンダーにご確認ください。<br>
+    ※ 本資料は手元の解析結果に基づくもので、原本 PDF からの再解析は環境不備のため未実施です。
+  </div>
+
+</div>
+</body>
+</html>

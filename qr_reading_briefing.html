@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIAJ 診断書 QR 読み取り — ご確認事項（4 件）</title>
+<style>
+  :root {
+    --el-color-primary: #175cd3;
+    --primary-soft: #eef4ff;
+    --primary-line: #b2ccff;
+    --text-primary: #101828;
+    --text-secondary: #667085;
+    --text-tertiary: #475467;
+    --border-color: #eaecf0;
+    --border-strong: #e4e7ec;
+    --panel-bg: #ffffff;
+    --page-bg: #f2f4f7;
+    --warn: #f79009;
+    --warn-soft: #fffaeb;
+    --danger: #e31b54;
+    --danger-soft: #fef3f2;
+    --success: #12b76a;
+    --success-soft: #ecfdf3;
+    --neutral-chip: #f2f4f7;
+    --violet: #5925dc;
+    --violet-soft: #f4f3ff;
+    --radius: 8px;
+    --font: 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', 'Meiryo', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--page-bg); color: var(--text-primary); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+  #stage { position: fixed; inset: 0; display: grid; place-items: center; overflow: hidden; }
+  #deck { width: 1280px; height: 720px; position: relative; transform-origin: center center; }
+  .slide {
+    position: absolute; inset: 0; display: none; flex-direction: column;
+    padding: 40px 56px 30px; background: var(--panel-bg);
+    border-radius: 10px; box-shadow: 0 10px 36px rgba(16, 24, 40, 0.16); overflow: hidden;
+  }
+  .slide.is-active { display: flex; }
+
+  .s-head { display: flex; align-items: baseline; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-strong); flex: 0 0 auto; }
+  .s-head .no {
+    flex: 0 0 auto; width: 24px; height: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 4px; background: var(--neutral-chip); color: var(--text-tertiary); font-size: 12px; font-weight: 700;
+  }
+  .s-head h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+  .s-head .zh { color: #98a2b3; font-size: 12.5px; }
+  .s-head .right { margin-left: auto; color: #98a2b3; font-size: 12px; }
+  .s-body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 16px; padding-top: 20px; min-height: 0; }
+
+  .cover { justify-content: center; padding: 0 88px; }
+  .cover .kicker { color: var(--el-color-primary); font-size: 14px; font-weight: 700; letter-spacing: 0.08em; }
+  .cover h1 { margin: 14px 0 0; font-size: 46px; line-height: 1.25; font-weight: 700; letter-spacing: -0.02em; }
+  .cover .lead { margin-top: 18px; max-width: 840px; color: var(--text-tertiary); font-size: 18px; line-height: 1.7; }
+  .cover .lead .zh { display: block; color: #98a2b3; font-size: 14px; margin-top: 6px; }
+  .cover .meta { margin-top: 34px; display: flex; gap: 32px; padding-top: 18px; border-top: 1px solid var(--border-strong); color: var(--text-secondary); font-size: 13px; }
+  .cover .meta b { color: var(--text-primary); }
+
+  .verdict {
+    display: flex; gap: 14px; padding: 16px 18px;
+    border: 1px solid var(--primary-line); border-left: 4px solid var(--el-color-primary);
+    border-radius: var(--radius); background: var(--primary-soft);
+  }
+  .verdict .badge { flex: 0 0 auto; align-self: flex-start; padding: 3px 10px; border-radius: 999px; background: var(--el-color-primary); color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .verdict p { margin: 0 0 4px; font-size: 15px; line-height: 1.65; }
+  .verdict p:last-child { margin-bottom: 0; }
+  .verdict .zh { color: #475467; font-size: 12.5px; }
+
+  .cols { display: grid; gap: 22px; min-height: 0; }
+  .cols.c-1-2 { grid-template-columns: 360px 1fr; }
+  .figure { display: flex; flex-direction: column; gap: 8px; }
+  .figure .frame { border: 1px solid var(--border-strong); border-radius: var(--radius); background: #fcfcfd; padding: 10px; display: flex; align-items: center; justify-content: center; }
+  .figure img { display: block; max-width: 100%; max-height: 100%; border-radius: 4px; }
+  .figure .cap { color: var(--text-secondary); font-size: 11.5px; line-height: 1.5; }
+  .figure .cap .zh { display: block; color: #b0b7c3; }
+
+  .schem { display: flex; flex-direction: column; gap: 7px; }
+  .schem-label { display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 11.5px; }
+  .chain { display: flex; align-items: stretch; height: 36px; }
+  .chain .qr {
+    flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--primary-line); background: var(--primary-soft); color: var(--el-color-primary);
+    font-size: 11px; font-weight: 700; font-family: var(--mono);
+  }
+  .chain .qr:first-child { border-radius: 4px 0 0 4px; }
+  .chain .qr:last-child { border-radius: 0 4px 4px 0; }
+  .chain .seam { flex: 0 0 auto; width: 3px; background: var(--border-strong); }
+  .chain .seam.is-cut { background: var(--danger); }
+  .seam-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--text-secondary); font-size: 11.5px; }
+  .seam-legend i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 2px; vertical-align: -1px; }
+
+  .cutdemo { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: #fcfcfd; }
+  .cutdemo .line { font-family: var(--mono); font-size: 15px; display: flex; flex-wrap: wrap; align-items: center; }
+  .cutdemo .mono-chip { padding: 3px 6px; border-radius: 3px; background: var(--neutral-chip); }
+  .cutdemo .mono-chip.q1 { background: var(--primary-soft); color: var(--el-color-primary); font-weight: 700; }
+  .cutdemo .mono-chip.q2 { background: var(--violet-soft); color: var(--violet); font-weight: 700; }
+  .cutdemo .cutmark { margin: 0 4px; padding: 2px 5px; border-radius: 3px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 700; }
+  .cutdemo .note { color: var(--text-secondary); font-size: 12.5px; }
+
+  table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.tbl th, table.tbl td { padding: 9px 12px; border-bottom: 1px solid #f1f4f8; text-align: left; vertical-align: middle; }
+  table.tbl thead th { background: #fafbfc; border-bottom: 1px solid var(--border-strong); color: var(--text-secondary); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+  table.tbl td.num { font-variant-numeric: tabular-nums; }
+  table.tbl td.mono { font-family: var(--mono); font-size: 13px; }
+  table.tbl tbody tr:last-child td { border-bottom: 0; }
+  .tbl-wrap { border: 1px solid var(--border-strong); border-radius: var(--radius); overflow: hidden; background: #fff; }
+  .tbl-wrap.tight table.tbl { font-size: 13px; }
+  .tbl-wrap.tight table.tbl th, .tbl-wrap.tight table.tbl td { padding: 7px 11px; }
+
+  .hl { color: var(--danger); font-weight: 700; }
+  .hlq { color: var(--el-color-primary); font-weight: 700; }
+  .hlv { color: var(--violet); font-weight: 700; }
+  .muted { color: var(--text-secondary); }
+  .mono { font-family: var(--mono); }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+  .card { display: flex; flex-direction: column; border: 1px solid var(--border-strong); border-radius: var(--radius); background: #fff; overflow: hidden; }
+  .card-head { padding: 12px 14px 10px; border-bottom: 1px solid #eef1f6; }
+  .card-head .tag { display: inline-block; margin-bottom: 6px; padding: 2px 8px; border-radius: 4px; background: var(--neutral-chip); color: var(--text-tertiary); font-size: 11px; font-weight: 700; }
+  .card-head .code { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--el-color-primary); }
+  .card-head .code-zh { margin-top: 3px; color: var(--text-secondary); font-size: 12px; font-family: var(--mono); }
+  .card .kv { display: grid; grid-template-columns: auto 1fr; }
+  .card .kv .k, .card .kv .v { padding: 6px 14px; border-bottom: 1px solid #f4f6f8; font-size: 13px; }
+  .card .kv .k { color: var(--text-secondary); white-space: nowrap; }
+  .card .kv .v { font-variant-numeric: tabular-nums; }
+  .card-foot { padding: 12px 14px; background: #fcfcfd; display: flex; flex-direction: column; gap: 9px; border-top: 1px solid #f4f6f8; }
+
+  .q-ask { padding: 18px 20px; border: 1px solid var(--primary-line); border-left: 4px solid var(--el-color-primary); border-radius: var(--radius); background: var(--primary-soft); }
+  .q-ask .ja { font-size: 17px; line-height: 1.7; font-weight: 600; }
+  .q-ask .zh { margin-top: 9px; color: #475467; font-size: 12.5px; line-height: 1.65; }
+  .q-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .q-card { padding: 14px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: #fcfcfd; }
+  .q-card .h { display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 700; margin-bottom: 7px; }
+  .q-card .h i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex: 0 0 auto; }
+  .q-card p { margin: 0 0 5px; font-size: 13.5px; line-height: 1.65; }
+  .q-card p:last-child { margin-bottom: 0; }
+  .q-card .zh { color: var(--text-secondary); font-size: 12px; }
+  .q-card ul { margin: 0; padding-left: 17px; }
+  .q-card li { font-size: 13.5px; line-height: 1.7; }
+
+  .opt { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .opt .box { padding: 14px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: #fcfcfd; display: flex; flex-direction: column; gap: 10px; }
+  .opt .box.is-current { border-color: var(--primary-line); background: var(--primary-soft); }
+  .opt .box .t { font-size: 14px; font-weight: 700; }
+  .opt .box .t span { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-left: 6px; }
+  .opt .box .t .cur { background: var(--el-color-primary); color: #fff; }
+  .opt .box .t .alt { background: var(--neutral-chip); color: var(--text-tertiary); }
+  .opt .box .s { font-size: 12.5px; color: var(--text-tertiary); line-height: 1.6; }
+  .serial { display: flex; gap: 6px; }
+  .serial .cell { flex: 1 1 0; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--primary-line); background: #fff; border-radius: 4px; font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--el-color-primary); }
+  .serial .cell.dim { border-color: var(--border-strong); color: var(--text-secondary); }
+
+  .note-box { padding: 12px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: #fcfcfd; color: var(--text-tertiary); font-size: 13px; line-height: 1.65; }
+  .note-box code { padding: 1px 5px; border-radius: 3px; background: var(--neutral-chip); font-family: var(--mono); font-size: 12.5px; }
+  .warn-box { display: flex; gap: 12px; padding: 13px 16px; border: 1px solid var(--warn); border-radius: var(--radius); background: var(--warn-soft); font-size: 14px; line-height: 1.6; }
+  .warn-box .n { flex: 0 0 auto; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--warn); color: #fff; font-size: 11px; font-weight: 700; }
+  .done-box { display: flex; gap: 12px; padding: 13px 16px; border: 1px solid var(--success); border-radius: var(--radius); background: var(--success-soft); font-size: 14px; line-height: 1.6; }
+  .done-box .n { flex: 0 0 auto; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--success); color: #fff; font-size: 11px; font-weight: 700; }
+  .slide.is-dense .s-body { gap: 12px; }
+  .slide.is-dense .q-ask { padding: 14px 18px; }
+  .slide.is-dense .q-ask .ja { font-size: 15.5px; line-height: 1.65; }
+  .slide.is-dense .q-ask .zh { margin-top: 7px; font-size: 12px; }
+  .slide.is-dense .q-card { padding: 11px 14px; }
+  .slide.is-dense .q-card .h { margin-bottom: 5px; }
+  .slide.is-dense .q-card p { font-size: 13px; line-height: 1.6; }
+  .slide.is-dense .opt .box { padding: 11px 14px; gap: 7px; }
+  .slide.is-dense .done-box { padding: 11px 14px; font-size: 13.5px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .s-foot { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid var(--border-strong); color: #98a2b3; font-size: 11.5px; }
+  .s-foot .pg { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .s-foot .pg b { color: var(--text-secondary); }
+
+  @page { size: 1280px 720px; margin: 0; }
+  @media print {
+    html, body { background: #fff; height: auto; }
+    #stage { position: static; display: block; overflow: visible; }
+    #deck { transform: none !important; width: auto; height: auto; position: static; }
+    .slide { display: flex !important; position: relative; inset: auto; width: 1280px; height: 720px; border-radius: 0; box-shadow: none; break-after: page; page-break-after: always; }
+    .slide:last-child { break-after: auto; page-break-after: auto; }
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+<div id="deck">
+
+  <!-- ============ 01 表紙 ============ -->
+  <section class="slide is-active cover">
+    <div class="kicker">LIAJ 診断書 QR 読み取り</div>
+    <h1>ご確認いただきたいこと<br><span style="font-size:34px;">— 4 件 —</span></h1>
+    <div class="lead">
+      実診断書 6 名分の QR を解析した結果をご報告します。<br>
+      読み取りの仕組みと、当方だけでは確定できない 4 点を整理しました。
+      <span class="zh">基于 6 份真实诊断书 QR 的解析结果，说明读取机制与 4 个我们无法自行确认的问题。</span>
+    </div>
+    <div class="meta">
+      <span>解析対象：<b>6 名分</b>（安達珠美・平田よし子・藤島紗織・土谷勝・服部朱理・塚原明夫）</span>
+      <span>確認できた様式：<b>3 種</b></span>
+      <span>2026-09-23</span>
+    </div>
+  </section>
+
+  <!-- ============ 02 ご確認事項一覧 ============ -->
+  <section class="slide">
+    <div class="s-head">
+      <span class="no">02</span>
+      <h2>本日のご確認事項</h2>
+      <span class="zh">本次想请确认的事项</span>
+      <span class="right">一覧</span>
+    </div>
+    <div class="s-body">
+      <div class="verdict">
+        <span class="badge">4 件</span>
+        <div>
+          <p>下記 4 点はいずれも、<strong>当方だけでは確定できない事項</strong>です。</p>
+          <p class="zh">以下 4 项均为我们无法自行确认的事项。</p>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr><th style="width:46px;">No</th><th style="width:86px;">区分</th><th>ご確認いただきたいこと</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="num"><b>1</b></td>
+              <td><span class="muted">様式</span></td>
+              <td>現在運用中の診断書の様式は何種類ありますか（当方は <b>3 種</b>のみ確認）</td>
+            </tr>
+            <tr>
+              <td class="num"><b>2</b></td>
+              <td><span class="muted">仕様</span></td>
+              <td>様式 ID が同じなら、保険会社が違っても QR 内部の定義・区切り記号・項目順は同一ですか</td>
+            </tr>
+            <tr>
+              <td class="num"><b>3</b></td>
+              <td><span class="muted">業務</span></td>
+              <td>分割後の <b>400 余りの項目</b>はそのまま取り込みますか、統合・加工などの後処理が必要ですか</td>
+            </tr>
+            <tr style="background:var(--primary-soft);">
+              <td class="num"><b>4</b></td>
+              <td><span class="hlq">連結順序</span></td>
+              <td>複数 QR の連結順序は<b>紙面の位置</b>ですか、<b>QR 内部の連番</b>ですか</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note-box">
+        次ページ以降、まず<b>前提となる仕組み</b>（03〜08）をご説明し、そのうえで<b>各質問の背景</b>（09〜12）を個別にご説明します。
+        <span class="muted">第 03〜08 页说明前提机制，第 09〜12 页逐条说明 4 个问题的背景。</span>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り</span><span class="pg"><b>2</b> / 13</span></div>
+  </section>
+
+  <!-- ============ 03 前提① QR の構造 ============ -->
+  <section class="slide">
+    <div class="s-head">
+      <span class="no">03</span>
+      <h2>QR の中身は「1 枚 1 項目」ではない</h2>
+      <span class="zh">QR 里装的不是「一枚一个字段」</span>
+      <span class="right">前提 ①</span>
+    </div>
+    <div class="s-body">
+      <div class="cols c-1-2">
+        <div class="figure">
+          <div class="frame" style="height:300px;">
+            <img src="public/assets/mock-diagnosis-liaj045.png" alt="診断書全体" style="max-height:280px;">
+          </div>
+          <div class="cap">
+            診断書の下段にデータ QR が横一列に並びます。
+            <span class="zh">诊断书最下段横向排列数据 QR。</span>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:14px; min-width:0;">
+          <div class="figure">
+            <div class="frame" style="padding:6px 10px;">
+              <img src="assets/qr-deck/a01-qr-strip.png" alt="A01 のデータ QR 6 枚（安達珠美さん）" style="max-height:96px;">
+            </div>
+            <div class="cap">
+              実際の QR 6 枚（LIAJ045-A01 / 安達珠美さん）。
+              <span class="zh">实际 6 枚 QR（A01 样式）。</span>
+            </div>
+          </div>
+
+          <div class="schem">
+            <div class="schem-label"><span>QR1 ‖ QR2 ‖ … ‖ QR6 →（つなげる）</span><span class="muted">1 本の文字列に戻す</span></div>
+            <div class="chain">
+              <span class="qr">QR1</span><span class="seam"></span>
+              <span class="qr">QR2</span><span class="seam"></span>
+              <span class="qr">QR3</span><span class="seam"></span>
+              <span class="qr">QR4</span><span class="seam"></span>
+              <span class="qr">QR5</span><span class="seam"></span>
+              <span class="qr">QR6</span>
+            </div>
+            <div class="seam-legend"><span>1 本につなげてから <code>$</code> で区切ると <b>406 項目</b>になります</span></div>
+          </div>
+
+          <div class="note-box">
+            <div style="margin-bottom:6px;"><b>QR1 の中身（実測）</b></div>
+            <div class="mono" style="font-size:12.5px; line-height:1.7; word-break:break-all;">
+              040c1$001$LIAJ045-A01-202104^安達　珠美$女$0000214951$1960$11$9$上行結腸癌$C182$$1$$1$$$$不詳$$$$不詳$…
+            </div>
+            <div style="margin-top:8px; color:var(--text-secondary);">
+              先頭は帳票コード、続いて枝番、3 番目が「テンプレート ID ^ 患者氏名」。4 番目以降が診断書の各項目です。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="warn-box">
+        <span class="n">!</span>
+        <div>
+          <b>QR を 1 枚ずつ区切ると、境目の項目が壊れます。</b>
+          <span class="muted">つなげてから区切るのが唯一安全な方法です。</span>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り</span><span class="pg"><b>3</b> / 13</span></div>
+  </section>
+
+  <!-- ============ 04 前提② 切断 ============ -->
+  <section class="slide">
+    <div class="s-head">
+      <span class="no">04</span>
+      <h2>項目が QR の境目で切れる</h2>
+      <span class="zh">字段在 QR 的接缝处被切断</span>
+      <span class="right">前提 ②</span>
+    </div>
+    <div class="s-body">
+      <div class="cutdemo">
+        <div class="line">
+          <span class="mono-chip q1">…$1$2026$5$28$20</span>
+          <span class="cutmark">QR1 の末尾 ｜ QR2 の先頭</span>
+          <span class="mono-chip q2">26$6$11$…</span>
+        </div>
+        <div class="note">
+          「2026」という 1 つの値が <b class="hl">20</b> と <b class="hl">26</b> に分断されています。
+          QR を 1 枚ずつ読むと <b>20</b> と <b>26</b> という別々の値になり、正しい <b>2026</b> には戻せません。
+        </div>
+      </div>
+
+      <div class="tbl-wrap tight">
+        <table class="tbl">
+          <thead>
+            <tr><th>患者</th><th>前の QR の末尾</th><th>次の QR の先頭</th><th>本来の値</th><th>切れていた項目</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>安達珠美</td><td class="mono hl">20</td><td class="mono hl">26</td><td class="mono">2026</td><td>3.入院期間①開始_年</td></tr>
+            <tr><td>安達珠美</td><td class="mono hl">便潜</td><td class="mono hl">血陽性</td><td class="mono">便潜血陽性</td><td>6.前医 病名</td></tr>
+            <tr><td>平田よし子</td><td class="mono hl">不</td><td class="mono hl">詳</td><td class="mono">不詳</td><td>2.ア 傷病発生年月日</td></tr>
+            <tr><td>服部朱理</td><td class="mono hl">8</td><td class="mono hl">882</td><td class="mono">8882</td><td>6.手術1 手術コード</td></tr>
+            <tr><td>塚原明夫</td><td class="mono hl">非浸潤性膀胱が</td><td class="mono hl">ん</td><td class="mono">非浸潤性膀胱がん</td><td>2.ア 傷病名</td></tr>
+            <tr><td>塚原明夫</td><td class="mono hl">たかだウロ</td><td class="mono hl">クリニック</td><td class="mono">たかだウロクリニック</td><td>9.前医 医療機関名</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="warn-box">
+        <span class="n">!</span>
+        <div>
+          6 名分の実測で、<b>11 項目</b>が分断されていました（他 5 例は省略）。
+          <span class="muted">数値だけの項目は気づきにくいため、境界をまたぐ「文字」の項目が特に危険です。</span>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り</span><span class="pg"><b>4</b> / 13</span></div>
+  </section>
+
+  <!-- ============ 05 前提③ 切れ目は患者ごとに違う ============ -->
+  <section class="slide">
+    <div class="s-head">
+      <span class="no">05</span>
+      <h2>切れる位置は、患者ごとに違う</h2>
+      <span class="zh">切断位置因人而异</span>
+      <span class="right">前提 ③</span>
+    </div>
+    <div class="s-body">
+      <div class="note-box">
+        同じ様式（<span class="mono">LIAJ045-A01-202104</span>）でも、患者さんの記入内容によって文字列の長さが変わるため、
+        <b>等分する位置が毎回ずれます</b>。
+      </div>
+
+      <div class="tbl-wrap tight">
+        <table class="tbl">
+          <thead>
+            <tr><th>患者</th><th>様式</th><th>QR 枚数</th><th>つなげた後の段数</th><th>QR のつなぎ目の位置（通し番号）</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>安達珠美</td><td class="mono">A01</td><td class="num">6</td><td class="num">406</td><td class="mono">39, 101, 169, 219, 352</td></tr>
+            <tr><td>平田よし子</td><td class="mono">A01</td><td class="num">6</td><td class="num">406</td><td class="mono">35, 93, 190, 226, 363</td></tr>
+            <tr><td>藤島紗織</td><td class="mono">A01</td><td class="num">6</td><td class="num">406</td><td class="mono">17, 77, 185, 295, 401</td></tr>
+            <tr><td>土谷勝</td><td class="mono">A01</td><td class="num">6</td><td class="num">406</td><td class="mono">38, 114, 233, 304, 372</td></tr>
+            <tr><td>服部朱理</td><td class="mono">A04</td><td class="num">6</td><td class="num">301</td><td class="mono">20, 86, 98, 181, 274</td></tr>
+            <tr><td>塚原明夫</td><td class="mono">K01</td><td class="num">9</td><td class="num">291</td><td class="mono">11, 46, 50, 92, 115, 151, 198, 281</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid2">
+        <div class="note-box" style="border-color:var(--danger); background:var(--danger-soft);">
+          <b class="hl">✕ 患者ごとに変わってしまうもの</b><br>
+          「何枚目の QR の、何番目か」という指定。<br>
+          <span class="muted">患者が変われば同じ項目でも位置が変わります。</span>
+        </div>
+        <div class="note-box" style="border-color:var(--primary-line); background:var(--primary-soft);">
+          <b class="hlq">✓ 患者に依存しないもの</b><br>
+          つなげた後の通し番号（<span class="mono">406 / 301 / 291</span>）と、項目の並び順。<br>
+          <span style="color:#475467;">これが読み取りの基準になります。</span>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り</span><span class="pg"><b>5</b> / 13</span></div>
+  </section>
+
+  <!-- ============ 06 前提④ 様式 3 種 ============ -->
+  <section class="slide">
+    <div class="s-head">
+      <span class="no">06</span>
+      <h2>確認できた様式は 3 種</h2>
+      <span class="zh">已确认的样式有 3 种</span>
+      <span class="right">前提 ④</span>
+    </div>
+    <div class="s-body">
+      <div class="cards">
+        <article class="card">
+          <div class="card-head">
+            <span class="tag">様式 ①（最も多く見た）</span>
+            <div class="code">LIAJ045-A01-202104</div>
+            <div class="code-zh">帳票コード 040c1 ／ 枝番 001</div>
+          </div>
+          <div class="kv">
+            <div class="k">データ QR</div><div class="v">6 枚（下段・横一列）</div>
+            <div class="k">段数</div><div class="v">406 段</div>
+            <div class="k">文字列の長さ</div><div class="v">638 〜 820 byte</div>
+            <div class="k">サンプル</div><div class="v">4 名分</div>
+          </div>
+          <div class="card-foot">
+            <div class="chain" style="height:28px;">
+              <span class="qr">1</span><span class="seam is-cut"></span>
+              <span class="qr">2</span><span class="seam is-cut"></span>
+              <span class="qr">3</span><span class="seam"></span>
+              <span class="qr">4</span><span class="seam is-cut"></span>
+              <span class="qr">5</span><span class="seam"></span>
+              <span class="qr">6</span>
+            </div>
+            <div class="seam-legend">
+              <span><i style="background:#e31b54"></i>実値が切れた（3）</span>
+              <span><i style="background:#e4e7ec"></i>空欄に落ちた（2）</span>
+            </div>
+            <div class="muted" style="font-size:12px;">安達珠美さんの実測</div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <span class="tag">様式 ②</span>
+            <div class="code">LIAJ045-A04-202104</div>
+            <div class="code-zh">帳票コード 040c2 ／ 枝番 001</div>
+          </div>
+          <div class="kv">
+            <div class="k">データ QR</div><div class="v">6 枚（下段・横一列）</div>
+            <div class="k">段数</div><div class="v">301 段</div>
+            <div class="k">文字列の長さ</div><div class="v">611 byte</div>
+            <div class="k">サンプル</div><div class="v">1 名分</div>
+          </div>
+          <div class="card-foot">
+            <div class="chain" style="height:28px;">
+              <span class="qr">1</span><span class="seam"></span>
+              <span class="qr">2</span><span class="seam"></span>
+              <span class="qr">3</span><span class="seam"></span>
+              <span class="qr">4</span><span class="seam"></span>
+              <span class="qr">5</span><span class="seam"></span>
+              <span class="qr">6</span>
+            </div>
+            <div class="seam-legend"><span>A01 より項目数が少ない（301 段）</span></div>
+            <div class="muted" style="font-size:12px;">服部朱理さんの実測</div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <span class="tag">様式 ③（別シリーズ）</span>
+            <div class="code">LIAJ001-K01-202604</div>
+            <div class="code-zh">帳票コード 040215(04) ／ 枝番 009</div>
+          </div>
+          <div class="kv">
+            <div class="k">データ QR</div><div class="v">9 枚（下段・横一列）</div>
+            <div class="k">段数</div><div class="v">291 段</div>
+            <div class="k">文字列の長さ</div><div class="v">719 byte</div>
+            <div class="k">サンプル</div><div class="v">1 名分</div>
+          </div>
+          <div class="card-foot">
+            <div class="chain" style="height:28px;">
+              <span class="qr">1</span><span class="seam"></span>
+              <span class="qr">2</span><span class="seam"></span>
+              <span class="qr">3</span><span class="seam"></span>
+              <span class="qr">4</span><span class="seam"></span>
+              <span class="qr">5</span><span class="seam"></span>
+              <span class="qr">6</span><span class="seam"></span>
+              <span class="qr">7</span><span class="seam"></span>
+              <span class="qr">8</span><span class="seam"></span>
+              <span class="qr">9</span>
+            </div>
+            <div class="seam-legend"><span><b>枚数が多いのに文字列は短い</b>（719 vs 820）</span></div>
+            <div class="muted" style="font-size:12px;">塚原明夫さんの実測</div>
+          </div>
+        </article>
+      </div>
+
+      <div class="warn-box">
+        <span class="n">!</span>
+        <div>
+          <b>3 種で全部とは考えていません。</b>A01 と A04 の間に <b>A02・A03</b> が無く、系列も様式記号も 2 系統あります。
+          <span class="muted">総数は仕様を持つベンダーしか分かりません（→ 質問 ①）。</span>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り</span><span class="pg"><b>6</b> / 13</span></div>
+  </section>
+
+  <!-- ============ 07 前提⑤ 現状実装 ============ -->
+  <section class="slide">
+    <div class="s-head">
+      <span class="no">07</span>
+      <h2>現在の画面は「QR ごと」に指定する作り</h2>
+      <span class="zh">现在的界面是「按每一枚 QR」指定的结构</span>
+      <span class="right">前提 ⑤</span>
+    </div>
+    <div class="s-body">
+      <div class="figure">
+        <div class="frame" style="padding:8px; width:fit-content; margin:0 auto;">
+          <img src="assets/prd-screenshots/fixed-doc-step2-qr.png" alt="現在の QR 設定画面" style="max-height:250px;">
+        </div>
+        <div class="cap" style="text-align:center;">
+          現在の設定画面（QR 設定タブ）。「QR ソース」と「順序」で、<b>何枚目の QR の何番目か</b>を 1 項目ずつ指定します。
+          <span class="zh">现行设置界面：用「QR ソース」和「順序」逐项指定「第几枚 QR 的第几个」。</span>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="note-box" style="border-color:var(--danger); background:var(--danger-soft);">
+          <b class="hl">この作りだと起きること</b>
+          <ul style="margin:8px 0 0; padding-left:18px; line-height:1.75;">
+            <li>QR をまたぐ項目は、<b>同じ項目名が 2 行</b>に分かれて表示される</li>
+            <li>切れた半分しか取れないため、<b>値が壊れる</b></li>
+            <li>患者ごとに位置が変わるので、<b>設定を作り直す必要がある</b></li>
+          </ul>
+        </div>
+        <div class="note-box" style="border-color:var(--primary-line); background:var(--primary-soft);">
+          <b class="hlq">修正の方向</b>
+          <ul style="margin:8px 0 0; padding-left:18px; line-height:1.75;">
+            <li>まず <b>QR を全部つなげて 1 本の文字列に戻す</b></li>
+            <li>そのあと <code>$</code> で区切って、<b>通し番号</b>で項目を指定する</li>
+            <li>「何枚目の QR か」を指定する必要がなくなる</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り</span><span class="pg"><b>7</b> / 13</span></div>
+  </section>
+
+  <!-- ============ 08 前提⑥ QR と llmocr の識別次元 ============ -->
+  <section class="slide is-dense">
+    <div class="s-head">
+      <span class="no">08</span>
+      <h2>QR の読み取り結果と llmocr の識別次元</h2>
+      <span class="zh">二维码识别结果 vs llmocr 识别维度</span>
+      <span class="right">前提 ⑥</span>
+    </div>
+    <div class="s-body">
+      <div class="tbl-wrap tight">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:112px;">観点</th>
+              <th style="width:42%;">QR コードの読み取り</th>
+              <th>llmocr（帳票 OCR）</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="muted">読み取り対象</td>
+              <td>QR コードの画像（機械コード）</td>
+              <td>帳票の画像（レイアウトと文字）</td>
+            </tr>
+            <tr>
+              <td class="muted">出力の単位</td>
+              <td>1 本の連続した文字列（payload 全体）</td>
+              <td>項目ごとの値（構造化）</td>
+            </tr>
+            <tr>
+              <td class="muted">項目名</td>
+              <td><b>持たない。</b>区切り記号＋通し番号でのみ位置を指す</td>
+              <td>項目マスタの項目名で取得する</td>
+            </tr>
+            <tr>
+              <td class="muted">値の境界</td>
+              <td>サイズの等分点。項目と無関係なため<b class="hl">切れる</b></td>
+              <td>帳票上の意味的な境界（Prompt で指定）</td>
+            </tr>
+            <tr>
+              <td class="muted">データ型</td>
+              <td>持たない（値はすべて文字列）</td>
+              <td>タイプ（string ／ number ／ enum）</td>
+            </tr>
+            <tr>
+              <td class="muted">単位</td>
+              <td>定義なし（値そのもの）</td>
+              <td>Prompt で抽出単位を約定（cm・円・日）</td>
+            </tr>
+            <tr>
+              <td class="muted">信頼度</td>
+              <td>出力しない（デコードは決定的）</td>
+              <td>出力する（%。閾値未満でノード error）</td>
+            </tr>
+            <tr>
+              <td class="muted">項目の総数</td>
+              <td>A01：<b>406</b> ／ A04：<b>301</b> ／ K01：<b>291</b></td>
+              <td>帳票タイプの項目数（試作の診断書は <b>13</b> 項目）</td>
+            </tr>
+            <tr>
+              <td class="muted">主な異常</td>
+              <td>切断・重複行・読み漏れ・index ずれ</td>
+              <td>誤読・読み漏れ・低信頼</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note-box">
+        <b>要点：</b>llmocr は「<b>項目名</b>」で読む。QR は「<b>何番目か</b>」でしか読めない。そのため QR 側には、項目名と通し番号の<b>対応表を別途用意する</b>必要があります。また両者は二択ではなく、<b>同一帳票でも項目ごとに QR と OCR が混在</b>します。
+        <span class="muted" style="display:block; margin-top:6px;">要点：llmocr 靠「字段名」读，QR 只能靠「第几个」读；所以 QR 侧必须另备「字段名 ↔ 通序号」的对应表。两者也并非二选一——同一张帐票里各字段会混用 QR 读取与 OCR 读取。</span>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り</span><span class="pg"><b>8</b> / 13</span></div>
+  </section>
+
+  <!-- ============ 09 質問① 様式の種類 ============ -->
+  <section class="slide">
+    <div class="s-head">
+      <span class="no">09</span>
+      <h2>質問 ①　様式は何種類あるか</h2>
+      <span class="zh">问题①：样式共几种</span>
+      <span class="right">質問 1 / 4</span>
+    </div>
+    <div class="s-body">
+      <div class="q-ask">
+        <div class="ja">現在実際に運用されている、複数の QR を含む診断書には何種類の様式がありますか。当方で確認できたのは次の 3 種類です：LIAJ045-A01-202104 ／ LIAJ045-A04-202104 ／ LIAJ001-K01-202604。<b>これ以外にもありますか。</b></div>
+        <div class="zh">现在实际在用的带多个二维码的诊断书，大概有几种样式？我们目前看到这三种：LIAJ045-A01-202104、LIAJ045-A04-202104、LIAJ001-K01-202604。除此之外还有吗？</div>
+      </div>
+
+      <div class="q-grid">
+        <div class="q-card">
+          <div class="h"><i style="background:#f79009"></i>なぜ伺いたいか</div>
+          <p>様式ごとに読み取り定義（項目一覧）が必要です。総数が分からないと、<b>対応漏れ</b>が発生します。</p>
+        </div>
+        <div class="q-card">
+          <div class="h"><i style="background:#175cd3"></i>当方の現時点の理解</div>
+          <p>3 種を確認しています。ただし <b>A01 と A04 の間に A02・A03 が無い</b>こと、帳票系列が 2 系統、様式記号も 2 系統であることから、3 種で全部とは考えていません。</p>
+        </div>
+      </div>
+
+      <div class="done-box">
+        <span class="n">✓</span>
+        <div><b>ご回答いただくと確定すること：</b>対応すべき様式の範囲（＝読み取り定義を何セット用意する必要があるか）</div>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り</span><span class="pg"><b>9</b> / 13</span></div>
+  </section>
+
+  <!-- ============ 10 質問② 保険会社による差異 ============ -->
+  <section class="slide">
+    <div class="s-head">
+      <span class="no">10</span>
+      <h2>質問 ②　保険会社が違っても同じか</h2>
+      <span class="zh">问题②：不同保险公司是否一致</span>
+      <span class="right">質問 2 / 4</span>
+    </div>
+    <div class="s-body">
+      <div class="q-ask">
+        <div class="ja">帳票様式 ID が同じであれば、発行元の保険会社が違っても、QR 内部のデータ定義・区切り記号（<span class="mono">$</span> ／ <span class="mono">^</span> など）・項目の並び順はすべて同一ですか。<b>差異がある場合は、保険会社ごとの違いを教えてください。</b></div>
+        <div class="zh">是否只要帐票版式 ID 相同，不管是哪家保险公司出具的诊断书，其二维码内部的数据定义、分隔符号（$/^ 等）、字段顺序全部保持一致？如果存在差异，请告知不同保险公司之间的区别。</div>
+      </div>
+
+      <div class="q-grid">
+        <div class="q-card">
+          <div class="h"><i style="background:#f79009"></i>なぜ伺いたいか</div>
+          <p>同一様式 ID なら読み取り定義は <b>1 セットで済みます</b>。差異があれば「様式 × 保険会社」ごとに定義が必要になり、工数と保守負担が大きく変わります。</p>
+        </div>
+        <div class="q-card">
+          <div class="h"><i style="background:#175cd3"></i>当方の現時点の理解</div>
+          <p>確認できた 6 名分では、同じ様式 ID の範囲で<b>項目数と並び順は一致</b>していました（A01 は 4 名すべて 406 項目）。ただし 6 名分のみで、<b>保険会社をまたいだ比較はできていません</b>。</p>
+        </div>
+      </div>
+
+      <div class="done-box">
+        <span class="n">✓</span>
+        <div><b>ご回答いただくと確定すること：</b>定義を「様式ごとに 1 セット」で持てるか、「様式 × 保険会社」ごとに持つ必要があるか</div>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り</span><span class="pg"><b>10</b> / 13</span></div>
+  </section>
+
+  <!-- ============ 11 質問③ 400 余項目の扱い ============ -->
+  <section class="slide">
+    <div class="s-head">
+      <span class="no">11</span>
+      <h2>質問 ③　400 余りの項目をそのまま使うか</h2>
+      <span class="zh">问题③：400 余个字段是否需加工</span>
+      <span class="right">質問 3 / 4</span>
+    </div>
+    <div class="s-body">
+      <div class="q-ask">
+        <div class="ja">読み取り後、1 つの様式のデータを <span class="mono">$</span> などの区切り記号で分割すると <b>400 余りの項目</b>が得られます。ご確認したいのは、業務処理ではこの 400 余りの項目を<b>そのまま取り込む</b>のか、それとも<b>追加の後処理</b>（例：複数の元項目を統合・加工してから出力項目にマッピングする）が必要なのかという点です。<b>公式資料があれば、様式ごとにご提供ください。</b></div>
+        <div class="zh">当前扫码解析之后，单个版式的数据经 $ 等分隔符拆分可得到 400 余个字段。希望确认：业务处理时，是否直接使用扫码分割得到的这 400 多个字段原样写入；还是需要额外做后处理（例如把若干个原始字段合并、加工，再映射输出）。如果有官方资料，请按各个版式分别提供。</div>
+      </div>
+
+      <div class="q-grid">
+        <div class="q-card">
+          <div class="h"><i style="background:#f79009"></i>なぜ伺いたいか</div>
+          <p>「そのまま取り込む」なら分割結果を直接使えますが、「統合・加工が必要」なら、<b>その規則のご提供</b>が必要になります。</p>
+        </div>
+        <div class="q-card">
+          <div class="h"><i style="background:#175cd3"></i>当方の現時点の理解</div>
+          <p>現在の試作は「QR から 1 項目ずつ取り込む」作りで、後処理は<b>単一項目内の変換のみ</b>です。複数の元項目を統合する仕組みは持っていません。実測でも、生年月日は<b>年・月・日の 3 項目</b>に分かれて格納されていました。</p>
+        </div>
+      </div>
+
+      <div class="done-box">
+        <span class="n">✓</span>
+        <div><b>ご回答いただくと確定すること：</b>加工・統合が必要な場合、その規則のご提供が必要になります（当方では推測できません）</div>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り</span><span class="pg"><b>11</b> / 13</span></div>
+  </section>
+
+  <!-- ============ 12 質問④ 連結順序（最重要） ============ -->
+  <section class="slide is-dense">
+    <div class="s-head">
+      <span class="no">12</span>
+      <h2>質問 ④　QR の連結順序</h2>
+      <span class="zh">问题④：QR 的拼接顺序</span>
+      <span class="right">質問 4 / 4 ★最重要</span>
+    </div>
+    <div class="s-body">
+      <div class="q-ask">
+        <div class="ja">複数の QR のデータを連結する順序についてご確認させてください。<b>紙面上の表示位置（診断書の下段、左から右）だけで連結順序は決まりますか。</b>当方の現在の処理は、ページ上のすべての QR を認識したうえで、<b>紙面の位置順に連結</b>して 1 本の文字列とし、その後に項目を解析する、という前提です。この前提が正しいかご確認ください。あるいは <b>QR 自体が内部に通し番号</b>を持っており、そちらを優先して連結すべきでしょうか。</div>
+        <div class="zh">需要确认多张 QR 码的数据拼接顺序。是否仅依靠纸张上的显示位置（诊断书底部从左到右）来决定拼接次序？我们当前处理逻辑是识别页面上全部 QR 之后，按页面位置顺序拼接成一整条字符串再做字段解析。想确认该处理前提是否正确；还是 QR 内部本身自带序号，应当优先以二维码内置的序列号为准进行拼接。</div>
+      </div>
+
+      <div class="opt">
+        <div class="box is-current">
+          <div class="t">A. 紙面の位置順（左 → 右）<span class="cur">当方の現在の前提</span></div>
+          <div class="serial">
+            <span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span><span class="cell">6</span>
+          </div>
+          <div class="s">ページ上の x 座標の昇順に連結する。QR の中身には順序情報を含めない。</div>
+        </div>
+        <div class="box">
+          <div class="t">B. QR 内部の通し番号<span class="alt">代替案</span></div>
+          <div class="serial">
+            <span class="cell dim">3</span><span class="cell dim">1</span><span class="cell dim">4</span><span class="cell dim">2</span><span class="cell dim">6</span><span class="cell dim">5</span>
+          </div>
+          <div class="s">各 QR が内部に番号を持つ場合、位置ではなく番号順に連結する。</div>
+        </div>
+      </div>
+
+      <div class="q-grid">
+        <div class="q-card">
+          <div class="h"><i style="background:#e31b54"></i>なぜ重要か</div>
+          <p>連結順序を誤ると、<b>後続の項目がすべてずれます</b>。1 項目の誤りでは済みません。</p>
+        </div>
+        <div class="q-card">
+          <div class="h"><i style="background:#175cd3"></i>当方の現時点の理解</div>
+          <p>位置順で連結した結果、6 名分すべてで項目の意味が整合しました。ただしこれは「位置順が仕様として正しい」証明ではなく、<b>たまたま一致した可能性</b>も残ります。また 6 名分では、QR の先頭が「帳票コード → 枝番 → 様式 ID ^ 患者氏名」で始まり、<b>通し番号らしき値は見つかりませんでした</b>。</p>
+        </div>
+      </div>
+
+      <div class="done-box">
+        <span class="n">✓</span>
+        <div><b>ご回答いただくと確定すること：</b>連結ロジック。内部に通し番号があれば、<b>QR の読み漏れ検知</b>にも使えます</div>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り</span><span class="pg"><b>12</b> / 13</span></div>
+  </section>
+
+  <!-- ============ 13 まとめ ============ -->
+  <section class="slide">
+    <div class="s-head">
+      <span class="no">13</span>
+      <h2>まとめ</h2>
+      <span class="zh">总结</span>
+      <span class="right">出典・限界</span>
+    </div>
+    <div class="s-body">
+      <div class="tbl-wrap tight">
+        <table class="tbl">
+          <thead>
+            <tr><th style="width:44px;">No</th><th style="width:90px;">区分</th><th>ご確認いただきたいこと</th><th style="width:180px;">当方の現状</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="num"><b>1</b></td><td>様式</td><td>運用中の様式は何種類か</td><td>3 種を確認。3 種で全部とは考えていない</td></tr>
+            <tr><td class="num"><b>2</b></td><td>仕様</td><td>様式 ID が同じなら社間で共通か</td><td>6 名分で一致。社間比較は未検証</td></tr>
+            <tr><td class="num"><b>3</b></td><td>業務</td><td>400 余項目をそのまま使うか、加工が要るか</td><td>試作は 1 項目ずつの取り込みのみ</td></tr>
+            <tr><td class="num"><b>4</b></td><td class="hlq">連結順序</td><td>紙面の位置か、QR 内部の連番か</td><td>位置順で 6 名分復元。仕様の裏付けなし</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note-box">
+        <b>本資料の根拠と限界</b>
+        <ul style="margin:8px 0 0; padding-left:18px; line-height:1.7;">
+          <li>出典：お手元の診断書 <b>6 名分</b>の QR を解析した結果（安達珠美・平田よし子・藤島紗織・土谷勝・服部朱理・塚原明夫）</li>
+          <li>様式ごとのサンプル数は <b>1〜4 名分</b>であり、全様式を網羅したものではありません</li>
+          <li>分割規則は <b>5 通りの仮説を検証した結果</b>で、生成側の仕様書による裏付けは取れていません（誤差 2% が残る）</li>
+          <li>「切れ目の位置」は実測値であり、他の患者で同じ位置になる保証はありません</li>
+        </ul>
+      </div>
+
+      <div class="verdict">
+        <span class="badge">お願い</span>
+        <div>
+          <p>上記 <strong>4 件</strong>のうち、ご回答いただけるものからで構いません。特に <strong>④ の連結順序</strong>は、誤ると全項目がずれるため、最初にご確認いただけると助かります。</p>
+          <p class="zh">以上 4 项，能回答几项都可以。特别是第 ④ 项「拼接顺序」，一旦有误会导致全部字段错位，希望能优先确认。</p>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot"><span>LIAJ 診断書 QR 読み取り ／ 2026-09-23</span><span class="pg"><b>13</b> / 13</span></div>
+  </section>
+
+</div>
+</div>
+
+<script>
+  (function () {
+    var deck = document.getElementById('deck');
+    var slides = Array.prototype.slice.call(deck.querySelectorAll('.slide'));
+    var index = 0;
+
+    function show(n) {
+      index = Math.max(0, Math.min(slides.length - 1, n));
+      slides.forEach(function (s, i) { s.classList.toggle('is-active', i === index); });
+      if (location.hash !== '#p' + (index + 1)) {
+        history.replaceState(null, '', '#p' + (index + 1));
+      }
+    }
+
+    function fit() {
+      var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720) * 0.94;
+      deck.style.transform = 'scale(' + s + ')';
+    }
+
+    var fromHash = parseInt((location.hash || '').replace('#p', ''), 10);
+    if (fromHash > 0) index = fromHash - 1;
+    show(index);
+    fit();
+
+    window.addEventListener('resize', fit);
+    window.addEventListener('hashchange', function () {
+      var n = parseInt((location.hash || '').replace('#p', ''), 10);
+      if (n > 0) show(n - 1);
+    });
+
+    window.__deck = { show: show, count: function () { return slides.length; } };
+
+    document.addEventListener('keydown', function (e) {
+      if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].indexOf(e.key) >= 0) {
+        show(index + 1); e.preventDefault();
+      } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].indexOf(e.key) >= 0) {
+        show(index - 1); e.preventDefault();
+      } else if (e.key === 'Home') { show(0); e.preventDefault(); }
+      else if (e.key === 'End') { show(slides.length - 1); e.preventDefault(); }
+    });
+
+    document.addEventListener('click', function (e) {
+      show(index + (e.clientX > window.innerWidth / 2 ? 1 : -1));
+    });
+  })();
+</script>
+</body>
+</html>
