@@ -1,0 +1,65 @@
+<Slide style={{ width: 1280, height: 720, padding: '20px 64px', flexDirection: 'column', background: '#FFFFFF' }}>
+    <Box style={{ height: 100, flexDirection: 'row', alignItems: 'center', gap: 14, borderBottom: '1px solid #E5E7EB' }}>
+        <Box style={{ width: 6, height: 32, background: '#175CD3' }} />
+        <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#111827' }}>本日のご確認事項</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>一覧</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'row', gap: 28, paddingTop: 24 }}>
+        <Box style={{ width: 330, flexDirection: 'column', justifyContent: 'center' }}>
+            <Box style={{ background: '#E8EEF9', borderRadius: 12, padding: 28, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#175CD3', letterSpacing: 1 }}>ご確認いただきたいこと</Text>
+                <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 14 }}>
+                    <Text style={{ fontSize: 72, fontWeight: 'bold', color: '#175CD3', lineHeight: 1 }}>2</Text>
+                    <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#175CD3' }}>件</Text>
+                </Box>
+                <Box style={{ height: 1, background: '#4E7FD8', opacity: 0.4, marginTop: 20, marginBottom: 20 }} />
+                <Text style={{ fontSize: 16, color: '#475467', lineHeight: 1.7 }}>
+                    いずれも当方だけでは確定できない事項です。
+                </Text>
+                <Text style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.7, marginTop: 14 }}>
+                    03〜05 で前提となる仕組みを、06〜09 で各項目の背景をご説明します。
+                </Text>
+            </Box>
+        </Box>
+
+        <Box style={{ flex: 1, flexDirection: 'column', gap: 16 }}>
+            <Box style={{ flex: 1, flexDirection: 'row', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+                <Box style={{ width: 5, background: '#175CD3' }} />
+                <Box style={{ flex: 1, flexDirection: 'column', padding: '20px 24px' }}>
+                    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#FFFFFF', background: '#175CD3', padding: '2px 10px', borderRadius: 4 }}>01</Text>
+                        <Text style={{ fontSize: 14, color: '#6B7280' }}>項目定義</Text>
+                    </Box>
+                    <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#111827', marginTop: 12 }}>
+                        QR 用と OCR 用で、2 セットの定義が必要になる
+                    </Text>
+                    <Text style={{ fontSize: 17, color: '#475467', lineHeight: 1.6, marginTop: 12 }}>
+                        1 つの様式を QR から読み取ると 400 余りの項目が得られますが、OCR で読み取れるのは数十項目です。同じ様式に対して、QR 用と OCR 用の 2 セットの項目定義を保守する必要が生じます。この二重管理を受け入れるか、どちらかに寄せるかをご教示ください。
+                    </Text>
+                </Box>
+            </Box>
+
+            <Box style={{ flex: 1, flexDirection: 'row', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+                <Box style={{ width: 5, background: '#E31B54' }} />
+                <Box style={{ flex: 1, flexDirection: 'column', padding: '20px 24px' }}>
+                    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#FFFFFF', background: '#E31B54', padding: '2px 10px', borderRadius: 4 }}>02</Text>
+                        <Text style={{ fontSize: 14, color: '#6B7280' }}>連結順序</Text>
+                    </Box>
+                    <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#111827', marginTop: 12 }}>
+                        複数 QR の連結順序は紙面の位置でよいか
+                    </Text>
+                    <Text style={{ fontSize: 17, color: '#475467', lineHeight: 1.6, marginTop: 12 }}>
+                        当方の現在の前提は、ページ上のすべての QR を認識し、紙面の位置（下段・左から右）の順に連結して 1 本の文字列に戻し、その後 $ で区切って項目順に値を書く、というものです。この前提が正しいかご確認ください。
+                    </Text>
+                </Box>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 40, flexDirection: 'row', alignItems: 'center', borderTop: '1px solid #E5E7EB' }}>
+        <Text style={{ fontSize: 14, color: '#6B7280' }}>LIAJ 診断書 QR 追加確認事項</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>02 / 09</Text>
+    </Box>
+</Slide>

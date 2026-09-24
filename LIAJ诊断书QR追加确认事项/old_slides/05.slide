@@ -1,0 +1,86 @@
+<Slide style={{ width: 1280, height: 720, padding: '20px 64px', flexDirection: 'column', background: '#FFFFFF' }}>
+    <Box style={{ height: 100, flexDirection: 'row', alignItems: 'center', gap: 14, borderBottom: '1px solid #E5E7EB' }}>
+        <Box style={{ width: 6, height: 32, background: '#175CD3' }} />
+        <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#111827' }}>切れる位置は、患者ごとに違う</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>前提 ③</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'row', gap: 26, paddingTop: 24 }}>
+        <Box style={{ width: 716, flexDirection: 'column', gap: 16 }}>
+            <Text style={{ fontSize: 17, color: '#475467', lineHeight: 1.6 }}>
+                同じ様式でも、患者さんの記入内容によって文字列の長さが変わるため、等分する位置が毎回ずれます。
+            </Text>
+            <Table
+                style={{ width: '100%', height: 372 }}
+                defaultTextStyle={{ fontSize: 15, textAlign: 'left', color: '#111827' }}
+                defaultCellStyle={{
+                    border: {
+                        left: { width: 1, color: '#E5E7EB' },
+                        right: { width: 1, color: '#E5E7EB' },
+                        top: { width: 1, color: '#E5E7EB' },
+                        bottom: { width: 1, color: '#E5E7EB' },
+                    },
+                    paddingLeft: 12,
+                }}
+                cells={[
+                    [
+                        { text: '患者', textStyle: { bold: true, color: '#FFFFFF' }, cellStyle: { background: { color: '#175CD3' } } },
+                        { text: '様式', textStyle: { bold: true, color: '#FFFFFF', textAlign: 'center' }, cellStyle: { background: { color: '#175CD3' } } },
+                        { text: 'QR 枚数', textStyle: { bold: true, color: '#FFFFFF', textAlign: 'center' }, cellStyle: { background: { color: '#175CD3' } } },
+                        { text: 'つなぎ目の位置（通し番号）', textStyle: { bold: true, color: '#FFFFFF', textAlign: 'center' }, cellStyle: { background: { color: '#175CD3' } } },
+                    ],
+                    ['安達珠美', { text: 'A01', textStyle: { textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" } }, { text: '6', textStyle: { textAlign: 'center' } }, { text: '39, 101, 169, 219, 352', textStyle: { fontFamily: "'SF Mono', Menlo, monospace" } }],
+                    [
+                        { text: '平田よし子', cellStyle: { background: { color: '#E8EEF9' } } },
+                        { text: 'A01', textStyle: { textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" }, cellStyle: { background: { color: '#E8EEF9' } } },
+                        { text: '6', textStyle: { textAlign: 'center' }, cellStyle: { background: { color: '#E8EEF9' } } },
+                        { text: '35, 93, 190, 226, 363', textStyle: { fontFamily: "'SF Mono', Menlo, monospace" }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    ],
+                    ['藤島紗織', { text: 'A01', textStyle: { textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" } }, { text: '6', textStyle: { textAlign: 'center' } }, { text: '17, 77, 185, 295, 401', textStyle: { fontFamily: "'SF Mono', Menlo, monospace" } }],
+                    [
+                        { text: '土谷勝', cellStyle: { background: { color: '#E8EEF9' } } },
+                        { text: 'A01', textStyle: { textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" }, cellStyle: { background: { color: '#E8EEF9' } } },
+                        { text: '6', textStyle: { textAlign: 'center' }, cellStyle: { background: { color: '#E8EEF9' } } },
+                        { text: '38, 114, 233, 304, 372', textStyle: { fontFamily: "'SF Mono', Menlo, monospace" }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    ],
+                    ['服部朱理', { text: 'A04', textStyle: { textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" } }, { text: '6', textStyle: { textAlign: 'center' } }, { text: '20, 86, 98, 181, 274', textStyle: { fontFamily: "'SF Mono', Menlo, monospace" } }],
+                    [
+                        { text: '塚原明夫', cellStyle: { background: { color: '#E8EEF9' } } },
+                        { text: 'K01', textStyle: { textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" }, cellStyle: { background: { color: '#E8EEF9' } } },
+                        { text: '9', textStyle: { textAlign: 'center' }, cellStyle: { background: { color: '#E8EEF9' } } },
+                        { text: '11, 46, 50, 92, 115, 151, 198, 281', textStyle: { fontFamily: "'SF Mono', Menlo, monospace" }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    ],
+                ]}
+            />
+        </Box>
+
+        <Box style={{ flex: 1, flexDirection: 'column', gap: 16 }}>
+            <Box style={{ flex: 1, background: '#FFFFFF', border: '1px solid #E31B54', borderRadius: 12, padding: 22, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#E31B54' }}>患者ごとに変わるもの</Text>
+                <Box style={{ height: 1, background: '#E31B54', opacity: 0.3, marginTop: 12, marginBottom: 12 }} />
+                <Text style={{ fontSize: 16, color: '#475467', lineHeight: 1.7 }}>
+                    「何枚目の QR の、何番目か」という指定です。患者が変われば、同じ項目でも位置が変わります。
+                </Text>
+                <Text style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.7, marginTop: 'auto' }}>
+                    患者ごとに定義を作り直すことは現実的ではありません。
+                </Text>
+            </Box>
+
+            <Box style={{ flex: 1, background: '#E8EEF9', borderRadius: 12, padding: 22, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#175CD3' }}>患者に依存しないもの</Text>
+                <Box style={{ height: 1, background: '#175CD3', opacity: 0.3, marginTop: 12, marginBottom: 12 }} />
+                <Text style={{ fontSize: 16, color: '#475467', lineHeight: 1.7 }}>
+                    つなげた後の通し番号（406 / 301 / 291）と、項目の並び順です。
+                </Text>
+                <Text style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.7, marginTop: 'auto' }}>
+                    これが読み取りの基準になります。
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 40, flexDirection: 'row', alignItems: 'center', borderTop: '1px solid #E5E7EB' }}>
+        <Text style={{ fontSize: 14, color: '#6B7280' }}>LIAJ 診断書 QR 追加確認事項</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>05 / 09</Text>
+    </Box>
+</Slide>

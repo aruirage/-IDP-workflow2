@@ -1,0 +1,50 @@
+<Slide style={{ width: 1280, height: 720, padding: '20px 64px', flexDirection: 'column', background: '#FFFFFF' }}>
+    <Box style={{ height: 100, flexDirection: 'row', alignItems: 'center', gap: 14, borderBottom: '1px solid #E5E7EB' }}>
+        <Box style={{ width: 6, height: 32, background: '#175CD3' }} />
+        <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#111827' }}>まとめ</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>根拠と限界</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'column', gap: 20, paddingTop: 20 }}>
+        <Box style={{ height: 132, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+            <Text style={{ fontSize: 96, fontWeight: 'bold', color: '#175CD3', lineHeight: 1, fontFamily: "'SF Mono', Menlo, monospace" }}>2</Text>
+            <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#475467' }}>件のご確認</Text>
+        </Box>
+
+        <Box style={{ height: 156, flexDirection: 'row', gap: 20 }}>
+            <Box style={{ flex: 1, background: '#E8EEF9', borderRadius: 12, padding: 20, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#175CD3' }}>① 認識の次元</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#111827', marginTop: 8 }}>
+                    QR 用と OCR 用で、定義が 2 セットになる
+                </Text>
+                <Text style={{ fontSize: 14, color: '#475467', lineHeight: 1.6, marginTop: 8 }}>
+                    受け入れられるか、どちらかに寄せられるかをご教示ください。
+                </Text>
+            </Box>
+            <Box style={{ flex: 1, background: '#FFFFFF', border: '1px solid #E31B54', borderRadius: 12, padding: 20, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#E31B54' }}>② 連結順序</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#111827', marginTop: 8 }}>
+                    紙面の位置順でよいか
+                </Text>
+                <Text style={{ fontSize: 14, color: '#475467', lineHeight: 1.6, marginTop: 8 }}>
+                    内部に通し番号があれば、読み漏れの検知にも使えます。
+                </Text>
+            </Box>
+        </Box>
+
+        <Box style={{ flex: 1, background: '#F7F8FA', borderRadius: 10, padding: 20, flexDirection: 'column' }}>
+            <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#6B7280' }}>本資料の根拠と限界</Text>
+            <Text style={{ fontSize: 14, color: '#475467', lineHeight: 1.75, marginTop: 10 }}>
+                ・出典：お手元の診断書 6 名分の QR を解析した結果（安達珠美・平田よし子・藤島紗織・土谷勝・服部朱理・塚原明夫）<br />
+                ・様式ごとのサンプル数は 1〜4 名分であり、全様式を網羅したものではありません<br />
+                ・分割規則は 5 通りの仮説を検証した結果で、生成側の仕様書による裏付けは取れていません（誤差 2% が残ります）<br />
+                ・「切れ目の位置」は実測値であり、他の患者で同じ位置になる保証はありません
+            </Text>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 40, flexDirection: 'row', alignItems: 'center', borderTop: '1px solid #E5E7EB' }}>
+        <Text style={{ fontSize: 14, color: '#6B7280' }}>LIAJ 診断書 QR 追加確認事項</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>09 / 09</Text>
+    </Box>
+</Slide>

@@ -1,0 +1,54 @@
+<Slide style={{ width: 1280, height: 720, padding: '20px 64px', flexDirection: 'row', gap: 28, background: '#FFFFFF' }}>
+    <Box style={{ width: 440, flexDirection: 'column', justifyContent: 'center' }}>
+        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#175CD3', letterSpacing: 2 }}>
+            LIAJ 診断書 QR 読み取り
+        </Text>
+        <Text style={{ fontSize: 46, fontWeight: 'bold', color: '#111827', lineHeight: 1.25, marginTop: 18 }}>
+            追加の<br />ご確認事項
+        </Text>
+        <Box style={{ width: 64, height: 6, background: '#175CD3', marginTop: 24 }} />
+        <Text style={{ fontSize: 26, fontWeight: 'bold', color: '#475467', marginTop: 22 }}>
+            2 件
+        </Text>
+        <Text style={{ fontSize: 15, color: '#6B7280', lineHeight: 1.7, marginTop: 16 }}>
+            実診断書 6 名分の QR を解析した結果より
+        </Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 8 }}>
+            2026-09-23
+        </Text>
+    </Box>
+
+    <Box style={{ flex: 1, flexDirection: 'column', gap: 20, paddingTop: 30 }}>
+        <Box style={{ height: 300, flexDirection: 'row', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+            <Box style={{ width: 5, background: '#175CD3' }} />
+            <Box style={{ flex: 1, flexDirection: 'column', padding: '24px 26px' }}>
+                <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#FFFFFF', background: '#175CD3', padding: '2px 10px', borderRadius: 4 }}>01</Text>
+                    <Text style={{ fontSize: 14, color: '#6B7280' }}>項目定義</Text>
+                </Box>
+                <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#111827', marginTop: 14 }}>
+                    QR 用と OCR 用で、定義が 2 セットになる
+                </Text>
+                <Text style={{ fontSize: 16, color: '#475467', lineHeight: 1.75, marginTop: 14 }}>
+                    1 つの様式を QR から読み取ると 400 余りの項目が得られますが、OCR で読み取れるのは約 50 項目です。同じ様式に対して、QR 用と OCR 用の 2 セットの項目定義を保守する必要が生じます。この二重管理を受け入れていただけますでしょうか。
+                </Text>
+            </Box>
+        </Box>
+
+        <Box style={{ height: 300, flexDirection: 'row', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+            <Box style={{ width: 5, background: '#E31B54' }} />
+            <Box style={{ flex: 1, flexDirection: 'column', padding: '24px 26px' }}>
+                <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#FFFFFF', background: '#E31B54', padding: '2px 10px', borderRadius: 4 }}>02</Text>
+                    <Text style={{ fontSize: 14, color: '#6B7280' }}>連結順序</Text>
+                </Box>
+                <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#111827', marginTop: 14 }}>
+                    複数 QR の連結順序は紙面の位置でよいか
+                </Text>
+                <Text style={{ fontSize: 16, color: '#475467', lineHeight: 1.75, marginTop: 14 }}>
+                    当方の現在の前提は、ページ上のすべての QR を認識し、紙面の位置（下段・左から右）の順に連結して 1 本の文字列に戻し、その後 $ で区切って項目順に値を書く、というものです。この前提が正しいかご確認ください。
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+</Slide>

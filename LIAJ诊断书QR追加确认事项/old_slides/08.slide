@@ -1,0 +1,99 @@
+<Slide style={{ width: 1280, height: 720, padding: '20px 64px', flexDirection: 'column', background: '#FFFFFF' }}>
+    <Box style={{ height: 100, flexDirection: 'row', alignItems: 'center', gap: 14, borderBottom: '1px solid #E5E7EB' }}>
+        <Box style={{ width: 6, height: 32, background: '#E31B54' }} />
+        <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#111827' }}>順序を誤ると、全項目がずれる</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>確認事項 ②</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'row', gap: 26, paddingTop: 22 }}>
+        <Box style={{ width: 424, flexDirection: 'column', gap: 14 }}>
+            <Box style={{ height: 250, background: '#E8EEF9', borderRadius: 12, padding: 22, flexDirection: 'column', justifyContent: 'center', gap: 10 }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#175CD3' }}>正しい順序で連結した場合</Text>
+                <Box style={{ flexDirection: 'row', gap: 6 }}>
+                    <Box style={{ width: 56, height: 38, background: '#175CD3', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#FFFFFF' }}>1</Text>
+                    </Box>
+                    <Box style={{ width: 56, height: 38, background: '#175CD3', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#FFFFFF' }}>2</Text>
+                    </Box>
+                    <Box style={{ width: 56, height: 38, background: '#175CD3', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#FFFFFF' }}>3</Text>
+                    </Box>
+                    <Box style={{ width: 56, height: 38, background: '#175CD3', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#FFFFFF' }}>4</Text>
+                    </Box>
+                    <Box style={{ width: 56, height: 38, background: '#175CD3', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#FFFFFF' }}>5</Text>
+                    </Box>
+                    <Box style={{ width: 56, height: 38, background: '#175CD3', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#FFFFFF' }}>6</Text>
+                    </Box>
+                </Box>
+                <Box style={{ height: 1, background: '#4E7FD8', opacity: 0.4 }} />
+                <Text style={{ fontSize: 15, color: '#475467', lineHeight: 1.6 }}>
+                    項目が定義どおりの位置に入ります。
+                </Text>
+            </Box>
+
+            <Box style={{ height: 250, background: '#FFFFFF', border: '1px solid #E31B54', borderRadius: 12, padding: 22, flexDirection: 'column', justifyContent: 'center', gap: 10 }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#E31B54' }}>順序を誤った場合</Text>
+                <Box style={{ flexDirection: 'row', gap: 6 }}>
+                    <Box style={{ width: 56, height: 38, background: '#FFFFFF', border: '1px solid #E31B54', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#E31B54' }}>2</Text>
+                    </Box>
+                    <Box style={{ width: 56, height: 38, background: '#FFFFFF', border: '1px solid #E31B54', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#E31B54' }}>1</Text>
+                    </Box>
+                    <Box style={{ width: 56, height: 38, background: '#FFFFFF', border: '1px solid #E31B54', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#E31B54' }}>3</Text>
+                    </Box>
+                    <Box style={{ width: 56, height: 38, background: '#FFFFFF', border: '1px solid #E31B54', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#E31B54' }}>4</Text>
+                    </Box>
+                    <Box style={{ width: 56, height: 38, background: '#FFFFFF', border: '1px solid #E31B54', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#E31B54' }}>5</Text>
+                    </Box>
+                    <Box style={{ width: 56, height: 38, background: '#FFFFFF', border: '1px solid #E31B54', borderRadius: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#E31B54' }}>6</Text>
+                    </Box>
+                </Box>
+                <Box style={{ height: 1, background: '#E31B54', opacity: 0.4 }} />
+                <Text style={{ fontSize: 15, color: '#475467', lineHeight: 1.6 }}>
+                    1 項目の誤りでは済まず、以降の全項目がずれます。
+                </Text>
+            </Box>
+        </Box>
+
+        <Box style={{ flex: 1, flexDirection: 'column', gap: 14 }}>
+            <Text style={{ fontSize: 21, fontWeight: 'bold', color: '#111827' }}>
+                そのため、順序の前提だけは先に確定させたい
+            </Text>
+
+            <Box style={{ flex: 1, background: '#E8EEF9', borderRadius: 10, padding: 18, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#175CD3' }}>実測したこと</Text>
+                <Text style={{ fontSize: 15, color: '#475467', lineHeight: 1.7, marginTop: 8 }}>
+                    紙面の位置順で連結した結果、6 名分すべてで項目の意味が整合しました。
+                </Text>
+            </Box>
+
+            <Box style={{ flex: 1, background: '#FFFFFF', border: '1px solid #E31B54', borderRadius: 10, padding: 18, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#E31B54' }}>ただし、証明ではありません</Text>
+                <Text style={{ fontSize: 15, color: '#475467', lineHeight: 1.7, marginTop: 8 }}>
+                    「位置順が仕様として正しい」ことの裏付けにはなりません。たまたま一致した可能性が残ります。
+                </Text>
+            </Box>
+
+            <Box style={{ flex: 1, background: '#F7F8FA', borderRadius: 10, padding: 18, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#6B7280' }}>観察したこと</Text>
+                <Text style={{ fontSize: 15, color: '#475467', lineHeight: 1.7, marginTop: 8 }}>
+                    6 名分では、QR の先頭は「帳票コード → 枝番 → 様式 ID^患者氏名」で始まり、通し番号らしき値は見つかりませんでした。
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 40, flexDirection: 'row', alignItems: 'center', borderTop: '1px solid #E5E7EB' }}>
+        <Text style={{ fontSize: 14, color: '#6B7280' }}>LIAJ 診断書 QR 追加確認事項</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>08 / 09</Text>
+    </Box>
+</Slide>

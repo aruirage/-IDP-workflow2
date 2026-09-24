@@ -1,0 +1,29 @@
+<Slide style={{ width: 1280, height: 720, padding: 0, flexDirection: 'row', background: '#FFFFFF' }}>
+    <Box style={{ width: 538, height: 720, flexDirection: 'column', justifyContent: 'center', padding: '0 44px 0 72px' }}>
+        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#175CD3', letterSpacing: 2 }}>
+            LIAJ 診断書 QR 読み取り
+        </Text>
+        <Text style={{ fontSize: 64, fontWeight: 'bold', color: '#111827', lineHeight: 1.2, marginTop: 22 }}>
+            追加の<br />ご確認事項
+        </Text>
+        <Box style={{ width: 64, height: 6, background: '#175CD3', marginTop: 26 }} />
+        <Text style={{ fontSize: 26, fontWeight: 'bold', color: '#475467', marginTop: 24 }}>
+            2 件
+        </Text>
+        <Text style={{ fontSize: 16, color: '#6B7280', lineHeight: 1.7, marginTop: 18 }}>
+            実診断書 6 名分の QR を解析した結果より
+        </Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 10 }}>
+            2026-09-23
+        </Text>
+    </Box>
+
+    <Box style={{ width: 742, height: 720, background: '#E8EEF9', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 22 }}>
+        <Box style={{ background: '#FFFFFF', borderRadius: 12, padding: 24, boxShadow: '0 4px 20px rgba(17,24,39,0.08)' }}>
+            <Image src="assets/a01-qr-strip.png" style={{ width: 592, height: 125 }} />
+        </Box>
+        <Text style={{ fontSize: 14, color: '#475467' }}>
+            LIAJ045-A01 のデータ QR 6 枚（実測）
+        </Text>
+    </Box>
+</Slide>

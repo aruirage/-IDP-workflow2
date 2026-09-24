@@ -1,0 +1,79 @@
+<Slide style={{ width: 1280, height: 720, padding: '20px 64px', flexDirection: 'column', background: '#FFFFFF' }}>
+    <Box style={{ height: 100, flexDirection: 'row', alignItems: 'center', gap: 14, borderBottom: '1px solid #E5E7EB' }}>
+        <Box style={{ width: 6, height: 32, background: '#E31B54' }} />
+        <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#111827' }}>複数 QR の連結順序</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>確認事項 ②</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'column', gap: 20, paddingTop: 22 }}>
+        <Box style={{ height: 238, background: '#E8EEF9', borderRadius: 12, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 14 }}>
+            <Image src="assets/a01-qr-strip.png" style={{ width: 780, height: 164 }} />
+            <Text style={{ fontSize: 14, color: '#475467' }}>
+                LIAJ045-A01 のデータ QR 6 枚。この 6 枚を、どの順で連結するか。
+            </Text>
+        </Box>
+
+        <Box style={{ height: 112, flexDirection: 'row', alignItems: 'center', gap: 24, background: '#E8EEF9', borderRadius: 10, padding: '0 26px' }}>
+            <Box style={{ width: 372, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#175CD3' }}>A 案　当方の現在の前提</Text>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#111827', marginTop: 6 }}>
+                    紙面の位置順（左 → 右）
+                </Text>
+            </Box>
+            <Box style={{ flex: 1, flexDirection: 'row', gap: 10 }}>
+                <Box style={{ width: 48, height: 44, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#FFFFFF' }}>1</Text>
+                </Box>
+                <Box style={{ width: 48, height: 44, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#FFFFFF' }}>2</Text>
+                </Box>
+                <Box style={{ width: 48, height: 44, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#FFFFFF' }}>3</Text>
+                </Box>
+                <Box style={{ width: 48, height: 44, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#FFFFFF' }}>4</Text>
+                </Box>
+                <Box style={{ width: 48, height: 44, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#FFFFFF' }}>5</Text>
+                </Box>
+                <Box style={{ width: 48, height: 44, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#FFFFFF' }}>6</Text>
+                </Box>
+            </Box>
+        </Box>
+
+        <Box style={{ height: 112, flexDirection: 'row', alignItems: 'center', gap: 24, background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 10, padding: '0 26px' }}>
+            <Box style={{ width: 372, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#6B7280' }}>B 案　代替案</Text>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#111827', marginTop: 6 }}>
+                    QR 内部の通し番号
+                </Text>
+            </Box>
+            <Box style={{ flex: 1, flexDirection: 'row', gap: 10 }}>
+                <Box style={{ width: 48, height: 44, background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#6B7280' }}>3</Text>
+                </Box>
+                <Box style={{ width: 48, height: 44, background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#6B7280' }}>1</Text>
+                </Box>
+                <Box style={{ width: 48, height: 44, background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#6B7280' }}>4</Text>
+                </Box>
+                <Box style={{ width: 48, height: 44, background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#6B7280' }}>2</Text>
+                </Box>
+                <Box style={{ width: 48, height: 44, background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#6B7280' }}>6</Text>
+                </Box>
+                <Box style={{ width: 48, height: 44, background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#6B7280' }}>5</Text>
+                </Box>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 40, flexDirection: 'row', alignItems: 'center', borderTop: '1px solid #E5E7EB' }}>
+        <Text style={{ fontSize: 14, color: '#6B7280' }}>LIAJ 診断書 QR 追加確認事項</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>07 / 09</Text>
+    </Box>
+</Slide>

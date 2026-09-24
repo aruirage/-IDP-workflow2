@@ -1,0 +1,97 @@
+<Slide style={{ width: 1280, height: 720, padding: '20px 64px', flexDirection: 'column', background: '#FFFFFF' }}>
+    <Box style={{ height: 100, flexDirection: 'row', alignItems: 'center', gap: 14, borderBottom: '1px solid #E5E7EB' }}>
+        <Box style={{ width: 6, height: 32, background: '#175CD3' }} />
+        <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#111827' }}>認識の次元が違う</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>確認事項 ①</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'column', gap: 20, paddingTop: 22 }}>
+        <Box style={{ height: 292, flexDirection: 'row', gap: 20 }}>
+            <Box style={{ flex: 1, background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 22, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#6B7280', letterSpacing: 1.5 }}>llmocr</Text>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#111827', marginTop: 8 }}>
+                    1 項目 ＝ 1 つの業務概念
+                </Text>
+                <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 8 }}>
+                    項目名で読み取ります。値そのものが選択肢です。
+                </Text>
+                <Box style={{ flex: 1, flexDirection: 'column', gap: 10, marginTop: 14 }}>
+                    <Box style={{ flex: 1, background: '#F7F8FA', borderRadius: 8, padding: '0 16px', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                        <Text style={{ fontSize: 14, color: '#6B7280', width: 108 }}>良悪性</Text>
+                        <Text style={{ fontSize: 14, color: '#6B7280' }}>＝</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#175CD3' }}>良性</Text>
+                        <Text style={{ fontSize: 13, color: '#6B7280', marginLeft: 'auto' }}>1 項目</Text>
+                    </Box>
+                    <Box style={{ flex: 1, background: '#F7F8FA', borderRadius: 8, padding: '0 16px', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                        <Text style={{ fontSize: 14, color: '#6B7280', width: 108 }}>診断日</Text>
+                        <Text style={{ fontSize: 14, color: '#6B7280' }}>＝</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#175CD3' }}>2026-06-19</Text>
+                        <Text style={{ fontSize: 13, color: '#6B7280', marginLeft: 'auto' }}>1 項目</Text>
+                    </Box>
+                </Box>
+            </Box>
+
+            <Box style={{ flex: 1, background: '#E8EEF9', borderRadius: 12, padding: 22, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#175CD3', letterSpacing: 1.5 }}>QR</Text>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#111827', marginTop: 8 }}>
+                    1 つの選択肢 ＝ 1 項目
+                </Text>
+                <Text style={{ fontSize: 14, color: '#475467', marginTop: 8 }}>
+                    通し番号で読み取ります。チェックされていれば 1、されていなければ空です。
+                </Text>
+                <Box style={{ flex: 1, flexDirection: 'column', gap: 10, marginTop: 14 }}>
+                    <Box style={{ flex: 1, background: '#FFFFFF', borderRadius: 8, padding: '0 16px', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Text style={{ fontSize: 14, color: '#6B7280' }}>良性 ＝</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#175CD3', fontFamily: "'SF Mono', Menlo, monospace" }}>1</Text>
+                        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 8 }}>悪性 ＝</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#6B7280', fontFamily: "'SF Mono', Menlo, monospace" }}>（空）</Text>
+                        <Text style={{ fontSize: 13, color: '#6B7280', marginLeft: 'auto' }}>2 項目</Text>
+                    </Box>
+                    <Box style={{ flex: 1, background: '#FFFFFF', borderRadius: 8, padding: '0 16px', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Text style={{ fontSize: 14, color: '#6B7280' }}>年 ＝</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#175CD3', fontFamily: "'SF Mono', Menlo, monospace" }}>2026</Text>
+                        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 6 }}>月 ＝</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#175CD3', fontFamily: "'SF Mono', Menlo, monospace" }}>6</Text>
+                        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 6 }}>日 ＝</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#175CD3', fontFamily: "'SF Mono', Menlo, monospace" }}>19</Text>
+                        <Text style={{ fontSize: 13, color: '#6B7280', marginLeft: 'auto' }}>3 項目</Text>
+                    </Box>
+                </Box>
+            </Box>
+        </Box>
+
+        <Box style={{ height: 228, flexDirection: 'row', gap: 20 }}>
+            <Box style={{ width: 296, background: '#E8EEF9', borderRadius: 12, padding: 22, flexDirection: 'column', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#175CD3' }}>1 様式あたりの項目数</Text>
+                <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 10 }}>
+                    <Text style={{ fontSize: 54, fontWeight: 'bold', color: '#175CD3', lineHeight: 1.1, fontFamily: "'SF Mono', Menlo, monospace" }}>406</Text>
+                    <Text style={{ fontSize: 14, color: '#475467' }}>項目　QR から</Text>
+                </Box>
+                <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 10 }}>
+                    <Text style={{ fontSize: 54, fontWeight: 'bold', color: '#475467', lineHeight: 1.1, fontFamily: "'SF Mono', Menlo, monospace" }}>50</Text>
+                    <Text style={{ fontSize: 14, color: '#475467' }}>項目未満　OCR から</Text>
+                </Box>
+            </Box>
+
+            <Box style={{ flex: 1, flexDirection: 'column', gap: 12 }}>
+                <Box style={{ flex: 1, background: '#E8EEF9', borderRadius: 10, padding: '14px 18px', flexDirection: 'column' }}>
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#175CD3' }}>受け入れられる場合</Text>
+                    <Text style={{ fontSize: 15, color: '#111827', marginTop: 6 }}>
+                        現在の保守方法をお教えいただき、保守の方案を一緒に検討させてください。
+                    </Text>
+                </Box>
+                <Box style={{ flex: 1, background: '#FFFFFF', border: '1px solid #E31B54', borderRadius: 10, padding: '14px 18px', flexDirection: 'column' }}>
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#E31B54' }}>受け入れられない場合</Text>
+                    <Text style={{ fontSize: 15, color: '#111827', marginTop: 6 }}>
+                        QR 経路の検討は、ここで止めることになります。
+                    </Text>
+                </Box>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 40, flexDirection: 'row', alignItems: 'center', borderTop: '1px solid #E5E7EB' }}>
+        <Text style={{ fontSize: 14, color: '#6B7280' }}>LIAJ 診断書 QR 追加確認事項</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>06 / 09</Text>
+    </Box>
+</Slide>

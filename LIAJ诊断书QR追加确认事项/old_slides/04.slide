@@ -1,0 +1,133 @@
+<Slide style={{ width: 1280, height: 720, padding: '20px 64px', flexDirection: 'column', background: '#FFFFFF' }}>
+    <Box style={{ height: 100, flexDirection: 'row', alignItems: 'center', gap: 14, borderBottom: '1px solid #E5E7EB' }}>
+        <Box style={{ width: 6, height: 32, background: '#175CD3' }} />
+        <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#111827' }}>項目が QR の境目で切れる</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>前提 ②</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'column', gap: 18, paddingTop: 22 }}>
+        <Box style={{ height: 126, flexDirection: 'row', alignItems: 'center', gap: 26 }}>
+            <Text style={{ fontSize: 96, fontWeight: 'bold', color: '#E31B54', lineHeight: 1, fontFamily: "'SF Mono', Menlo, monospace" }}>11</Text>
+            <Box style={{ flexDirection: 'column', gap: 8 }}>
+                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#111827' }}>項目が、QR の境目で分断されていた</Text>
+                <Text style={{ fontSize: 16, color: '#475467', lineHeight: 1.6 }}>
+                    6 名分の実測値です。数値だけの項目は気づきにくく、文字の項目は特に危険です。
+                </Text>
+            </Box>
+        </Box>
+
+        <Box style={{ height: 158, flexDirection: 'column', gap: 12 }}>
+            <Box style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <Box style={{ flex: 1, background: '#E8EEF9', borderRadius: 8, padding: '10px 16px' }}>
+                    <Text style={{ fontSize: 12, color: '#6B7280' }}>QR1 の末尾</Text>
+                    <Text style={{ fontSize: 19, color: '#111827', fontFamily: "'SF Mono', Menlo, monospace", marginTop: 4 }}>
+                        …$5$28$<span style={{ color: '#E31B54', fontWeight: 'bold' }}>20</span>
+                    </Text>
+                </Box>
+                <Text style={{ fontSize: 20, color: '#6B7280' }}>＋</Text>
+                <Box style={{ flex: 1, background: '#E8EEF9', borderRadius: 8, padding: '10px 16px' }}>
+                    <Text style={{ fontSize: 12, color: '#6B7280' }}>QR2 の先頭</Text>
+                    <Text style={{ fontSize: 19, color: '#111827', fontFamily: "'SF Mono', Menlo, monospace", marginTop: 4 }}>
+                        <span style={{ color: '#E31B54', fontWeight: 'bold' }}>26</span>$6$11$…
+                    </Text>
+                </Box>
+                <Text style={{ fontSize: 20, color: '#6B7280' }}>→</Text>
+                <Box style={{ width: 210, flexDirection: 'column' }}>
+                    <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#175CD3', fontFamily: "'SF Mono', Menlo, monospace" }}>2026</Text>
+                    <Text style={{ fontSize: 12, color: '#6B7280' }}>3.入院期間①開始_年</Text>
+                </Box>
+            </Box>
+
+            <Box style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <Box style={{ flex: 1, background: '#E8EEF9', borderRadius: 8, padding: '10px 16px' }}>
+                    <Text style={{ fontSize: 12, color: '#6B7280' }}>QR1 の末尾</Text>
+                    <Text style={{ fontSize: 19, color: '#111827', fontFamily: "'SF Mono', Menlo, monospace", marginTop: 4 }}>
+                        …$1$<span style={{ color: '#E31B54', fontWeight: 'bold' }}>便潜</span>
+                    </Text>
+                </Box>
+                <Text style={{ fontSize: 20, color: '#6B7280' }}>＋</Text>
+                <Box style={{ flex: 1, background: '#E8EEF9', borderRadius: 8, padding: '10px 16px' }}>
+                    <Text style={{ fontSize: 12, color: '#6B7280' }}>QR2 の先頭</Text>
+                    <Text style={{ fontSize: 19, color: '#111827', fontFamily: "'SF Mono', Menlo, monospace", marginTop: 4 }}>
+                        <span style={{ color: '#E31B54', fontWeight: 'bold' }}>血陽性</span>$…
+                    </Text>
+                </Box>
+                <Text style={{ fontSize: 20, color: '#6B7280' }}>→</Text>
+                <Box style={{ width: 210, flexDirection: 'column' }}>
+                    <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#175CD3' }}>便潜血陽性</Text>
+                    <Text style={{ fontSize: 12, color: '#6B7280' }}>6.前医 病名</Text>
+                </Box>
+            </Box>
+        </Box>
+
+        <Table
+            style={{ width: '100%', height: 200 }}
+            defaultTextStyle={{ fontSize: 14, textAlign: 'left', color: '#111827' }}
+            defaultCellStyle={{
+                border: {
+                    left: { width: 1, color: '#E5E7EB' },
+                    right: { width: 1, color: '#E5E7EB' },
+                    top: { width: 1, color: '#E5E7EB' },
+                    bottom: { width: 1, color: '#E5E7EB' },
+                },
+                paddingLeft: 12,
+            }}
+            cells={[
+                [
+                    { text: '患者', textStyle: { bold: true, color: '#FFFFFF' }, cellStyle: { background: { color: '#175CD3' } } },
+                    { text: '前の QR の末尾', textStyle: { bold: true, color: '#FFFFFF', textAlign: 'center' }, cellStyle: { background: { color: '#175CD3' } } },
+                    { text: '次の QR の先頭', textStyle: { bold: true, color: '#FFFFFF', textAlign: 'center' }, cellStyle: { background: { color: '#175CD3' } } },
+                    { text: '本来の値', textStyle: { bold: true, color: '#FFFFFF', textAlign: 'center' }, cellStyle: { background: { color: '#175CD3' } } },
+                    { text: '切れていた項目', textStyle: { bold: true, color: '#FFFFFF' }, cellStyle: { background: { color: '#175CD3' } } },
+                ],
+                [
+                    '安達珠美',
+                    { text: '便潜', textStyle: { color: '#E31B54', bold: true, textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" } },
+                    { text: '血陽性', textStyle: { color: '#E31B54', bold: true, textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" } },
+                    { text: '便潜血陽性', textStyle: { textAlign: 'center' } },
+                    '6.前医 病名',
+                ],
+                [
+                    { text: '安達珠美', cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: '20', textStyle: { color: '#E31B54', bold: true, textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: '26', textStyle: { color: '#E31B54', bold: true, textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: '2026', textStyle: { textAlign: 'center' }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: '3.入院期間①開始_年', cellStyle: { background: { color: '#E8EEF9' } } },
+                ],
+                [
+                    '平田よし子',
+                    { text: '不', textStyle: { color: '#E31B54', bold: true, textAlign: 'center' } },
+                    { text: '詳', textStyle: { color: '#E31B54', bold: true, textAlign: 'center' } },
+                    { text: '不詳', textStyle: { textAlign: 'center' } },
+                    '2.ア 傷病発生年月日',
+                ],
+                [
+                    { text: '服部朱理', cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: '8', textStyle: { color: '#E31B54', bold: true, textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: '882', textStyle: { color: '#E31B54', bold: true, textAlign: 'center', fontFamily: "'SF Mono', Menlo, monospace" }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: '8882', textStyle: { textAlign: 'center' }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: '6.手術1 手術コード', cellStyle: { background: { color: '#E8EEF9' } } },
+                ],
+                [
+                    '塚原明夫',
+                    { text: '非浸潤性膀胱が', textStyle: { color: '#E31B54', bold: true, textAlign: 'center' } },
+                    { text: 'ん', textStyle: { color: '#E31B54', bold: true, textAlign: 'center' } },
+                    { text: '非浸潤性膀胱がん', textStyle: { textAlign: 'center' } },
+                    '2.ア 傷病名',
+                ],
+                [
+                    { text: '塚原明夫', cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: 'たかだウロ', textStyle: { color: '#E31B54', bold: true, textAlign: 'center' }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: 'クリニック', textStyle: { color: '#E31B54', bold: true, textAlign: 'center' }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: 'たかだウロクリニック', textStyle: { textAlign: 'center' }, cellStyle: { background: { color: '#E8EEF9' } } },
+                    { text: '9.前医 医療機関名', cellStyle: { background: { color: '#E8EEF9' } } },
+                ],
+            ]}
+        />
+    </Box>
+
+    <Box style={{ height: 40, flexDirection: 'row', alignItems: 'center', borderTop: '1px solid #E5E7EB' }}>
+        <Text style={{ fontSize: 14, color: '#6B7280' }}>LIAJ 診断書 QR 追加確認事項</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>04 / 09</Text>
+    </Box>
+</Slide>

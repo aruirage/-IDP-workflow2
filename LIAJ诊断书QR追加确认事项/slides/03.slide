@@ -1,0 +1,64 @@
+<Slide style={{ width: 1280, height: 720, padding: '20px 64px', flexDirection: 'column', background: '#FFFFFF' }}>
+    <Box style={{ height: 100, flexDirection: 'row', alignItems: 'center', gap: 14, borderBottom: '1px solid #E5E7EB' }}>
+        <Box style={{ width: 6, height: 32, background: '#E31B54' }} />
+        <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#111827' }}>複数 QR の連結順序</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>確認事項 ②</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'column', gap: 20, paddingTop: 22 }}>
+        <Box style={{ height: 330, background: '#E8EEF9', borderRadius: 12, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 18 }}>
+            <Image src="assets/a01-qr-strip.png" style={{ width: 880, height: 185 }} />
+            <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Box style={{ background: '#FFFFFF', borderRadius: 6, padding: '8px 14px' }}>
+                    <Text style={{ fontSize: 14, color: '#111827' }}>ページ上の全 QR を認識</Text>
+                </Box>
+                <Text style={{ fontSize: 15, color: '#6B7280' }}>→</Text>
+                <Box style={{ background: '#FFFFFF', borderRadius: 6, padding: '8px 14px' }}>
+                    <Text style={{ fontSize: 14, color: '#111827' }}>紙面の位置順に連結</Text>
+                </Box>
+                <Text style={{ fontSize: 15, color: '#6B7280' }}>→</Text>
+                <Box style={{ background: '#FFFFFF', borderRadius: 6, padding: '8px 14px' }}>
+                    <Text style={{ fontSize: 14, color: '#111827' }}>1 本の文字列</Text>
+                </Box>
+                <Text style={{ fontSize: 15, color: '#6B7280' }}>→</Text>
+                <Box style={{ background: '#175CD3', borderRadius: 6, padding: '8px 14px' }}>
+                    <Text style={{ fontSize: 14, color: '#FFFFFF' }}>$ で区切って項目順に値を書く</Text>
+                </Box>
+            </Box>
+        </Box>
+
+        <Box style={{ height: 158, flexDirection: 'row', alignItems: 'center', gap: 24, background: '#E8EEF9', borderRadius: 10, padding: '0 26px' }}>
+            <Box style={{ width: 372, flexDirection: 'column' }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#175CD3' }}>当方の現在の前提</Text>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#111827', marginTop: 8 }}>
+                    紙面の位置順に連結（左 → 右）
+                </Text>
+            </Box>
+            <Box style={{ flex: 1, flexDirection: 'row', gap: 10 }}>
+                <Box style={{ width: 62, height: 56, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' }}>1</Text>
+                </Box>
+                <Box style={{ width: 62, height: 56, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' }}>2</Text>
+                </Box>
+                <Box style={{ width: 62, height: 56, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' }}>3</Text>
+                </Box>
+                <Box style={{ width: 62, height: 56, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' }}>4</Text>
+                </Box>
+                <Box style={{ width: 62, height: 56, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' }}>5</Text>
+                </Box>
+                <Box style={{ width: 62, height: 56, background: '#175CD3', borderRadius: 6, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' }}>6</Text>
+                </Box>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 40, flexDirection: 'row', alignItems: 'center', borderTop: '1px solid #E5E7EB' }}>
+        <Text style={{ fontSize: 14, color: '#6B7280' }}>LIAJ 診断書 QR 追加確認事項</Text>
+        <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 'auto' }}>03 / 03</Text>
+    </Box>
+</Slide>
