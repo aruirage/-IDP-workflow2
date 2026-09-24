@@ -1419,7 +1419,6 @@ const appOptions = {
     const outputSelectedMasterRuleId = ref('');
     const fixedDocSetupStep = ref(2);
     const fixedDocReadTab = ref('text');
-    const fixedDocReadMode = ref('ocr');
     const fixedDocRuleTab = ref('text');
     const fixedDocTestTab = ref('text');
     const exportPreviewExpanded = reactive({});
@@ -1592,7 +1591,6 @@ const appOptions = {
     }
     function onFixedDocPreviewPointerDown(event) {
       if (!fixedDocPreviewImage.value) return;
-      if (event.target.closest('.fixed-doc-preview-hotspot')) return;
       fixedDocPreviewPanning.value = true;
       fixedDocPreviewPanStart.x = event.clientX;
       fixedDocPreviewPanStart.y = event.clientY;
@@ -1611,20 +1609,6 @@ const appOptions = {
       event.currentTarget.releasePointerCapture?.(event.pointerId);
     }
     const fixedDocActiveQrSourceId = ref('');
-    const fixedDocPreviewShowQrHotspots = computed(() => (
-      fixedDocSetupStep.value === 2
-      && fixedDocReadTab.value === 'text'
-      && fixedDocReadMode.value === 'qr'
-      && !!fixedDocPreviewImage.value
-      && fixedDocHasStep1Template.value
-      && !fixedDocQrScanActive.value
-    ));
-    const fixedDocPreviewQrHotspots = computed(() => {
-      if (!fixedDocPreviewShowQrHotspots.value || !fixedDocActiveQrSourceId.value) return [];
-      const src = fixedDocQrSourceCatalog.find((item) => item.id === fixedDocActiveQrSourceId.value);
-      return src?.rect ? [src] : [];
-    });
-    const fixedDocCanAddQrSource = computed(() => fixedDocQrIgnoredDetections.length > 0);
     function focusFixedDocQrSource(sourceId) {
       if (!sourceId) return;
       fixedDocActiveQrSourceId.value = sourceId;
@@ -2281,11 +2265,18 @@ const appOptions = {
       { id: 'QR4', label: '診断（英語等）', enabled: true },
       { id: 'QR5', label: '予備・続き', enabled: true },
       { id: 'QR6', label: '医療機関・発行', enabled: true },
-      { id: 'QR7', label: '底部 QR5列', enabled: true },
     ];
     const fixedDocQrSourceCatalog = reactive([]);
     const fixedDocQrIgnoredDetections = reactive([]);
     const fixedDocQrScanActive = ref(false);
+    /**
+     * スキャン済みの枠 ID。実機のスキャナは枠ごとに結果を返すので、試作でも
+     * 1 枠ずつ順に確定させる。ここに入っていない枠は「まだ結果が無い」= スキャン中として描く。
+     * 全部まとめて出すと、スイッチを入れた瞬間に 6 枠そろって見えてしまう。
+     */
+    const fixedDocQrScannedIds = reactive(new Set());
+    /** 1 枠あたりのスキャン所要時間（ms）。枠数ぶん足すと数秒の読取待ちになる。 */
+    const FIXED_DOC_QR_SCAN_STEP_MS = 260;
     const fixedDocQrSuppressAutoSourceAssignment = ref(false);
     let fixedDocQrScanRunToken = 0;
     const FIXED_DOC_QR_SAMPLE_PAYLOADS = {
@@ -2296,6 +2287,179 @@ const appOptions = {
       QR5: '腸腫瘍$$$1$$$$$$$$$$$$$$$$$$$$1$$$$$$$$$$$$$$$$$$$$1$$$$$$$$$$$$$$$$$$$$1$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$1$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$',
       QR6: '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$1$$$$2026$6$25$241-0002$神奈川県横浜市旭区上白根2-65-1$医療法人社団恵生会　上白根病院$外科',
     };
+    // A01 様式の項目名（結合索引順）。liaj045_liaj001_qr_field_list.xlsx より生成。
+    const FIXED_DOC_QR_FIELD_NAMES = [
+      '帳票コード', '帳票枝番', 'テンプレートID', '患者氏名', '性別', 'カルテ番号',
+      '生年月日_年', '生年月日_月', '生年月日_日', '傷病名', 'ICD10コード', '2.ア 良性フラグ',
+      '2.ア 悪性フラグ', '2.ア 区分フラグ（予備）', '2.ア 原発フラグ', '2.ア 再発フラグ', '2.ア 転移フラグ', '2.ア 傷病発生年月日_年',
+      '2.ア 傷病発生年月日_月', '2.ア 傷病発生年月日_日', '2.ア 医師推定フラグ', '2.ア 患者申告フラグ', '2.イ アの原因', '2.イ 傷病発生年月日_年',
+      '2.イ 傷病発生年月日_月', '2.イ 傷病発生年月日_日', '2.イ 医師推定フラグ', '2.イ 患者申告フラグ', '3.初診日_年', '3.初診日_月',
+      '3.初診日_日', '3.初診から終診まで_年', '3.初診から終診まで_月', '3.初診から終診まで_日', '3.終診フラグ', '3.加療中フラグ',
+      '3.入院を指示した日_年', '3.入院を指示した日_月', '3.入院を指示した日_日', '3.入院期間①開始_年', '3.入院期間①開始_月', '3.入院期間①開始_日',
+      '3.入院期間①終了_年', '3.入院期間①終了_月', '3.入院期間①終了_日', '3.入院期間①退院フラグ', '3.入院期間①転科フラグ', '3.入院期間①入院中フラグ',
+      '3.入院期間②開始_年', '3.入院期間②開始_月', '3.入院期間②開始_日', '3.入院期間②終了_年', '3.入院期間②終了_月', '3.入院期間②終了_日',
+      '3.入院期間②退院フラグ', '3.入院期間②転科フラグ', '3.入院期間②入院中フラグ', '3.入院その他 区分フラグ①', '3.入院その他 区分フラグ②', '3.入院その他 有フラグ',
+      '3.妊娠・分娩 健康保険適用期間 開始_年', '3.妊娠・分娩 健康保険適用期間 開始_月', '3.妊娠・分娩 健康保険適用期間 開始_日', '3.妊娠・分娩 健康保険適用期間 終了_年', '3.妊娠・分娩 健康保険適用期間 終了_月', '3.妊娠・分娩 健康保険適用期間 終了_日',
+      '3.分娩日_年', '3.分娩日_月', '3.分娩日_日', '3.入院期間中の差額ベッド代', '4.合併症 病名', '4.合併症 治療有無',
+      '4.合併症 治療期間 開始_年', '4.合併症 治療期間 開始_月', '4.合併症 治療期間 開始_日', '4.合併症 治療期間 終了_年', '4.合併症 治療期間 終了_月', '4.合併症 治療期間 終了_日',
+      '4.合併症 治療開始 開始_年', '4.合併症 治療開始 開始_月', '4.合併症 治療開始 開始_日', '4.合併症 治療開始 終了_年', '4.合併症 治療開始 終了_月', '4.合併症 治療開始 終了_日',
+      '4.合併症 傷病発生年月日_年', '4.合併症 傷病発生年月日_月', '4.合併症 傷病発生年月日_日', '4.合併症 医師推定フラグ', '4.合併症 患者申告フラグ', '5.既往症 有フラグ',
+      '5.既往症 無フラグ', '5.既往症 病名', '5.既往症 医療機関名', '5.既往症 治療期間 開始_年', '5.既往症 治療期間 開始_月', '5.既往症 治療期間 開始_日',
+      '5.既往症 治療期間 終了_年', '5.既往症 治療期間 終了_月', '5.既往症 治療期間 終了_日', '6.前医または紹介医 有フラグ', '6.前医または紹介医 無フラグ', '6.前医 病名',
+      '6.前医 医療機関名', '6.前医 病理組織診断 有フラグ', '6.前医 病理組織診断 無フラグ', '6.前医 診断日_年', '6.前医 診断日_月', '6.前医 診断日_日',
+      '7.手術1 手術名', '7.手術1 術後病理組織検査 有フラグ', '7.手術1 術後病理組織検査 無フラグ', '7.手術1 手術コード（Kコード）', '7.手術1 手術日_年', '7.手術1 手術日_月',
+      '7.手術1 手術日_日', '7.手術1 診断結果', '7.手術2 手術名', '7.手術2 術後病理組織検査 有フラグ', '7.手術2 術後病理組織検査 無フラグ', '7.手術2 手術コード（Kコード）',
+      '7.手術2 手術日_年', '7.手術2 手術日_月', '7.手術2 手術日_日', '7.手術2 診断結果', '7.手術 種類_1.開頭術フラグ', '7.手術 種類_2.穿頭術フラグ',
+      '7.手術 種類_3.開胸術・胸腔鏡下手術フラグ', '7.手術 種類_4.開腹術・腹腔鏡下手術フラグ', '7.手術 種類_5.経皮的フラグ', '7.手術 種類_6.経尿道的フラグ', '7.手術 種類_7.経腟的フラグ', '7.手術 種類_8.アイバースコープ・バスケットカテーテルフラグ',
+      '7.手術 種類_9.レーザー手術フラグ', '7.手術 種類_10.その他フラグ', '7.手術 種類_11.関節鏡下手術フラグ', '7.手術 種類_12.内視鏡下手術フラグ', '7.手術 種類_13.体外衝撃波フラグ', '7.手術 種類_14.熱凝固フラグ',
+      '7.手術 種類_15.冷凍凝固フラグ', '7.手術 種類_16.血管内治療フラグ', '7.手術 種類_17.その他の手術フラグ', '7.手術 内容_筋骨関係の手術_観血', '7.手術 内容_筋骨関係の手術_非観血', '7.手術 内容_筋・腱・靭帯に_及ぶ',
+      '7.手術 内容_筋・腱・靭帯に_及ばない', '7.手術 内容_軟部腫瘍・皮膚腫瘍_及ぶ', '7.手術 内容_軟部腫瘍・皮膚腫瘍_及ばない', '7.手術 内容_手指・足指_及ぶ', '7.手術 内容_手指・足指_及ばない', '7.手術 内容_植皮術・皮弁術_25cm²以上',
+      '7.手術 内容_植皮術・皮弁術_25cm²未満', '7.手術 内容_口腔内手術_削っている', '7.手術 内容_口腔内手術_削っていない', '7.手術 内容_骨移植_採骨部位', '8.放射線照射 種類_分割照射フラグ', '8.放射線照射 種類_定位照射フラグ',
+      '8.放射線照射 種類_温熱療法フラグ', '8.放射線照射 種類_小線源治療フラグ', '8.放射線照射 種類_ヨード内用療法フラグ', '8.放射線照射 種類_Sr89フラグ', '8.放射線照射 種類_その他フラグ', '8.放射線照射 部位',
+      '8.放射線照射 Mコード', '8.放射線照射 総線量', '8.放射線照射 治療期間 開始_年', '8.放射線照射 治療期間 開始_月', '8.放射線照射 治療期間 開始_日', '8.放射線照射 治療期間 終了_年',
+      '8.放射線照射 治療期間 終了_月', '8.放射線照射 治療期間 終了_日', '8.放射線総照射年月1_年', '8.放射線総照射年月1_月', '8.放射線総照射年月2_年', '8.放射線総照射年月2_月',
+      '8.放射線総照射年月3_年', '8.放射線総照射年月3_月', '8.放射線総照射年月4_年', '8.放射線総照射年月4_月', '8.放射線総照射年月5_年', '8.放射線総照射年月5_月',
+      '8.放射線総照射年月6_年', '8.放射線総照射年月6_月', '9.子宮頸部異形成 CIN Ⅰフラグ', '9.子宮頸部異形成 CIN Ⅱフラグ', '9.子宮頸部異形成 CIN Ⅲフラグ', '9.子宮頸部異形成 診断確定日_年',
+      '9.子宮頸部異形成 診断確定日_月', '9.子宮頸部異形成 診断確定日_日', '9.子宮頸部異形成 予備1', '9.子宮頸部異形成 予備2', '10.病理組織学的検査 無フラグ', '10.病理組織学的検査 有フラグ',
+      '10.病理組織診断名', '10.診断確定日_年', '10.診断確定日_月', '10.診断確定日_日', '10.該当するもの1', '10.該当するもの2',
+      '10.該当するもの3', '10.該当するもの4', '10.該当するもの5', '10.予備', '10.診断日_年', '10.診断日_月',
+      '10.診断日_日', '10.診断結果', '10.種類_上皮内フラグ', '10.種類_浸潤性フラグ', '10.TNM分類_T', '10.TNM分類_N',
+      '10.TNM分類_M', '10.大腸癌の深達度①', '10.大腸癌の深達度②', '10.悪性と告知_無フラグ', '10.悪性と告知_有フラグ', '10.悪性と告知した相手_本人',
+      '10.悪性と告知した相手_親族者', '10.悪性と告知した相手_その他', '10.悪性と告知した相手_その他記述', '10.本人に告げた病名', '11.境界悪性 国際疾病分類・腫瘍学のコード', '11.境界悪性 ICD10コード',
+      '12.①抗悪性腫瘍剤（健康保険対象） 無フラグ', '12.①抗悪性腫瘍剤（健康保険対象） 有フラグ', '12.①抗悪性腫瘍剤（健康保険対象） 治療期間 開始_年', '12.①抗悪性腫瘍剤（健康保険対象） 治療期間 開始_月', '12.①抗悪性腫瘍剤（健康保険対象） 治療期間 開始_日', '12.①抗悪性腫瘍剤（健康保険対象） 治療期間 終了_年',
+      '12.①抗悪性腫瘍剤（健康保険対象） 治療期間 終了_月', '12.①抗悪性腫瘍剤（健康保険対象） 治療期間 終了_日', '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月1_年', '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月1_月', '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月2_年', '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月2_月',
+      '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月3_年', '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月3_月', '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月4_年', '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月4_月', '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月5_年', '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月5_月',
+      '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月6_年', '12.①抗悪性腫瘍剤（健康保険対象） 処方・投与年月6_月', '12.②ホルモン療法（健康保険対象） 無フラグ', '12.②ホルモン療法（健康保険対象） 有フラグ', '12.②ホルモン療法（健康保険対象） 治療期間 開始_年', '12.②ホルモン療法（健康保険対象） 治療期間 開始_月',
+      '12.②ホルモン療法（健康保険対象） 治療期間 開始_日', '12.②ホルモン療法（健康保険対象） 治療期間 終了_年', '12.②ホルモン療法（健康保険対象） 治療期間 終了_月', '12.②ホルモン療法（健康保険対象） 治療期間 終了_日', '12.②ホルモン療法（健康保険対象） 処方・投与年月1_年', '12.②ホルモン療法（健康保険対象） 処方・投与年月1_月',
+      '12.②ホルモン療法（健康保険対象） 処方・投与年月2_年', '12.②ホルモン療法（健康保険対象） 処方・投与年月2_月', '12.②ホルモン療法（健康保険対象） 処方・投与年月3_年', '12.②ホルモン療法（健康保険対象） 処方・投与年月3_月', '12.②ホルモン療法（健康保険対象） 処方・投与年月4_年', '12.②ホルモン療法（健康保険対象） 処方・投与年月4_月',
+      '12.②ホルモン療法（健康保険対象） 処方・投与年月5_年', '12.②ホルモン療法（健康保険対象） 処方・投与年月5_月', '12.②ホルモン療法（健康保険対象） 処方・投与年月6_年', '12.②ホルモン療法（健康保険対象） 処方・投与年月6_月', '12.③抗悪性腫瘍剤（自由診療） 無フラグ', '12.③抗悪性腫瘍剤（自由診療） 有フラグ',
+      '12.③抗悪性腫瘍剤（自由診療） 治療期間 開始_年', '12.③抗悪性腫瘍剤（自由診療） 治療期間 開始_月', '12.③抗悪性腫瘍剤（自由診療） 治療期間 開始_日', '12.③抗悪性腫瘍剤（自由診療） 治療期間 終了_年', '12.③抗悪性腫瘍剤（自由診療） 治療期間 終了_月', '12.③抗悪性腫瘍剤（自由診療） 治療期間 終了_日',
+      '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月1_年', '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月1_月', '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月2_年', '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月2_月', '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月3_年', '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月3_月',
+      '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月4_年', '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月4_月', '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月5_年', '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月5_月', '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月6_年', '12.③抗悪性腫瘍剤（自由診療） 処方・投与年月6_月',
+      '12.④ホルモン療法（自由診療） 無フラグ', '12.④ホルモン療法（自由診療） 有フラグ', '12.④ホルモン療法（自由診療） 治療期間 開始_年', '12.④ホルモン療法（自由診療） 治療期間 開始_月', '12.④ホルモン療法（自由診療） 治療期間 開始_日', '12.④ホルモン療法（自由診療） 治療期間 終了_年',
+      '12.④ホルモン療法（自由診療） 治療期間 終了_月', '12.④ホルモン療法（自由診療） 治療期間 終了_日', '12.④ホルモン療法（自由診療） 処方・投与年月1_年', '12.④ホルモン療法（自由診療） 処方・投与年月1_月', '12.④ホルモン療法（自由診療） 処方・投与年月2_年', '12.④ホルモン療法（自由診療） 処方・投与年月2_月',
+      '12.④ホルモン療法（自由診療） 処方・投与年月3_年', '12.④ホルモン療法（自由診療） 処方・投与年月3_月', '12.④ホルモン療法（自由診療） 処方・投与年月4_年', '12.④ホルモン療法（自由診療） 処方・投与年月4_月', '12.④ホルモン療法（自由診療） 処方・投与年月5_年', '12.④ホルモン療法（自由診療） 処方・投与年月5_月',
+      '12.④ホルモン療法（自由診療） 処方・投与年月6_年', '12.④ホルモン療法（自由診療） 処方・投与年月6_月', '12.⑤オピオイド鎮痛薬 健康保険適用フラグ', '12.⑤オピオイド鎮痛薬 健康保険適用外フラグ', '12.⑤オピオイド鎮痛薬 薬剤名', '12.⑤オピオイド鎮痛薬 処方・投与年月1_年',
+      '12.⑤オピオイド鎮痛薬 処方・投与年月1_月', '12.⑤オピオイド鎮痛薬 処方・投与年月2_年', '12.⑤オピオイド鎮痛薬 処方・投与年月2_月', '12.⑤オピオイド鎮痛薬 処方・投与年月3_年', '12.⑤オピオイド鎮痛薬 処方・投与年月3_月', '12.⑤オピオイド鎮痛薬 処方・投与年月4_年',
+      '12.⑤オピオイド鎮痛薬 処方・投与年月4_月', '12.⑤オピオイド鎮痛薬 処方・投与年月5_年', '12.⑤オピオイド鎮痛薬 処方・投与年月5_月', '12.⑤オピオイド鎮痛薬 処方・投与年月6_年', '12.⑤オピオイド鎮痛薬 処方・投与年月6_月', '12.⑥緩和ケア 無フラグ',
+      '12.⑥緩和ケア 有フラグ', '12.⑥緩和ケア 病棟入院料算定フラグ', '12.⑥緩和ケア 診療加算算定フラグ', '12.⑥緩和ケア 入院期間 開始_年', '12.⑥緩和ケア 入院期間 開始_月', '12.⑥緩和ケア 入院期間 開始_日',
+      '12.⑥緩和ケア 入院期間 終了_年', '12.⑥緩和ケア 入院期間 終了_月', '12.⑥緩和ケア 入院期間 終了_日', '13.先進医療 治療の種類', '13.先進医療 治療の期間 開始_年', '13.先進医療 治療の期間 開始_月',
+      '13.先進医療 治療の期間 開始_日', '13.先進医療 治療の期間 終了_年', '13.先進医療 治療の期間 終了_月', '13.先進医療 治療の期間 終了_日', '13.先進医療 技術料', '14.自宅療養指示期間 開始_年',
+      '14.自宅療養指示期間 開始_月', '14.自宅療養指示期間 開始_日', '14.自宅療養指示期間 終了_年', '14.自宅療養指示期間 終了_月', '14.自宅療養指示期間 終了_日', '15.通院治療 枠1_年',
+      '15.通院治療 枠1_月', '15.通院治療 枠1_1日', '15.通院治療 枠1_2日', '15.通院治療 枠1_3日', '15.通院治療 枠1_4日', '15.通院治療 枠1_5日',
+      '15.通院治療 枠1_6日', '15.通院治療 枠1_7日', '15.通院治療 枠1_8日', '15.通院治療 枠1_9日', '15.通院治療 枠1_10日', '15.通院治療 枠1_合計日数',
+      '15.通院治療 枠2_年', '15.通院治療 枠2_月', '15.通院治療 枠2_1日', '15.通院治療 枠2_2日', '15.通院治療 枠2_3日', '15.通院治療 枠2_4日',
+      '15.通院治療 枠2_5日', '15.通院治療 枠2_6日', '15.通院治療 枠2_7日', '15.通院治療 枠2_8日', '15.通院治療 枠2_9日', '15.通院治療 枠2_10日',
+      '15.通院治療 枠2_合計日数', '15.通院治療 枠3_年', '15.通院治療 枠3_月', '15.通院治療 枠3_1日', '15.通院治療 枠3_2日', '15.通院治療 枠3_3日',
+      '15.通院治療 枠3_4日', '15.通院治療 枠3_5日', '15.通院治療 枠3_6日', '15.通院治療 枠3_7日', '15.通院治療 枠3_8日', '15.通院治療 枠3_9日',
+      '15.通院治療 枠3_10日', '15.通院治療 枠3_合計日数', '15.通院治療 枠4_年', '15.通院治療 枠4_月', '15.通院治療 枠4_1日', '15.通院治療 枠4_2日',
+      '15.通院治療 枠4_3日', '15.通院治療 枠4_4日', '15.通院治療 枠4_5日', '15.通院治療 枠4_6日', '15.通院治療 枠4_7日', '15.通院治療 枠4_8日',
+      '15.通院治療 枠4_9日', '15.通院治療 枠4_10日', '15.通院治療 枠4_合計日数', '15.通院治療 上記以外の通院日', '16.転帰 治癒フラグ', '16.転帰 軽快フラグ',
+      '16.転帰 継続フラグ', '16.転帰 中止フラグ', '16.転帰 転医フラグ', '16.転帰 転医先', '発行日_年', '発行日_月',
+      '発行日_日', '郵便番号', '所在地', '医療機関名', '診療科',
+    ];
+
+    /**
+     * QR 連結読み取りの区切り文字。この 2 文字で固定（帳票側の仕様）。 */
+    const FIXED_DOC_QR_DELIMITERS = ['$', '^'];
+    const FIXED_DOC_QR_SPLIT_PATTERN = new RegExp(`[${FIXED_DOC_QR_DELIMITERS.map((d) => `\\${d}`).join('')}]`);
+    /**
+     * QR 連結読み取りの唯一の経路。
+     * 1. データ QR（payload に '$' を含む）だけを、QR 番号順に連結して 1 本の文字列にする
+     * 2. 区切り文字（$ と ^）で扁平に分割する
+     * 3. 分割結果を項目順（結合索引順）にそのまま写像する
+     * ID 類 QR（'$' を含まない）は連結対象から外す。
+     */
+    /**
+     * QR 読取の ON/OFF。QR を持たない帳票や、QR を使わない運用では切る。
+     * OFF のときは 1 枠も連結しないので、値は OCR 側だけで埋まる（暗黙のフォールバックではなく明示的な選択）。
+     */
+    const fixedDocQrReadEnabled = ref(false);
+    /** 帳票側で決まっている QR 枠。未検出でも枠は一覧に残す（欠落を可視化するため）。 */
+    const fixedDocQrExpectedSlots = computed(() => Object.keys(FIXED_DOC_QR_SOURCE_RECTS)
+      .sort((a, b) => Number(String(a).replace(/\D/g, '')) - Number(String(b).replace(/\D/g, '')))
+      .map((id) => {
+        const def = FIXED_DOC_QR_SOURCE_DEFAULTS.find((item) => item.id === id) || { id, label: id };
+        return { id, label: def.label, rect: { ...FIXED_DOC_QR_SOURCE_RECTS[id] } };
+      }));
+    /** 検出できなかった QR。実機ではスキャナが埋める。試作では既定で空（= 全枠検出）。 */
+    const fixedDocQrUndetectedIds = reactive(new Set());
+    /** 検出済みかつデータ QR の payload だけを、QR 番号順に。 */
+    const fixedDocQrDetectedSegments = computed(() => {
+      if (!fixedDocQrReadEnabled.value) return [];
+      return fixedDocQrExpectedSlots.value
+        .filter((slot) => !fixedDocQrUndetectedIds.has(slot.id))
+        .map((slot) => ({ ...slot, payload: FIXED_DOC_QR_SAMPLE_PAYLOADS[slot.id] || '' }))
+        .filter((slot) => slot.payload.includes('$'));
+    });
+    const fixedDocQrDataSegments = computed(() => fixedDocQrDetectedSegments.value.map((slot) => slot.payload));
+    const fixedDocQrConcatenatedPayload = computed(() => fixedDocQrDataSegments.value.join(''));
+    const fixedDocQrValues = computed(() => {
+      const payload = fixedDocQrConcatenatedPayload.value;
+      return payload ? payload.split(FIXED_DOC_QR_SPLIT_PATTERN) : [];
+    });
+    /**
+     * 読取結果バー用。期待枠を全部並べ、未検出の枠も detected:false で残す。
+     * 「検出できた分だけ描く」と欠落が見えなくなるため、必ず全枠を描く。
+     * rect はプレビューの重ね表示（fixedDocPreviewQrSlots）で使う。
+     */
+    const fixedDocQrReadSlots = computed(() => fixedDocQrExpectedSlots.value.map((slot) => ({
+      id: slot.id,
+      label: slot.label,
+      rect: { ...slot.rect },
+      scanned: fixedDocQrScannedIds.has(slot.id),
+      detected: fixedDocQrDetectedSegments.value.some((segment) => segment.id === slot.id),
+    })));
+    /**
+     * 読取の完全性。ゲートにするのは「QR から連結して書き込む値の数 === 項目総数」のみ。
+     * 検出枠数（6/6）はゲートにしない —— 欠けた枠は連結値のトークン数に直結するため、
+     * 値数が項目総数に満たなければ自ずと不完全になる（赤枠でどの QR が未検出か診断表示する）。
+     */
+    const fixedDocQrReadStatus = computed(() => {
+      const enabled = fixedDocQrReadEnabled.value;
+      const expected = fixedDocQrExpectedSlots.value.length;
+      const detected = fixedDocQrDetectedSegments.value.length;
+      // 門は「帳票の項目定義数」と比べる。QR は値を項目順に 1 つずつ書くので、
+      // 項目定義の数と QR 仕様の値数は一致している前提（設定側で揃える。A01 は 407）。
+      // Step2 の項目表はデモ用に一部だけ描いているので、ここでは定義数を使う。
+      const expectedValues = FIXED_DOC_QR_FIELD_NAMES.length;
+      const valueCount = fixedDocQrValues.value.length;
+      const complete = valueCount === expectedValues;
+      return {
+        enabled,
+        expected,
+        detected,
+        expectedValues,
+        valueCount,
+        delta: valueCount - expectedValues,
+        complete,
+        // 枠が欠けているか。値数が合わない原因がスキャン側か、項目数側かの切り分けに使う。
+        slotsMissing: enabled && detected < expected,
+        ok: !enabled || complete,
+      };
+    });
+    /** プレビューに重ねる QR 枠。Step2 のテキスト読取かつ QR 読取が有効なときだけ表示する。 */
+    const fixedDocPreviewQrSlots = computed(() => {
+      if (!fixedDocQrReadEnabled.value) return [];
+      if (fixedDocSetupStep.value !== 2) return [];
+      if (fixedDocReadTab.value !== 'text') return [];
+      if (!fixedDocPreviewImage.value) return [];
+      // スキャン中はまだ確定していない枠を重ねない（枠が出る順番を条と合わせる）。
+      return fixedDocQrReadSlots.value.filter((slot) => slot.scanned);
+    });
+    /** 項目名（結合索引順）と分割値を 1 対 1 で対応させたもの。順序がそのまま通番になる。 */
+    const fixedDocQrFieldMappings = computed(() => FIXED_DOC_QR_FIELD_NAMES.map((name, index) => ({
+      no: index + 1,
+      name,
+      value: fixedDocQrValues.value[index] ?? '',
+    })));
+    const fixedDocQrValueByName = computed(() => {
+      const map = new Map();
+      fixedDocQrFieldMappings.value.forEach((item) => {
+        if (!map.has(item.name)) map.set(item.name, item.value);
+      });
+      return map;
+    });
     const FIXED_DOC_QR_FIELD_PRESET = {
       患者氏名: { qrSourceId: 'QR1', fetchIndex: 2 },
       被保険者氏名: { qrSourceId: 'QR1', fetchIndex: 2 },
@@ -2378,19 +2542,12 @@ const appOptions = {
         isEmpty: part === '' || part === token,
       }));
     }
+    /** 連結 → 扁平分割 → 項目順写像 の結果から、項目名で値を引く */
     function getFixedDocQrFieldPreviewValue(fieldRule = {}) {
-      const config = resolveFixedDocQrFieldConfig(fieldRule);
-      if (!config) return '';
-      const payload = getFixedDocQrSamplePayload(config.qrSourceId);
-      if (isFixedDocQrPlainExtractMethod(config.extractMethod)) {
-        return payload || '';
-      }
-      const parts = splitFixedDocQrPreserveEmpty(payload, config.delimiter);
-      const fetchIndex = Number.isFinite(Number(fieldRule.fetchIndex)) ? Number(fieldRule.fetchIndex) : 0;
-      const picked = parts[fetchIndex];
-      if (picked == null) return '';
-      if (picked === '' || picked === config.emptyToken) return '';
-      return picked;
+      const name = fieldRule.name || '';
+      if (!name) return '';
+      const value = fixedDocQrValueByName.value.get(name);
+      return value == null ? '' : value;
     }
     function getFixedDocQrSourceFieldRows(sourceId) {
       return fixedDocTextRows.value.filter((row) => {
@@ -2438,23 +2595,6 @@ const appOptions = {
         delete fixedDocFieldRules[fieldId].fetchIndex;
       });
       fixedDocQrFetchIndexBootstrapped = false;
-    }
-    function ensureFixedDocQrSourceAssignments() {
-      if (fixedDocReadMode.value !== 'qr' || fixedDocQrSuppressAutoSourceAssignment.value) return;
-      ensureFixedDocFieldRules();
-      fixedDocTextRows.value.forEach((row) => {
-        if (fixedDocFieldRules[row.fieldId]?.qrSourceId) return;
-        const qrSourceId = getDefaultFixedDocQrSourceId(row.name);
-        setFixedDocFieldRule(row.fieldId, {
-          qrSourceId,
-          sourceQr: qrSourceId,
-          qrExtractMethod: FIXED_DOC_QR_EXTRACT_SPLIT,
-          qrDelimiter: '$',
-        });
-      });
-      if (!fixedDocQrFetchIndexBootstrapped) {
-        bootstrapFixedDocQrFetchIndexOrder();
-      }
     }
     let fixedDocQrFetchIndexBootstrapped = false;
     function resequenceFixedDocQrSourceFetchIndexes(sourceId) {
@@ -3118,10 +3258,6 @@ const appOptions = {
       const label = fixedDocPreviewTitle.value || '';
       return label.includes('診断書');
     }
-    const fixedDocShowQrReadMode = computed(() => fixedDocReadTab.value === 'text' && fixedDocReadMode.value === 'qr');
-    const fixedDocShowQrEffectPanel = computed(() => (
-      isFixedDocQrCapableDocType() && fixedDocHasQrMapping.value
-    ));
     const fixedDocHasStep1Template = computed(() => !!fixedDocPreviewImage.value);
     function ensureFixedDocRuleSelection() {
       getFixedDocFieldIds().forEach((fieldId) => {
@@ -3424,15 +3560,6 @@ const appOptions = {
       label: slot.id,
     })));
     const fixedDocOcrProcessRuleOptions = computed(() => fixedDocProcessRuleOptions);
-    const fixedDocQrReadRows = computed(() => {
-      if (fixedDocReadMode.value !== 'qr') return [];
-      return fixedDocTextRows.value.map((row) => ({
-        ...row,
-        ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)),
-      }));
-    });
-    const fixedDocHasQrMapping = computed(() => fixedDocReadMode.value === 'qr');
-    const fixedDocHasQrSourceCatalog = computed(() => fixedDocQrSourceCatalog.length > 0);
     const fixedDocHasConfiguredFieldQrMapping = computed(() => {
       ensureFixedDocFieldRules();
       return fixedDocTextRows.value.some((row) => !!fixedDocFieldRules[row.fieldId]?.qrSourceId);
@@ -3467,7 +3594,7 @@ const appOptions = {
           .filter(Boolean),
       );
     }
-    function applyFixedDocQrSourcesFromTemplate(options = {}) {
+    function applyFixedDocQrSourcesFromTemplate() {
       const detections = listFixedDocQrTemplateDetections();
       const excludedKeys = getFixedDocQrExcludedSourceKeys();
       const scanKeys = new Set(detections.map((detection) => detection.sourceKey));
@@ -3503,9 +3630,6 @@ const appOptions = {
         });
       });
       reindexFixedDocQrSources();
-      if (!options.skipQrSourceAssignments) {
-        ensureFixedDocQrSourceAssignments();
-      }
       return true;
     }
     function waitFixedDocQrScan(ms) {
@@ -3531,7 +3655,7 @@ const appOptions = {
       fixedDocActiveQrSourceId.value = '';
       await waitFixedDocQrScan(900);
       if (runToken !== fixedDocQrScanRunToken) return false;
-      applyFixedDocQrSourcesFromTemplate({ skipQrSourceAssignments: !!options.clearFieldMappings });
+      applyFixedDocQrSourcesFromTemplate();
       fixedDocQrScanActive.value = false;
       if (!options.silent) {
         ElementPlus.ElMessage.success('読取成功');
@@ -3540,6 +3664,61 @@ const appOptions = {
     }
     function rescanFixedDocQrSourcesFromTemplate(options = {}) {
       return runFixedDocQrSourcesScan(options);
+    }
+    /**
+     * QR スキャン。実機ではスキャナが枠ごとの検出可否を返す。試作ではサンプル payload の有無で代用する。
+     * 検出できなかった枠は fixedDocQrUndetectedIds に入れて、一覧に残したまま赤く表示する。
+     * 「1 枠でも欠けたらスキャン品質の問題」なので、欠落は再アップロードでの再スキャンを促す。
+     */
+    async function runFixedDocQrScan(options = {}) {
+      if (fixedDocQrScanActive.value) return false;
+      fixedDocQrScanActive.value = true;
+      fixedDocQrScannedIds.clear();
+      try {
+        const slots = fixedDocQrExpectedSlots.value;
+        const undetected = slots
+          .filter((slot) => !String(FIXED_DOC_QR_SAMPLE_PAYLOADS[slot.id] || '').includes('$'))
+          .map((slot) => slot.id);
+        fixedDocQrUndetectedIds.clear();
+        undetected.forEach((id) => fixedDocQrUndetectedIds.add(id));
+        // 枠ごとに結果を確定させる。読み取りには時間がかかるので、条の枠は左から順に出る。
+        for (const slot of slots) {
+          await waitFixedDocQrScan(FIXED_DOC_QR_SCAN_STEP_MS);
+          // 途中でスイッチを切られたら、残りの枠は出さずに捨てる。
+          if (!fixedDocQrReadEnabled.value) return false;
+          fixedDocQrScannedIds.add(slot.id);
+        }
+        const status = fixedDocQrReadStatus.value;
+        if (options.silent) return status.ok;
+        if (status.ok) {
+          ElementPlus.ElMessage.success(`QR を ${status.detected} / ${status.expected} 検出しました`);
+        } else {
+          ElementPlus.ElMessage.warning(
+            `QR の検出数が不足しています（${status.detected} / ${status.expected}）。画像を再アップロードして再スキャンしてください`,
+          );
+        }
+        return status.ok;
+      } finally {
+        fixedDocQrScanActive.value = false;
+      }
+    }
+    /**
+     * QR 読取 スイッチ。ON にしたらその場でスキャンを走らせる（枠は 1 つずつ出る）。
+     * OFF にしたら走っているスキャンの結果を捨てて枠を消す（スキャン中の分も止まる）。
+     *
+     * 設定側の検めとして「帳票の項目定義数 === QR 仕様の値数」を入れる予定だが、
+     * 試作の Step2 項目表はデモ用に一部（13 行）しか描いていないので、ここでは検められない。
+     * 項目定義が揃っている前提でスキャンへ進む（PRD「項目数与 QR 值数不一致」参照）。
+     */
+    function onFixedDocQrReadToggle(enabled) {
+      if (!enabled) {
+        fixedDocQrReadEnabled.value = false;
+        fixedDocQrScannedIds.clear();
+        fixedDocQrUndetectedIds.clear();
+        return;
+      }
+      fixedDocQrReadEnabled.value = true;
+      runFixedDocQrScan();
     }
     function parseFixedDocQrSourcesFromTemplate() {
       if (fixedDocHasConfiguredFieldQrMapping.value) {
@@ -3713,7 +3892,8 @@ const appOptions = {
     function resolveFixedDocTestReadContext(fieldName, fieldRule, row) {
       const scenario = FIXED_DOC_TEST_READ_SCENARIOS[fieldName];
       let rule = fieldRule;
-      let hasQrMapping = !!fieldRule.qrSourceId;
+      // QR 連結読み取りに当該項目が含まれていれば QR 経路
+      let hasQrMapping = fixedDocQrValueByName.value.has(fieldName);
       if (scenario?.confidence) {
         rule = { ...rule, confidence: scenario.confidence };
       }
@@ -4107,7 +4287,6 @@ const appOptions = {
       const step = stepOverride ?? 2;
       fixedDocSetupStep.value = step;
       fixedDocReadTab.value = 'text';
-      fixedDocReadMode.value = options.readMode || (step === 2 && docLabel.includes('診断書') ? 'qr' : 'ocr');
       fixedDocRuleTab.value = 'text';
       fixedDocTestTab.value = 'text';
       ensureFixedDocFieldHitl();
@@ -4159,29 +4338,10 @@ const appOptions = {
     }
 
     watch(fixedDocSetupStep, (step) => {
+      // QR 設定ビューを廃止したので、旧ビューに入ったときの自動スキャンは Step2 への遷移で代替する。
+      // QR を持たない帳票ではスイッチを切っておけば 1 枠も読まない（＝ OCR だけ）。
+      if (step === 2 && fixedDocQrReadEnabled.value) runFixedDocQrScan({ silent: true });
       if (step === 3) nextTick(autoApplyFixedDocAiMatchingIfNeeded);
-    });
-    watch(fixedDocReadTab, (tab) => {
-      if (tab === 'table') fixedDocReadMode.value = 'ocr';
-    });
-    watch(fixedDocReadMode, (readMode) => {
-      if (readMode !== 'qr') {
-        fixedDocQrScanRunToken += 1;
-        fixedDocQrScanActive.value = false;
-        fixedDocQrSuppressAutoSourceAssignment.value = false;
-        return;
-      }
-      nextTick(() => ensureFixedDocQrSourceAssignments());
-    });
-    watch([fixedDocSetupStep, fixedDocReadMode, fixedDocHasStep1Template], ([step, readMode, hasTemplate]) => {
-      if (step !== 2 || fixedDocReadTab.value !== 'text' || readMode !== 'qr' || !hasTemplate) return;
-      nextTick(() => {
-        runFixedDocQrSourcesScan({ silent: true });
-      });
-    });
-    watch(fixedDocTextRows, () => {
-      if (fixedDocSetupStep.value !== 2 || fixedDocReadTab.value !== 'text' || fixedDocReadMode.value !== 'qr') return;
-      nextTick(() => ensureFixedDocQrSourceAssignments());
     });
 
     const textEditingId = ref(null);
@@ -13394,7 +13554,6 @@ const appOptions = {
       fixedDocSetupStep,
       fixedDocSteps,
       fixedDocReadTab,
-      fixedDocReadMode,
       fixedDocRuleTab,
       fixedDocTestTab,
       fixedDocTestFileInput,
@@ -13420,11 +13579,8 @@ const appOptions = {
       onFixedDocPreviewPointerDown,
       onFixedDocPreviewPointerMove,
       onFixedDocPreviewPointerUp,
-      fixedDocPreviewShowQrHotspots,
-      fixedDocPreviewQrHotspots,
       focusFixedDocQrSource,
       onFixedDocQrMappingRowClick,
-      fixedDocCanAddQrSource,
       fixedDocActiveQrSourceId,
       selectFixedDocPreviewQrSource,
       removeFixedDocQrSource,
@@ -13457,7 +13613,6 @@ const appOptions = {
       shouldShowFixedDocTableNormalConditionColumn,
       getFixedDocTableTestVisibleColumns,
       getFixedDocTableTestGridStyle,
-      fixedDocQrReadRows,
       fixedDocProcessRuleOptions,
       isFixedDocMasterRule,
       isFixedDocTextReplaceRule,
@@ -13475,23 +13630,26 @@ const appOptions = {
       hasFixedDocRuleParams,
       fixedDocRangeModeOptions,
       fixedDocQrTemplate,
+      fixedDocQrReadEnabled,
+      onFixedDocQrReadToggle,
+      fixedDocQrReadSlots,
+      fixedDocQrReadStatus,
+      fixedDocQrValues,
+      fixedDocQrUndetectedIds,
+      fixedDocPreviewQrSlots,
       fixedDocQrSourceCatalog,
       fixedDocQrIgnoredDetections,
       fixedDocQrScanActive,
+      runFixedDocQrScan,
       fixedDocQrDelimiterOptions,
       fixedDocQrEmptyTokenOptions,
       fixedDocQrSourceOptions,
       fixedDocQrNumberOptions,
       fixedDocOcrProcessRuleOptions,
-      fixedDocHasQrMapping,
-      fixedDocHasQrSourceCatalog,
       fixedDocHasConfiguredFieldQrMapping,
       isFixedDocQrCapableDocType,
       fixedDocFieldNameOptions,
-      fixedDocShowQrReadMode,
-      fixedDocShowQrEffectPanel,
       fixedDocHasStep1Template,
-      fixedDocHasQrRule: fixedDocHasQrMapping,
       runFixedDocAiGenerate,
       rescanFixedDocQrSourcesFromTemplate,
       runFixedDocQrSourcesScan,

@@ -99,7 +99,7 @@
               <div class="scene-list-title">業務シーン</div>
               <button type="button" class="scene-collapse-btn" title="折りたたむ" @click="toggleSceneSidebar">‹</button>
             </div>
-            <el-input v-model="sceneSearch" placeholder="業務シーン名で検索" clearable class="scene-search" />
+            <el-input v-model="sceneSearch" placeholder="業務シーン名で検索" clearable class="scene-search"></el-input>
             <el-button type="primary" class="scene-add-btn" @click="createNewScene">＋ 業務シーン追加</el-button>
           </div>
           <div class="scene-list-body scene-list-body--cards">
@@ -149,7 +149,7 @@
                   <h2>帳票タイプ</h2>
                   <button type="button" class="scene-collapse-btn" title="折りたたむ" @click="toggleFixedDocTypeList">‹</button>
               </div>
-                <el-input v-model="fixedDocTypeSearch" placeholder="帳票タイプで検索" clearable class="fixed-doc-type-search" />
+                <el-input v-model="fixedDocTypeSearch" placeholder="帳票タイプで検索" clearable class="fixed-doc-type-search"></el-input>
                 <el-button type="primary" class="fixed-doc-type-add" @click="createFixedDocType">＋ タイプ追加</el-button>
             </div>
               <div v-show="!fixedDocTypeListCollapsed" class="fixed-doc-type-list">
@@ -219,26 +219,27 @@
                             draggable="false"
                           />
                           <div
-                            v-if="fixedDocPreviewQrHotspots.length"
+                            v-if="fixedDocPreviewQrSlots.length"
                             class="fixed-doc-preview-hotspots"
                             aria-hidden="true"
                           >
                             <div
-                              v-for="src in fixedDocPreviewQrHotspots"
-                              :key="'qr-hot-' + src.id"
-                              class="fixed-doc-preview-hotspot fixed-doc-preview-hotspot--readonly is-active"
-                              :data-source-id="src.id"
+                              v-for="slot in fixedDocPreviewQrSlots"
+                              :key="'qr-hot-' + slot.id"
+                              class="fixed-doc-preview-hotspot"
+                              :class="{ 'is-missing': !slot.detected }"
+                              :data-source-id="slot.id"
                               :style="{
-                                left: src.rect.x + '%',
-                                top: src.rect.y + '%',
-                                width: src.rect.w + '%',
-                                height: src.rect.h + '%',
+                                left: slot.rect.x + '%',
+                                top: slot.rect.y + '%',
+                                width: slot.rect.w + '%',
+                                height: slot.rect.h + '%',
                               }"
-                              :title="src.id + ' · ' + src.label"
+                              :title="slot.id + ' · ' + slot.label"
                             >
-                              <span class="fixed-doc-preview-hotspot-label">{{ src.id }}</span>
-                      </div>
-                      </div>
+                              <span class="fixed-doc-preview-hotspot-label">{{ slot.id }}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -328,19 +329,14 @@
                     <div class="fixed-doc-tabs fixed-doc-tabs--local">
                       <div class="fixed-doc-tabs-nav">
                       <button type="button" :class="{ 'is-active': fixedDocReadTab === 'text' }" @click="fixedDocReadTab = 'text'">テキスト読取</button>
-                        <button type="button" :class="{ 'is-active': fixedDocReadTab === 'table' }" @click="fixedDocReadTab = 'table'; fixedDocReadMode = 'ocr'">テーブル情報読取</button>
+                        <button type="button" :class="{ 'is-active': fixedDocReadTab === 'table' }" @click="fixedDocReadTab = 'table'">テーブル情報読取</button>
                     </div>
                       <div class="fixed-doc-tabs-actions">
                         <el-button
-                          v-if="fixedDocReadTab === 'table' || (fixedDocReadTab === 'text' && fixedDocReadMode === 'ocr')"
                           type="primary"
                           class="fixed-doc-ai-generate"
                           @click="runFixedDocAiGenerate"
                         >AI自動生成</el-button>
-                        <div v-if="fixedDocReadTab === 'text'" class="fixed-doc-read-mode-switch">
-                          <button type="button" :class="{ 'is-active': fixedDocReadMode === 'ocr' }" @click="fixedDocReadMode = 'ocr'">OCR設定</button>
-                          <button type="button" :class="{ 'is-active': fixedDocReadMode === 'qr' }" @click="fixedDocReadMode = 'qr'">QR設定</button>
-                        </div>
                         <el-dropdown trigger="click" placement="bottom-end" popper-class="fixed-doc-action-dropdown" @command="handleFixedDocTemplateAction">
                           <el-button class="fixed-doc-icon-btn" aria-label="テンプレート操作">▣</el-button>
                           <template #dropdown>
@@ -363,7 +359,7 @@
                       </div>
                     </div>
                     <template v-if="fixedDocReadTab === 'text'">
-                    <div v-if="fixedDocReadMode === 'ocr'" class="fixed-doc-read-body">
+                    <div class="fixed-doc-read-body">
                       <div class="fixed-doc-textarea-wrap">
                       <el-input
                         class="fixed-doc-common-prompt"
@@ -377,6 +373,65 @@
                           <el-button type="primary">AI</el-button>
                           <el-button>⌫</el-button>
                         </div>
+                      </div>
+                        <div
+                          class="fixed-doc-qr-result"
+                          :class="{
+                            'is-incomplete': fixedDocQrReadStatus.enabled && !fixedDocQrReadStatus.ok && !fixedDocQrScanActive,
+                            'is-disabled': !fixedDocQrReadStatus.enabled,
+                          }"
+                        >
+                        <div class="fixed-doc-qr-result-head">
+                          <span class="fixed-doc-qr-result-title">QR 読取</span>
+                          <el-tooltip
+                            placement="top"
+                            :show-after="200"
+                            content="LIAJ診断書テンプレート専用。複数の QR の値を項目にマッピングします。QR が 1 つでも解析に失敗すると、診断書全体を OCR 読み取りに切り替えます。"
+                          >
+                            <span class="fixed-doc-info" tabindex="0">i</span>
+                          </el-tooltip>
+                          <el-switch
+                            class="fixed-doc-qr-result-switch"
+                            :model-value="fixedDocQrReadEnabled"
+                            @change="onFixedDocQrReadToggle"
+                          ></el-switch>
+                          <div v-if="fixedDocQrReadStatus.enabled" class="fixed-doc-qr-result-slots">
+                            <div
+                              v-for="slot in fixedDocQrReadSlots"
+                              :key="slot.id"
+                              class="fixed-doc-qr-result-slot"
+                              :class="{
+                                'is-scanning': !slot.scanned,
+                                'is-missing': slot.scanned && !slot.detected,
+                              }"
+                              :data-source-id="slot.id"
+                              :title="slot.id + ' · ' + (!slot.scanned ? 'スキャン中' : (slot.detected ? '検出' : '未検出'))"
+                            >{{ slot.id }}</div>
+                          </div>
+                          <span v-if="!fixedDocQrReadStatus.enabled" class="fixed-doc-qr-result-count">無効 — OCR のみで読取</span>
+                          <span
+                            v-else-if="fixedDocQrScanActive"
+                            class="fixed-doc-qr-result-count is-scanning"
+                          >スキャン中…</span>
+                          <span
+                            v-else-if="fixedDocQrReadStatus.ok"
+                            class="fixed-doc-qr-result-path is-qr"
+                          >QR 読取優先パス適用中</span>
+                          <el-button
+                            class="fixed-doc-qr-scan-btn"
+                            size="small"
+                            :disabled="!fixedDocQrReadStatus.enabled"
+                            :loading="fixedDocQrScanActive"
+                            @click="runFixedDocQrScan"
+                          >QR スキャン</el-button>
+                        </div>
+                        <p
+                          v-if="fixedDocQrReadStatus.enabled && !fixedDocQrReadStatus.ok && !fixedDocQrScanActive"
+                          class="fixed-doc-qr-result-alert"
+                        >
+                          <template v-if="fixedDocQrReadStatus.slotsMissing">QR の読み取りが不完全です。画像を再アップロードして再スキャンしてください。</template>
+                          <template v-else>QR から読み取った値の数が項目数と一致しません。項目の設定を確認してください。</template>
+                        </p>
                       </div>
                       <div class="fixed-doc-table-panel">
                         <div class="fixed-doc-table-scroll">
@@ -475,185 +530,6 @@
                         </div>
                       </div>
                       <el-button class="fixed-doc-add-field" type="primary" plain>＋ 項目追加({{ fixedDocTextRows.length }}/200)</el-button>
-                    </div>
-                    <div v-else-if="fixedDocReadMode === 'qr'" class="fixed-doc-read-body fixed-doc-read-body--qr">
-                      <div class="fixed-doc-qr-workspace">
-                        <div class="fixed-doc-qr-map-panel">
-                          <div class="fixed-doc-qr-source-strip">
-                            <div class="fixed-doc-qr-source-strip-head">
-                              <strong>QRソース</strong>
-                              <el-tooltip
-                                placement="top"
-                                :show-after="200"
-                              >
-                                <template #content>
-                                  QR設定に入ると Step1 テンプレートを自動スキャンし、左から右へ QR1、QR2… と検出数に応じて割り当てます。テンプレート変更後は「QRスキャン」で再実行できます。
-                                </template>
-                                <span class="fixed-doc-info" tabindex="0">i</span>
-                              </el-tooltip>
-                              <span v-if="!fixedDocHasStep1Template" class="fixed-doc-qr-source-empty">Step1 でテンプレートをアップロードしてください</span>
-                              <span v-else-if="fixedDocQrScanActive" class="fixed-doc-qr-source-empty">読取中…</span>
-                              <span v-else-if="!fixedDocQrSourceCatalog.length" class="fixed-doc-qr-source-empty">QR を検出できませんでした。「QRスキャン」で再試行できます</span>
-                      </div>
-                            <div v-if="fixedDocHasStep1Template" class="fixed-doc-qr-source-list-wrap">
-                              <div v-if="fixedDocQrSourceCatalog.length" class="fixed-doc-qr-source-scroll">
-                                <ul class="fixed-doc-qr-source-list">
-                                  <li
-                                    v-for="src in fixedDocQrSourceCatalog"
-                                    :key="'qr-src-' + src.id"
-                                    :class="{ 'is-active': fixedDocActiveQrSourceId === src.id }"
-                                    @click="selectFixedDocPreviewQrSource(src.id)"
-                                  >
-                                    <code>{{ fixedDocQrSourceDisplayLabel(src) }}</code>
-                                  </li>
-                                </ul>
-                    </div>
-                              <div class="fixed-doc-qr-source-actions">
-                                <el-button
-                                  size="small"
-                                  plain
-                                  type="primary"
-                                  class="fixed-doc-qr-source-parse"
-                                  :loading="fixedDocQrScanActive"
-                                  :disabled="fixedDocQrScanActive"
-                                  @click="parseFixedDocQrSourcesFromTemplate"
-                                >
-                                  QRスキャン
-                                </el-button>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="fixed-doc-table-scroll">
-                            <table class="fixed-doc-table fixed-doc-table--read fixed-doc-table--qr-read">
-                      <thead>
-                        <tr>
-                          <th>番号</th>
-                                  <th>項目名 <span class="fixed-doc-required">必須</span></th>
-                                  <th class="fixed-doc-qr-type-col">
-                                    タイプ
-                                    <el-tooltip placement="top" :show-after="200" content="OCR設定で定義した項目タイプを表示します。QR読取では編集できません。">
-                                      <span class="fixed-doc-info" tabindex="0">i</span>
-                                    </el-tooltip>
-                                  </th>
-                                  <th class="fixed-doc-qr-no-col">QRソース</th>
-                                  <th class="fixed-doc-qr-extract-col">
-                                    取値方法
-                                    <el-tooltip placement="top" :show-after="200">
-                                      <template #content>
-                                        OFF：QR 解码全文をそのままフィールドに書き込みます。<br />
-                                        ON：区切り文字と順序を入力し、指定した 1 段だけを取得します。
-                                      </template>
-                                      <span class="fixed-doc-info" tabindex="0">i</span>
-                                    </el-tooltip>
-                                  </th>
-                                  <th class="fixed-doc-qr-delim-col">
-                                    区切り文字
-                                    <el-tooltip placement="top" :show-after="200">
-                                      <template #content>
-                                        区切り文字で切分します。連続する区切り文字（例：$$）の間は空フィールドです。段内が空文字または空値占位の場合も空として扱います。
-                                      </template>
-                                      <span class="fixed-doc-info" tabindex="0">i</span>
-                                    </el-tooltip>
-                                  </th>
-                                  <th class="fixed-doc-qr-index-col">
-                                    順序
-                                    <el-tooltip placement="top" :show-after="200" content="分割時に QR 解码串から取る位置（1 起）。同一 QR ソース内で重複不可。">
-                                      <span class="fixed-doc-info" tabindex="0">i</span>
-                                    </el-tooltip>
-                                  </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                                <tr
-                                  v-for="row in fixedDocQrReadRows"
-                                  :key="'fd-qr-read-' + row.fieldId"
-                                  :class="{ 'is-qr-source-active': fixedDocActiveQrSourceId && row.qrSourceId === fixedDocActiveQrSourceId }"
-                                  @click="onFixedDocQrMappingRowClick(row, $event)"
-                                >
-                          <td>{{ row.no }}</td>
-                          <td>{{ row.name }}</td>
-                                  <td class="fixed-doc-qr-type-col">
-                                    <span class="fixed-doc-type-readonly">{{ row.type }}</span>
-                                  </td>
-                                  <td class="fixed-doc-qr-no-col">
-                                    <el-select
-                                      :model-value="row.qrSourceId || ''"
-                                      placeholder="未選択（OCR）"
-                                      clearable
-                                      size="small"
-                                      class="fixed-doc-qr-source-select"
-                                      @change="setFixedDocFieldRule(row.fieldId, { qrSourceId: $event || '' })"
-                                    >
-                                      <el-option
-                                        v-for="opt in fixedDocQrNumberOptions"
-                                        :key="'qr-read-' + row.fieldId + opt.value"
-                                        :label="opt.label"
-                                        :value="opt.value"
-                                      ></el-option>
-                                    </el-select>
-                                  </td>
-                                  <td class="fixed-doc-qr-extract-col">
-                                    <el-switch
-                                      v-if="shouldShowFixedDocQrFieldExtractMethod(row)"
-                                      :model-value="isFixedDocQrSplitExtractMethod(row)"
-                                      size="small"
-                                      class="fixed-doc-qr-split-switch"
-                                      active-text="分割"
-                                      inactive-text="全文"
-                                      @change="setFixedDocQrSplitEnabled(row.fieldId, $event)"
-                                    ></el-switch>
-                                    <span v-else class="fixed-doc-range-summary is-muted">—</span>
-                                  </td>
-                                  <td class="fixed-doc-qr-delim-col">
-                                    <el-tooltip
-                                      v-if="shouldShowFixedDocQrFieldDelimiter(row)"
-                                      placement="top"
-                                      :show-after="200"
-                                      :disabled="!getFixedDocQrDelimiterError(row.fieldId)"
-                                      :content="getFixedDocQrDelimiterError(row.fieldId)"
-                                    >
-                                      <el-input
-                                        :model-value="getFixedDocQrDelimiterInput(row)"
-                                        size="small"
-                                        class="fixed-doc-qr-delim-select"
-                                        :class="{ 'is-error': !!getFixedDocQrDelimiterError(row.fieldId) }"
-                                        @focus="focusFixedDocQrDelimiterField(row.fieldId)"
-                                        @update:model-value="setFixedDocQrDelimiterDraft(row.fieldId, $event)"
-                                        @blur="commitFixedDocQrDelimiterDraft(row.fieldId)"
-                                      ></el-input>
-                                    </el-tooltip>
-                                    <span v-else class="fixed-doc-range-summary is-muted">—</span>
-                                  </td>
-                                  <td class="fixed-doc-qr-index-col">
-                                    <template v-if="shouldShowFixedDocQrFieldSplitIndex(row)">
-                                      <div class="fixed-doc-qr-index-cell">
-                                        <el-tooltip
-                                          placement="top"
-                                          :show-after="200"
-                                          :disabled="!getFixedDocQrFetchIndexError(row.fieldId)"
-                                          :content="getFixedDocQrFetchIndexError(row.fieldId)"
-                                        >
-                                          <el-input
-                                            :model-value="getFixedDocQrFetchIndexInput(row)"
-                                            size="small"
-                                            class="fixed-doc-qr-index-input"
-                                            inputmode="numeric"
-                                            :class="{ 'is-error': !!getFixedDocQrFetchIndexError(row.fieldId) }"
-                                            @focus="focusFixedDocQrFetchIndexField(row.fieldId)"
-                                            @update:model-value="setFixedDocQrFetchIndexDraft(row.fieldId, $event)"
-                                            @blur="commitFixedDocQrFetchIndexDraft(row.fieldId)"
-                                          ></el-input>
-                                        </el-tooltip>
-                                      </div>
-                                    </template>
-                                    <span v-else class="fixed-doc-range-summary is-muted">—</span>
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                     </template>
                     <template v-else>
@@ -1263,7 +1139,7 @@
               <aside class="master-data-sidebar">
                 <div class="master-data-sidebar-head">
                   <h2>マスタ一覧</h2>
-                  <el-input size="small" placeholder="マスタ名で検索" clearable />
+                  <el-input size="small" placeholder="マスタ名で検索" clearable></el-input>
                   <el-button type="primary" class="master-data-add-source">＋ マスタ追加</el-button>
                 </div>
                 <div class="master-data-source-list">
@@ -1291,7 +1167,7 @@
                     <el-button disabled>ベクトル化再実行</el-button>
                   </div>
                   <div class="master-data-search">
-                    <el-input size="small" placeholder="照合コード・各列で検索" clearable />
+                    <el-input size="small" placeholder="照合コード・各列で検索" clearable></el-input>
                     <el-button size="small">↻</el-button>
                   </div>
                 </div>

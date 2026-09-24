@@ -1,7 +1,12 @@
-import { cp, mkdir, rm, access } from 'node:fs/promises';
+import { cp, mkdir, rm, access, readFile, writeFile } from 'node:fs/promises';
+
+// エディタが index.html に注入する data-page-node-id は、属性値の中（=> や length > 0 の
+// 「>」の直後）にも挿入されるため、そのままだと Vue のテンプレート式が壊れて
+// 「Invalid left-hand side in assignment」でアプリが起動しなくなる。
+// 配信物（public/）には必ず除去してから書き出す。
+const stripPageNodeIds = (text) => text.replace(/ data-page-node-id="[^"]*"/g, '');
 
 const files = [
-  'index.html',
   'style.css',
   'main.js',
   'logo-CWaP-1CB.png',
@@ -21,6 +26,8 @@ await mkdir('public/assets', { recursive: true });
 for (const file of files) {
   await cp(file, `public/${file}`);
 }
+
+await writeFile('public/index.html', stripPageNodeIds(await readFile('index.html', 'utf8')));
 
 for (const file of scriptFiles) {
   await cp(`scripts/${file}`, `public/scripts/${file}`);

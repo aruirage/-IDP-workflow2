@@ -10,19 +10,23 @@
     "step2-脱敏列": [
       {
         "file": "fixed-doc-step2-ocr-mask.png",
-        "caption": "账票类型 Step2 · 字段读取 tab · OCR設定 · マスク列（红框：マスク / HITL 并列开关；マスク=ON 不参与 OCR 读取，下游 Step3/Step5 直接排除）"
+        "caption": "账票类型 Step2 · 字段读取 tab · マスク列（マスク / HITL 并列开关；マスク=ON 不参与 OCR 读取，下游 Step3/Step5 直接排除）"
       }
     ],
     "step2-hitl-列": [
       {
         "file": "fixed-doc-step2-hitl.png",
-        "caption": "账票类型 Step2 · 字段读取 tab · OCR設定 · マスク / HITL 列（HITL：字段级人工确认对象开关，与 マスク 并列）"
+        "caption": "账票类型 Step2 · 字段读取 tab · マスク / HITL 列（HITL：字段级人工确认对象开关，与 マスク 并列）"
       }
     ],
-    "step2-字段读取-qr-映射": [
+    "liaj-診断書-qr-連結読取": [
       {
         "file": "fixed-doc-step2-qr.png",
-        "caption": "账票类型 Step2 · 字段读取 tab · QR設定 与字段映射（タイプ：string / number / enum）"
+        "caption": "账票类型 Step2 · 字段读取 tab · QR 読取 条（开关置 ON 并扫描完成后的状态：QR1–QR6 槽位 + 路径徽标「QR 読取優先パス適用中」+ QR スキャン；开关默认 OFF，此时只显示「無効 — OCR のみで読取」）"
+      },
+      {
+        "file": "fixed-doc-step2-qr-scanning.png",
+        "caption": "账票类型 Step2 · 字段读取 tab · QR 読取 条 · 扫描中（槽位从左到右逐个出结果，未出的显示为虚线灰底；全部出完前不显示路径徽标，条内显示「スキャン中…」）"
       }
     ],
     "step3-正常值范围": [

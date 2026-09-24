@@ -56,11 +56,17 @@ createServer(async (request, response) => {
     const filePath = normalize(join(root, requested));
     if (!filePath.startsWith(normalize(root))) return sendJson(response, 403, { error: 'Forbidden' });
     const body = await readFile(filePath).catch(async () => readFile(join(root, 'index.html')));
+    const ext = extname(filePath);
+    // エディタが HTML に注入する data-page-node-id は属性値の中にも入り、Vue のテンプレート式
+    // （=> や length > 0 の「>」の直後）を壊してアプリが起動しなくなる。配信時に必ず除去する。
+    const payload = ext === '.html'
+      ? Buffer.from(body.toString('utf8').replace(/ data-page-node-id="[^"]*"/g, ''))
+      : body;
     response.writeHead(200, {
-      'Content-Type': mimeTypes[extname(filePath)] || 'application/octet-stream',
+      'Content-Type': mimeTypes[ext] || 'application/octet-stream',
       'Cache-Control': 'no-store',
     });
-    response.end(body);
+    response.end(payload);
   } catch (error) {
     sendJson(response, 500, { error: error?.message || 'AI関連ルールの生成に失敗しました' });
   }

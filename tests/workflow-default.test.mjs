@@ -25,7 +25,7 @@ test('migrates minimal placeholder drafts to the default workflow and restores p
 
 test('labels the built-in workflow test fixture as mock data', async () => {
   const mockData = await readFile(new URL('../scripts/mock-data.js', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
 
   assert.match(mockData, /label: 'Mock テストデータ'/);
   assert.match(mockData, /Mock の集約済み案件データ/);
@@ -75,7 +75,7 @@ test('uses current document names and a distinct test-input error step', async (
 });
 
 test('hides the uncompiled Vue template until mount', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
 
   assert.match(index, /\[v-cloak\]\s*\{\s*display:\s*none\s*!important;\s*\}/);
   assert.match(index, /<div id="app" v-cloak>/);
@@ -90,7 +90,7 @@ test('persists UI language preference with Japanese default', async () => {
 });
 
 test('uses a compact required badge for the scene name', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
 
   assert.match(index, /業務シーン名<span class="field-required">必須<\/span>/);
@@ -99,7 +99,7 @@ test('uses a compact required badge for the scene name', async () => {
 });
 
 test('shows Japanese output names and focused value tooltips', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
   const workflowCore = await readFile(new URL('../scripts/workflow-core.js', import.meta.url), 'utf8');
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
@@ -129,7 +129,7 @@ test('keeps data mapping output limited to status and standard variables', async
 });
 
 test('removes match-result columns from Step4 export tables', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
 
   assert.doesNotMatch(index, /照合結果（サンプル）/);
   assert.doesNotMatch(index, /class="col-match"/);
@@ -137,7 +137,7 @@ test('removes match-result columns from Step4 export tables', async () => {
 });
 
 test('centers the workflow setup step track independently from actions', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
 
   assert.match(index, /class="wf-setup-stepper-track"/);
@@ -159,7 +159,7 @@ test('excludes custom functions from Step2 configuration checks', async () => {
 
 test('uses an executable file-renaming function as the custom node default', async () => {
   const workflowCore = await readFile(new URL('../scripts/workflow-core.js', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const appMain = await readFile(new URL('../main.js', import.meta.url), 'utf8');
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
   const source = workflowCore.match(/const DEFAULT_CODE_PYTHON = `([\s\S]*?)`;\n/)?.[1] || '';
@@ -223,7 +223,7 @@ test('uses an executable file-renaming function as the custom node default', asy
 });
 
 test('collapses relation preview and highlights curved field relations', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
   const sceneConfig = await readFile(new URL('../scripts/scene-config.js', import.meta.url), 'utf8');
 
@@ -261,7 +261,7 @@ test('collapses relation preview and highlights curved field relations', async (
 });
 
 test('uses one regular-weight settings shortcut label', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
 
   assert.equal((index.match(/class="inspector-settings-link"/g) || []).length, 3);
@@ -270,7 +270,7 @@ test('uses one regular-weight settings shortcut label', async () => {
 });
 
 test('shows searchable node descriptions and colored icons in the node picker', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
   const workflowCore = await readFile(new URL('../scripts/workflow-core.js', import.meta.url), 'utf8');
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
@@ -290,7 +290,7 @@ test('shows searchable node descriptions and colored icons in the node picker', 
 
 test('aligns OCR extraction switches to the row end', async () => {
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const workflowCore = await readFile(new URL('../scripts/workflow-core.js', import.meta.url), 'utf8');
 
   assert.match(style, /\.ocr-extract-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto;/s);
@@ -318,7 +318,7 @@ test('does not render forward edges as backflow inside a cycle', async () => {
 
 test('keeps both notification insertion targets visible', async () => {
   const styles = await readFile(new URL('../style.css', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
 
   assert.match(styles, /\.notify-var-insert-target\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*width:\s*112px;[^}]*flex:\s*0 0 112px;/s);
   assert.match(styles, /\.notify-var-insert-target \.el-radio-button__inner\s*\{[^}]*width:\s*100%;/s);
@@ -329,7 +329,7 @@ test('keeps both notification insertion targets visible', async () => {
 
 test('uses type-aware condition value controls', async () => {
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const workflowCore = await readFile(new URL('../scripts/workflow-core.js', import.meta.url), 'utf8');
 
   assert.match(index, /v-if="decisionUsesFreeTextValue\(condition\)"/);
@@ -369,7 +369,7 @@ test('keeps only rotation, correction, and image alignment preprocessing', async
 });
 
 test('shows connected target names in decision branch rows', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
 
   assert.match(index, /getDecisionBranchTarget\(node\.id, 'else'\)/);
@@ -390,7 +390,7 @@ test('does not revalidate rules already enforced by configuration controls', asy
 
 test('keeps draft and published workflow history separate', async () => {
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const sceneConfig = await readFile(new URL('../scripts/scene-config.js', import.meta.url), 'utf8');
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
 
@@ -432,7 +432,7 @@ test('keeps draft and published workflow history separate', async () => {
 
 test('records scene publish history only after successful publication', async () => {
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
 
   assert.match(index, /<el-dropdown-item command="history">変更履歴<\/el-dropdown-item>/);
   assert.match(index, /title="変更履歴"/);
@@ -443,7 +443,7 @@ test('records scene publish history only after successful publication', async ()
 });
 
 test('uses aligned delete icons and highlights the complete document-pair group', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
 
   assert.match(index, /class="case-link-doc-remove"[\s\S]*@click="removeSceneSetupDoc\(i\)"[\s\S]*>×<\/button>/);
@@ -471,7 +471,7 @@ test('keeps related document rows neutral when hovering delete', async () => {
 
 test('runs the Step2 configuration check before publishing from Step4', async () => {
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
 
   assert.doesNotMatch(index, /class="wf-check-links-btn" @click="openWorkflowTestDialog">テスト/);
   assert.match(index, /<el-button type="primary" @click="publishWorkflowScene">公開<\/el-button>/);
@@ -524,7 +524,7 @@ test('returns global Step3 and Step4 saves to draft before publishing', async ()
 
 test('filters Step3 notification rules by subject or body and resets the query', async () => {
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
 
   assert.match(main, /const workflowNotificationSearch = ref\(''\);/);
   assert.match(main, /const filteredWorkflowNotificationRuleRows = computed\([\s\S]*rule\.subject, rule\.body, rule\.emailRecipientDisplay/);
@@ -538,7 +538,7 @@ test('filters Step3 notification rules by subject or body and resets the query',
 
 test('supports email recipients with delimiter-separated addresses in Step3 notifications', async () => {
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const core = await readFile(new URL('../scripts/workflow-core.js', import.meta.url), 'utf8');
 
   assert.match(core, /function parseNotifyEmailRecipients/);
@@ -555,7 +555,7 @@ test('supports email recipients with delimiter-separated addresses in Step3 noti
 });
 
 test('uses accent dots and keeps human review configuration role-only', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
 
@@ -571,7 +571,7 @@ test('uses accent dots and keeps human review configuration role-only', async ()
 });
 
 test('keeps manual labels pink and human review branch names neutral', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
 
   assert.equal((index.match(/class="wf-hitl-branch-name"/g) || []).length, 2);
@@ -604,7 +604,7 @@ test('keeps Step4 field columns equal and field lists scrollable', async () => {
 });
 
 test('places workflow reset at the end of the canvas history toolbar', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
   const step2Start = index.indexOf('<template v-else-if="workflowSetupStep === 2">');
   const step2Workspace = index.indexOf('class="idp-workspace"', step2Start);
@@ -630,7 +630,7 @@ test('places workflow reset at the end of the canvas history toolbar', async () 
 });
 
 test('uses four ordered workflow canvas view controls', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const toolbarStart = index.indexOf('class="wf-canvas-floating-actions wf-canvas-view-actions"');
   const toolbarEnd = index.indexOf('v-if="wfNodePicker.visible"', toolbarStart);
   const toolbar = index.slice(toolbarStart, toolbarEnd);
@@ -654,7 +654,7 @@ test('deletes workflow nodes immediately without a confirmation dialog', async (
 });
 
 test('deletes edges from a red midpoint control without inline insertion', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
 
@@ -666,7 +666,7 @@ test('deletes edges from a red midpoint control without inline insertion', async
 
 test('offers a separate Step2 configuration check without blocking save or navigation', async () => {
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const mockData = await readFile(new URL('../scripts/mock-data.js', import.meta.url), 'utf8');
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
 
@@ -702,7 +702,7 @@ test('requires human-review supplement exits to loop back to a prior node', asyn
 
 test('separates Step1 draft save from validated navigation', async () => {
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
 
   assert.match(index, /@click="proceedToWorkflowStep">次へ<\/el-button>[\s\S]*type="primary" @click="saveSceneSetupStep1">保存<\/el-button>/);
   assert.match(main, /function saveSceneSetupStep1\(\)[\s\S]*persistSceneSetupDraft\(\{ validate: false \}\)[\s\S]*下書きを保存しました/);
@@ -725,7 +725,7 @@ test('labels the AI verification mapping module as standard data consistency', a
 });
 
 test('explains the publishable status beside every workflow status badge', async () => {
-  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
 
   assert.equal((index.match(/Step2の設定チェック完了後、ステータスが「公開可能」に更新され、公開できます。/g) || []).length, 4);

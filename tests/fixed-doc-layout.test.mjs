@@ -4,7 +4,7 @@ import { access, readFile } from 'node:fs/promises';
 
 test('fixed document type settings use the diagnosis template layout', async () => {
   const [html, main, css] = await Promise.all([
-    readFile(new URL('../index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, '')),
     readFile(new URL('../main.js', import.meta.url), 'utf8'),
     readFile(new URL('../style.css', import.meta.url), 'utf8'),
   ]);
@@ -58,8 +58,11 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(main, /function createFixedDocType\(\)/);
   assert.match(html, /class="fixed-doc-preview-sheet"/);
   assert.match(html, /class="fixed-doc-preview-image-wrap"/);
-  assert.match(html, /class="fixed-doc-preview-hotspots"/);
-  assert.match(html, /class="fixed-doc-preview-hotspot fixed-doc-preview-hotspot--readonly is-active"/);
+  // QR 枠オーバーレイは「読取結果の可視化」としてのみ残す（設定 UI は持たない）
+  assert.match(html, /v-if="fixedDocPreviewQrSlots\.length"[\s\S]*class="fixed-doc-preview-hotspots"/);
+  assert.match(html, /class="fixed-doc-preview-hotspot"[\s\S]*'is-missing': !slot\.detected/);
+  assert.doesNotMatch(html, /fixedDocPreviewQrHotspots|fixedDocPreviewShowQrHotspots/);
+  assert.doesNotMatch(html, /fixedDocActiveQrSourceId|fixedDocQrSourceCatalog/);
   assert.match(html, /fixedDocPreviewFit/);
   assert.match(html, /@wheel\.prevent="onFixedDocPreviewWheel"/);
   assert.doesNotMatch(html, /class="fixed-doc-preview-region-draft"/);
@@ -74,7 +77,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.doesNotMatch(html, /fixed-doc-preview-head/);
   assert.doesNotMatch(html, /fixed-doc-preview-meta/);
   assert.doesNotMatch(html, /fixed-doc-qr-source-caption/);
-  assert.match(html, /@click="fixedDocReadTab = 'table'; fixedDocReadMode = 'ocr'"/);
+  assert.match(html, /@click="fixedDocReadTab = 'table'"/);
   const step1Html = html.slice(
     html.indexOf('<section v-show="fixedDocSetupStep === 1"'),
     html.indexOf('<section v-show="fixedDocSetupStep === 2"'),
@@ -94,56 +97,107 @@ test('fixed document type settings use the diagnosis template layout', async () 
     html.indexOf('<section v-show="fixedDocSetupStep === 2"'),
     html.indexOf('<template v-if="fixedDocReadTab === \'text\'">'),
   );
-  assert.match(step2TabsHtml, /class="fixed-doc-tabs-actions"[\s\S]*class="fixed-doc-ai-generate"[\s\S]*class="fixed-doc-read-mode-switch"[\s\S]*OCR設定[\s\S]*QR設定/);
+  // QR 設定ビュー（OCR設定／QR設定 の切替と QR ソース目録の設定 UI）は撤去済み。
+  // 値は「全 QR を連結 → 区切り文字で扁平分割 → 項目順に写像」で解決する。
+  assert.match(step2TabsHtml, /class="fixed-doc-tabs-actions"[\s\S]*class="fixed-doc-ai-generate"/);
+  assert.doesNotMatch(html, /fixed-doc-read-mode-switch/);
   assert.doesNotMatch(html, /class="fixed-doc-read-mode-bar"/);
-  assert.doesNotMatch(css, /fixed-doc-read-mode-switch button\.is-active::after/);
-  assert.match(css, /\.fixed-doc-read-mode-switch\s*\{[\s\S]*?padding:\s*4px;[\s\S]*?border:\s*0;[\s\S]*?background:\s*#f2f4f7;/);
-  assert.match(css, /\.fixed-doc-read-mode-switch button\s*\{[\s\S]*?min-width:\s*84px;[\s\S]*?height:\s*34px;/);
-  assert.match(css, /\.fixed-doc-read-mode-switch button\.is-active\s*\{[\s\S]*?color:\s*#155eef;[\s\S]*?background:\s*#fff;/);
-  assert.doesNotMatch(css, /\.fixed-doc-read-mode-switch button\.is-active\s*\{[\s\S]*?background:\s*#155eef;/);
-  assert.match(html, /class="fixed-doc-qr-workspace"/);
-  assert.doesNotMatch(html, /<aside class="fixed-doc-qr-source-panel"/);
-  assert.match(html, /class="fixed-doc-qr-source-strip"/);
-  assert.match(html, /class="fixed-doc-qr-source-scroll"/);
-  assert.match(html, /class="fixed-doc-qr-source-actions"/);
-  assert.match(html, /class="fixed-doc-qr-source-parse"/);
-  assert.match(html, /@click="parseFixedDocQrSourcesFromTemplate"[\s\S]*>\s*QRスキャン\s*</);
-  assert.doesNotMatch(html, /class="fixed-doc-qr-source-parse"[\s\S]*>\s*再読取\s*</);
-  assert.doesNotMatch(html, /class="fixed-doc-qr-source-parse"[\s\S]*>\s*解析\s*</);
-  assert.doesNotMatch(html, /再解析/);
+  assert.doesNotMatch(css, /fixed-doc-read-mode-switch/);
+  assert.doesNotMatch(main, /fixedDocReadMode/);
+  assert.doesNotMatch(main, /fixedDocShowQrReadMode|fixedDocShowQrEffectPanel|fixedDocQrReadRows/);
+  assert.doesNotMatch(main, /fixedDocHasQrMapping|fixedDocCanAddQrSource|fixedDocHasQrSourceCatalog/);
+  assert.doesNotMatch(html, /class="fixed-doc-qr-workspace"/);
+  assert.doesNotMatch(html, /class="fixed-doc-qr-source-(strip|scroll|actions|parse|add|panel)"/);
+  assert.doesNotMatch(html, /:data-source-id="src\.id"/);
+  assert.doesNotMatch(html, /v-if="fixedDocPreviewQrHotspots\.length"/);
+  assert.doesNotMatch(html, /@click="onFixedDocQrMappingRowClick\(row, \$event\)"/);
+  assert.doesNotMatch(html, /class="fixed-doc-qr-source-generate"/);
+  assert.doesNotMatch(html, /fixedDocQrSourceStatusLabel/);
+  assert.doesNotMatch(html, /fixed-doc-qr-source-enable/);
+  assert.doesNotMatch(html, />再定位</);
+  assert.doesNotMatch(html, /src\.enabled === false \? 'OFF' : 'ON'/);
+  assert.doesNotMatch(html, />🗑</);
+  // 連結読み取りモデル：連結 → 扁平分割 → 項目順写像
+  assert.match(main, /const FIXED_DOC_QR_FIELD_NAMES = \[/);
+  assert.match(main, /const FIXED_DOC_QR_DELIMITERS = \['\$', '\^'\];/);
+  assert.match(main, /\.filter\(\(slot\) => slot\.payload\.includes\('\$'\)\)/);
+  assert.match(main, /const fixedDocQrDataSegments = computed\(\(\) => fixedDocQrDetectedSegments\.value\.map/);
+  assert.match(main, /const fixedDocQrConcatenatedPayload = computed\(\(\) => fixedDocQrDataSegments\.value\.join\(''\)\)/);
+  assert.match(main, /const fixedDocQrValues = computed\(\(\) => \{[\s\S]*?payload\.split\(FIXED_DOC_QR_SPLIT_PATTERN\)/);
+  assert.match(main, /const fixedDocQrFieldMappings = computed\(\(\) => FIXED_DOC_QR_FIELD_NAMES\.map/);
+  assert.match(main, /function getFixedDocQrFieldPreviewValue\(fieldRule = \{\}\) \{[\s\S]*?fixedDocQrValueByName\.value\.get\(name\)/);
+  assert.match(main, /let hasQrMapping = fixedDocQrValueByName\.value\.has\(fieldName\);/);
+  // QR 読取結果バー：AI 入力欄の下・項目表の上に置き、ON/OFF スイッチと QR スキャンを持つ
+  assert.match(html, /:model-value="fixedDocCommonPrompt"[\s\S]*?class="fixed-doc-qr-result"[\s\S]*?<div class="fixed-doc-table-panel">/);
+  assert.match(html, /class="fixed-doc-qr-result"[\s\S]*'is-incomplete': fixedDocQrReadStatus\.enabled && !fixedDocQrReadStatus\.ok/);
+  assert.match(html, /'is-disabled': !fixedDocQrReadStatus\.enabled/);
+  assert.match(html, /class="fixed-doc-qr-result-switch"[\s\S]*:model-value="fixedDocQrReadEnabled"[\s\S]*@change="onFixedDocQrReadToggle"/);
+  // スイッチを入れたらその場でスキャンを走らせる（枠を出さずに終わらせない）。
+  assert.match(main, /function onFixedDocQrReadToggle\(enabled\) \{[\s\S]*?fixedDocQrReadEnabled\.value = true;[\s\S]*?runFixedDocQrScan\(\);/);
+  // 門は帳票の項目定義数（= QR 仕様の値数）と比べる。デモの項目表は一部しか描いていない。
+  assert.match(main, /const expectedValues = FIXED_DOC_QR_FIELD_NAMES\.length;/);
+  assert.match(html, /<div v-if="fixedDocQrReadStatus\.enabled" class="fixed-doc-qr-result-slots">/);
+  assert.match(html, /v-for="slot in fixedDocQrReadSlots"[\s\S]*class="fixed-doc-qr-result-slot"[\s\S]*'is-scanning': !slot\.scanned,[\s\S]*'is-missing': slot\.scanned && !slot\.detected/);
+  // 読取には時間がかかる。枠は 1 つずつ確定させ、全部そろうまでパス徽标は出さない。
+  assert.match(main, /const FIXED_DOC_QR_SCAN_STEP_MS = \d+;/);
+  assert.match(main, /for \(const slot of slots\) \{[\s\S]*?await waitFixedDocQrScan\(FIXED_DOC_QR_SCAN_STEP_MS\);[\s\S]*?fixedDocQrScannedIds\.add\(slot\.id\);/);
+  assert.match(html, /class="fixed-doc-qr-result-count is-scanning"[\s\S]*?>スキャン中…</);
+  assert.match(main, /fixedDocQrReadSlots\.value\.filter\(\(slot\) => slot\.scanned\)/);
+  // 6 つの QR 枠はスイッチのすぐ横（ヘッド内、同一行）に並べる。別行の枠行は作らない。
+  assert.match(html, /class="fixed-doc-qr-result-switch"[\s\S]*<\/el-switch>[\s\S]*<div v-if="fixedDocQrReadStatus\.enabled" class="fixed-doc-qr-result-slots">/);
+  // 枠のラベルは QR id だけ（QR1 / QR2 …）。項目範囲や説明文は出さない。
+  assert.match(html, /:data-source-id="slot\.id"[\s\S]*?>\{\{ slot\.id \}\}<\/div>/);
+  // 「QR 読取」の横に情報アイコン（tooltip）。LIAJ 診断書テンプレート専用の説明。
+  assert.match(html, /class="fixed-doc-qr-result-title">QR 読取<\/span>[\s\S]*?class="fixed-doc-info" tabindex="0">i<\/span>/);
+  assert.match(html, /LIAJ診断書テンプレート専用/);
+  // 顧客に見せるバッジは「QR 優先パス適用中」だけ。値数が合わない時の赤バッジは
+  // 原因を言い切れない（スキャン側か項目数側か）ので出さない。理由は下の提示行で伝える。
+  assert.match(html, /class="fixed-doc-qr-result-path is-qr"[\s\S]*?>QR 読取優先パス適用中</);
+  assert.doesNotMatch(html, /fixed-doc-qr-result-path is-ocr/);
+  assert.doesNotMatch(html, /QR 不足 — OCR で読取/);
+  assert.doesNotMatch(css, /\.fixed-doc-qr-result-path\.is-ocr/);
+  assert.doesNotMatch(html, /fixed-doc-qr-result-(label|range|id)"/);
+  assert.doesNotMatch(html, /\{\{ fixedDocQrReadStatus\.detected \}\}/);
+  assert.doesNotMatch(html, /値 \{\{ fixedDocQrReadStatus\.valueCount \}\}/);
+  assert.match(html, /v-if="!fixedDocQrReadStatus\.enabled" class="fixed-doc-qr-result-count">無効 — OCR のみで読取<\/span>/);
+  // QR スキャンは残す（QR を読む運用では必須）
+  assert.match(html, /class="fixed-doc-qr-scan-btn"[\s\S]*?:disabled="!fixedDocQrReadStatus\.enabled"[\s\S]*?:loading="fixedDocQrScanActive"[\s\S]*?@click="runFixedDocQrScan"[\s\S]*?>QR スキャン<\/el-button>/);
+  // 顧客向け文言。技術的な数値（値数/項目数）は出さない。
+  // 値数が合わない原因はスキャン側だけではない（項目数を変えた場合もある）ので、原因別に出し分ける。
+  assert.match(html, /fixedDocQrReadStatus\.slotsMissing[\s\S]*?>QR の読み取りが不完全です。画像を再アップロードして再スキャンしてください。</);
+  assert.match(html, /QR から読み取った値の数が項目数と一致しません。項目の設定を確認してください。/);
+  assert.match(main, /slotsMissing: enabled && detected < expected,/);
+  assert.doesNotMatch(html, /項目位置がずれています/);
+  assert.doesNotMatch(html, /class="fixed-doc-qr-result-(add|remove|parse|actions)"/);
+  // QR 連結読取 は既定 OFF。admin が明示的に ON にした帳票だけ QR 優先パスになる。
+  assert.match(main, /const fixedDocQrReadEnabled = ref\(false\);/);
+  assert.match(main, /const fixedDocQrExpectedSlots = computed\(\(\) => Object\.keys\(FIXED_DOC_QR_SOURCE_RECTS\)/);
+  assert.match(main, /const fixedDocQrUndetectedIds = reactive\(new Set\(\)\);/);
+  assert.match(main, /const fixedDocQrDetectedSegments = computed\(\(\) => \{[\s\S]*?if \(!fixedDocQrReadEnabled\.value\) return \[\];/);
+  assert.match(main, /const fixedDocQrReadSlots = computed\(\(\) => fixedDocQrExpectedSlots\.value\.map/);
+  assert.match(main, /const fixedDocQrReadStatus = computed\(\(\) => \{[\s\S]*?const complete = valueCount === expectedValues;[\s\S]*?ok: !enabled \|\| complete/);
+  assert.match(main, /const fixedDocPreviewQrSlots = computed\(\(\) => \{[\s\S]*?fixedDocQrReadSlots\.value/);
+  assert.match(main, /async function runFixedDocQrScan\(options = \{\}\) \{[\s\S]*?\.includes\('\$'\)[\s\S]*?fixedDocQrUndetectedIds\.clear\(\);[\s\S]*?fixedDocQrUndetectedIds\.add\(id\)/);
+  assert.match(main, /runFixedDocQrScan,/);
+  // QR 設定ビューの代わりに Step2 への遷移で自動スキャンする（ビューは作らない）
+  assert.match(main, /watch\(fixedDocSetupStep, \(step\) => \{[\s\S]*?if \(step === 2 && fixedDocQrReadEnabled\.value\) runFixedDocQrScan\(\{ silent: true \}\);/);
+  assert.match(css, /\.fixed-doc-qr-result\.is-disabled\s*\{/);
+  assert.match(css, /\.fixed-doc-qr-result-switch\s*\{[\s\S]*?flex:\s*none;/);
+  assert.match(css, /\.fixed-doc-qr-result-count\s*\{[\s\S]*?margin-left:\s*auto;/);
+  assert.match(css, /\.fixed-doc-qr-scan-btn\s*\{[\s\S]*?flex:\s*none;/);
+  assert.match(css, /\.fixed-doc-qr-result-slot\.is-missing\s*\{[\s\S]*border-style:\s*dashed;/);
+  assert.match(css, /\.fixed-doc-preview-hotspot\.is-missing\s*\{[\s\S]*border-color:\s*#e31b54;/);
   assert.match(main, /function parseFixedDocQrSourcesFromTemplate\(\)/);
-  assert.match(main, /runFixedDocQrSourcesScan\(\{ silent: true \}\)/);
-  assert.match(html, /:loading="fixedDocQrScanActive"/);
-  assert.doesNotMatch(html, /class="fixed-doc-qr-scan-overlay"/);
-  assert.doesNotMatch(html, /fixedDocQrScanStepLabels/);
-  assert.doesNotMatch(css, /\.fixed-doc-qr-scan-step-index/);
-  assert.match(html, /QR を検出できませんでした。「QRスキャン」で再試行できます/);
-  assert.match(html, /fixedDocQrSourceDisplayLabel\(src\)/);
-  assert.doesNotMatch(html, /class="fixed-doc-qr-source-name"/);
-  assert.doesNotMatch(html, /@input="renameFixedDocQrSource\(src\.id, \$event\.target\.value\)"/);
-  assert.match(html, /:data-source-id="src\.id"/);
-  assert.match(html, /class="fixed-doc-qr-source-item-actions"/);
-  assert.match(html, /class="fixed-doc-qr-source-icon-btn fixed-doc-qr-source-remove"/);
-  assert.match(html, /removeFixedDocQrSource\(src\.id\)/);
-  assert.match(html, /fixedDocCanAddQrSource/);
-  assert.match(html, /class="fixed-doc-qr-source-add"/);
-  assert.match(html, /appendNextFixedDocQrSourceFromIgnored/);
-  assert.match(html, /:disabled="!fixedDocCanAddQrSource \|\| fixedDocQrScanActive"/);
-  assert.match(main, /appendNextFixedDocQrSourceFromIgnored,/);
-  assert.doesNotMatch(html, /fixedDocPreviewIgnoredQrHotspots/);
-  assert.match(html, /v-if="fixedDocPreviewQrHotspots\.length"/);
-  assert.match(html, /@click="onFixedDocQrMappingRowClick\(row, \$event\)"/);
+  assert.match(main, /function runFixedDocQrSourcesScan/);
   assert.match(main, /function focusFixedDocQrSource\(sourceId\)/);
   assert.match(main, /fixedDocActiveQrSourceId\.value[\s\S]*fixedDocQrSourceCatalog\.find/);
   assert.match(main, /fixedDocHasConfiguredFieldQrMapping\.value[\s\S]*ElMessageBox\.confirm/);
-  assert.match(main, /既にフィールド映射が設定されています。QRスキャンを再実行すると、フィールド映射がクリアされ、QRソース目録が上書きされます。続行しますか？/);
   assert.match(main, /function clearAllFixedDocConfiguredQrFieldMappings/);
   assert.match(main, /function updateFixedDocQrSourceMappingRefs\(idMap, removedSourceId\)/);
   assert.match(main, /if \(!rule \|\| !rule\.qrSourceId\) return;/);
   assert.match(main, /else if \(removedSourceId && rule\.qrSourceId === removedSourceId\)/);
   assert.match(main, /fixedDocQrSuppressAutoSourceAssignment/);
   assert.match(main, /runFixedDocQrSourcesScan\(\{ clearFieldMappings: true \}\)/);
-  assert.match(main, /skipQrSourceAssignments: !!options\.clearFieldMappings/);
   assert.match(html, /class="fixed-doc-ai-generate"[\s\S]*@click="runFixedDocAiGenerate"[\s\S]*>AI自動生成/);
   assert.match(html, /<el-dropdown trigger="click" placement="bottom-end" popper-class="fixed-doc-action-dropdown" @command="handleFixedDocTemplateAction">[\s\S]*テンプレートをダウンロード[\s\S]*一括ダウンロード[\s\S]*一括インポート[\s\S]*<\/el-dropdown>/);
   assert.match(html, /<el-dropdown trigger="click" placement="bottom-end" popper-class="fixed-doc-action-dropdown" @command="handleFixedDocSettingsAction">[\s\S]*エクスポート設定[\s\S]*読取モデル設定[\s\S]*<\/el-dropdown>/);
@@ -156,41 +210,22 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.doesNotMatch(html, />再定位</);
   assert.doesNotMatch(html, /src\.enabled === false \? 'OFF' : 'ON'/);
   assert.doesNotMatch(html, />🗑</);
-  const step2QrStart = html.indexOf('class="fixed-doc-read-body fixed-doc-read-body--qr"');
-  const step2TableStart = html.indexOf('class="fixed-doc-read-body fixed-doc-table-read-body"', step2QrStart);
-  const step2QrHtml = html.slice(
-    step2QrStart,
-    step2TableStart,
-  );
-  assert.match(html, /<th>項目名 <span class="fixed-doc-required">必須<\/span><\/th>\s*<th class="fixed-doc-qr-type-col">[\s\S]*?タイプ[\s\S]*?<th class="fixed-doc-qr-no-col">QRソース<\/th>/);
-  assert.match(step2QrHtml, /OCR設定で定義した項目タイプを表示します。QR読取では編集できません。/);
-  assert.match(step2QrHtml, /<td class="fixed-doc-qr-type-col">\s*<span class="fixed-doc-type-readonly">\{\{ row\.type \}\}<\/span>\s*<\/td>/);
-  const qrTypeCellHtml = step2QrHtml.slice(
-    step2QrHtml.indexOf('<td class="fixed-doc-qr-type-col">'),
-    step2QrHtml.indexOf('<td class="fixed-doc-qr-no-col">'),
-  );
-  assert.doesNotMatch(qrTypeCellHtml, /<el-select/);
-  assert.doesNotMatch(qrTypeCellHtml, /@change=/);
+  // QR 読取テーブル（項目タイプ／取値方法／順序 の列）も撤去済み
+  assert.doesNotMatch(html, /fixed-doc-read-body--qr/);
+  assert.doesNotMatch(html, /fixed-doc-table--qr-read/);
+  assert.doesNotMatch(html, /fixed-doc-qr-type-col|fixed-doc-qr-no-col|fixed-doc-qr-extract-col|fixed-doc-qr-index-col/);
+  assert.doesNotMatch(html, /fixed-doc-qr-split-switch/);
+  assert.doesNotMatch(html, /fixed-doc-type-readonly/);
+  assert.doesNotMatch(html, /getFixedDocQrFetchIndexInput\(row\)/);
+  assert.doesNotMatch(html, /getFixedDocQrDelimiterInput\(row\)/);
+  assert.doesNotMatch(html, /setFixedDocQrSplitEnabled\(row\.fieldId/);
+  assert.doesNotMatch(html, /fixed-doc-qr-source-select/);
   assert.doesNotMatch(html, /<th class="fixed-doc-qr-extract-col">抽出方式<\/th>/);
-  assert.match(html, /<th class="fixed-doc-qr-extract-col">[\s\S]*?取値方法/);
-  assert.match(html, /取値方法[\s\S]*?OFF：QR 解码全文をそのままフィールドに書き込みます/);
-  assert.match(html, /取値方法[\s\S]*?ON：区切り文字と順序を入力し、指定した 1 段だけを取得します/);
-  assert.match(step2QrHtml, /<el-switch[\s\S]*:model-value="isFixedDocQrSplitExtractMethod\(row\)"[\s\S]*class="fixed-doc-qr-split-switch"[\s\S]*active-text="分割"[\s\S]*inactive-text="全文"[\s\S]*@change="setFixedDocQrSplitEnabled\(row\.fieldId, \$event\)"/);
-  assert.doesNotMatch(step2QrHtml, /fixed-doc-qr-extract-select/);
-  assert.match(html, /<th class="fixed-doc-qr-index-col">[\s\S]*?順序/);
-  assert.match(step2QrHtml, /fixed-doc-qr-index-col/);
-  assert.match(step2QrHtml, /getFixedDocQrFetchIndexInput\(row\)/);
-  assert.match(step2QrHtml, /focusFixedDocQrFetchIndexField\(row\.fieldId\)/);
-  assert.match(step2QrHtml, /commitFixedDocQrFetchIndexDraft\(row\.fieldId\)/);
-  assert.match(step2QrHtml, /el-tooltip[\s\S]*getFixedDocQrFetchIndexError\(row\.fieldId\)/);
-  assert.doesNotMatch(step2QrHtml, /fixed-doc-field-error[\s\S]*getFixedDocQrFetchIndexError/);
-  assert.doesNotMatch(step2QrHtml, /<th class="fixed-doc-row-actions-col">操作<\/th>/);
-  assert.doesNotMatch(step2QrHtml, /class="fixed-doc-row-actions"/);
   assert.match(css, /\.el-switch\s*\{[\s\S]*--el-switch-on-color:\s*#667085;[\s\S]*--el-switch-off-color:\s*#d0d5dd;/);
   assert.match(css, /\.el-switch \.el-switch__action\s*\{[\s\S]*background-color:\s*#fff;/);
-  assert.doesNotMatch(css, /\.fixed-doc-qr-split-switch\s*\{[^}]*--el-switch-on-color:\s*var\(--el-color-primary\);/);
-  assert.match(css, /\.fixed-doc-table--qr-read th\.fixed-doc-qr-type-col,[\s\S]*?\.fixed-doc-table--qr-read td\.fixed-doc-qr-type-col\s*\{[\s\S]*width:\s*9%;/);
-  assert.match(css, /\.fixed-doc-type-readonly\s*\{[\s\S]*font-size:\s*13px;[\s\S]*white-space:\s*nowrap;/);
+  assert.doesNotMatch(css, /fixed-doc-table--qr-read/);
+  assert.doesNotMatch(css, /fixed-doc-qr-type-col|fixed-doc-qr-no-col|fixed-doc-qr-index-cell|fixed-doc-qr-split-switch/);
+  assert.doesNotMatch(css, /fixed-doc-type-readonly/);
   assert.doesNotMatch(css, /\.fixed-doc-qr-fetch-index/);
   assert.doesNotMatch(main, /const FIXED_DOC_QR_EXTRACT_PLAIN = '普通OCR';/);
   assert.match(main, /const FIXED_DOC_QR_EXTRACT_PLAIN = '全文';/);
@@ -232,31 +267,31 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.doesNotMatch(css, /\.fixed-doc-row-move/);
   assert.match(css, /\.fixed-doc-row-delete:focus-visible,[\s\S]*?box-shadow:\s*0 0 0 2px #b2ddff;/);
   assert.match(css, /\.fixed-doc-table th\.fixed-doc-row-actions-col,[\s\S]*?width:\s*80px;/);
-  assert.doesNotMatch(step2QrHtml, /class="fixed-doc-qr-type-select"/);
-  assert.doesNotMatch(step2QrHtml, /@change="setFixedDocFieldType\(row\.fieldId, \$event\)"/);
+  // QR 読取テーブルの タイプ 列（読み取り専用）は撤去済み。OCR 設定側のタイプ選択は残る。
+  assert.doesNotMatch(html, /class="fixed-doc-qr-type-select"/);
+  assert.doesNotMatch(html, /fixed-doc-qr-type-col/);
   assert.match(main, /const fixedDocFieldTypes = reactive\(\{\}\);/);
   assert.match(main, /function setFixedDocFieldType\(fieldRef, type\)/);
   assert.match(main, /function normalizeFixedDocFieldType\(type\)/);
   assert.match(html, /タイプ[\s\S]*string：文字列、number：数値/);
   assert.doesNotMatch(html, /content="string：文字列、number：数値、enum：候補値"/);
-  assert.doesNotMatch(html, /<el-option label="enum" value="enum"><\/el-option>/);
   assert.match(html, /setFixedDocTableColumnType\(table\.id, col\.columnId, \$event\)/);
-  assert.match(html, /getFixedDocQrDelimiterInput\(row\)/);
-  assert.match(html, /commitFixedDocQrDelimiterDraft\(row\.fieldId\)/);
+  assert.doesNotMatch(html, /getFixedDocQrDelimiterInput\(row\)/);
+  assert.doesNotMatch(html, /commitFixedDocQrDelimiterDraft\(row\.fieldId\)/);
   assert.doesNotMatch(html, /fixed-doc-qr-delim-select"[\s\S]*placeholder="\$"/);
-  assert.doesNotMatch(step2QrHtml, /v-if="shouldShowFixedDocQrFieldDelimiter\(row\)"[\s\S]*<el-select/);
+  assert.doesNotMatch(html, /v-if="shouldShowFixedDocQrFieldDelimiter\(row\)"[\s\S]*<el-select/);
   assert.doesNotMatch(html, /v-if="row\.qrSourceId"[\s\S]*class="fixed-doc-qr-source-select"/);
-  assert.match(html, /:model-value="row\.qrSourceId"[\s\S]*placeholder="選択してください"[\s\S]*setFixedDocFieldRule\(row\.fieldId, \{ qrSourceId: \$event \}\)/);
-  assert.match(main, /const fixedDocQrReadRows = computed\(\(\) => \{[\s\S]*?return fixedDocTextRows\.value\.map/);
+  assert.doesNotMatch(html, /:model-value="row\.qrSourceId"/);
+  assert.doesNotMatch(main, /const fixedDocQrReadRows = computed/);
   assert.doesNotMatch(
     main.slice(main.indexOf('function ensureFixedDocFieldRules'), main.indexOf('function setFixedDocFieldRule')),
     /ensureFixedDocQrSourceAssignments/,
   );
   assert.doesNotMatch(html, /未設定（OCR）/);
-  assert.doesNotMatch(step2QrHtml, /正解サンプル/);
-  assert.match(html, /fixedDocReadMode === 'ocr'[\s\S]*正解サンプル[\s\S]*content="この項目は自動ルールマッチングと読取に使用されます。"/);
+  assert.doesNotMatch(html, /正解サンプル[\s\S]{0,200}QR読取/);
+  assert.match(html, /正解サンプル[\s\S]*content="この項目は自動ルールマッチングと読取に使用されます。"/);
   assert.match(html, /正解サンプル[\s\S]*content="この列は自動ルールマッチングと読取に使用されます。"/);
-  assert.match(step2QrHtml, /setFixedDocFieldRule\(row\.fieldId,/);
+  assert.match(html, /setFixedDocFieldRule\(row\.fieldId,/);
   assert.match(html, /class="fixed-doc-table-config-panel"/);
   assert.match(html, /テーブル抽出条件/);
   assert.match(html, /class="fixed-doc-table-config-name"/);
@@ -269,7 +304,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(html, /<td><el-switch :model-value="row\.required" size="small"><\/el-switch><\/td>/);
   assert.doesNotMatch(html, /class="fixed-doc-table-qr-panel"/);
   assert.doesNotMatch(html, /class="fixed-doc-table-qr-read"/);
-  assert.doesNotMatch(step2QrHtml, /setFixedDocTableColumnRule\(table\.id, col\.columnId, \{ qrSourceId/);
+  assert.doesNotMatch(html, /setFixedDocTableColumnRule\(table\.id, col\.columnId, \{ qrSourceId/);
   assert.doesNotMatch(html, /<strong>テーブル QR 読取<\/strong>/);
   assert.doesNotMatch(html, /fixed-doc-qr-toggle-col/);
   assert.doesNotMatch(html, />解析样例</);
@@ -310,7 +345,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(main, /function listFixedDocQrTemplateDetections\(\)/);
   assert.match(main, /function getFixedDocQrExcludedSourceKeys\(\)/);
   assert.doesNotMatch(main, /FIXED_DOC_QR_SOURCE_LIMIT/);
-  assert.match(main, /const fixedDocCanAddQrSource = computed/);
+  assert.doesNotMatch(main, /const fixedDocCanAddQrSource = computed/);
   assert.match(main, /function addFixedDocQrSourceFromIgnored/);
   assert.match(main, /function removeFixedDocQrSource\(sourceId\)/);
   assert.match(main, /removeFixedDocQrSource\(sourceId\)[\s\S]*?reindexFixedDocQrSources\(sourceId\)/);
@@ -488,27 +523,16 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(css, /\.fixed-doc-preview-canvas\s*\{[^}]*overflow:\s*hidden;/);
   assert.match(css, /\.fixed-doc-preview-canvas\s*\{[^}]*align-items:\s*center;/);
   assert.match(css, /\.fixed-doc-preview-stage\s*\{[^}]*width:\s*min\(100%, 520px\);/);
-  assert.match(css, /\.fixed-doc-preview-hotspot--readonly\s*\{[\s\S]*pointer-events:\s*none;/);
-  assert.match(css, /\.fixed-doc-preview-region-draft\s*\{/);
-  assert.match(css, /\.fixed-doc-preview-region-draft\s*\{[^}]*border:\s*2px solid #155eef;/);
-  assert.match(css, /\.fixed-doc-preview-hotspot--ignored\s*\{[\s\S]*border-style:\s*dashed;/);
-  assert.match(css, /\.fixed-doc-preview-hotspot--ignored:hover\s*\{/);
-  assert.doesNotMatch(css, /\.fixed-doc-qr-source-list li\.is-unbound\s*\{[^}]*border-style:\s*dashed;/);
-  assert.match(css, /\.fixed-doc-qr-source-list-wrap\s*\{[^}]*overflow:\s*visible;/);
-  assert.match(css, /\.fixed-doc-qr-source-scroll\s*\{[^}]*overflow:\s*visible;/);
-  assert.match(css, /\.fixed-doc-qr-source-list\s*\{[^}]*flex-wrap:\s*wrap;/);
-  assert.doesNotMatch(css, /\.fixed-doc-qr-source-scroll\s*\{[^}]*overflow-x:\s*auto;/);
-  assert.doesNotMatch(css, /\.fixed-doc-qr-source-name\s*\{/);
-  assert.doesNotMatch(css, /\.fixed-doc-test-source-label\s*\{/);
-  assert.match(css, /\.fixed-doc-qr-source-actions\s*\{[^}]*align-items:\s*center;/);
-  assert.match(css, /\.fixed-doc-table--qr-read\s*\{[^}]*min-width:\s*0;/);
-  assert.match(css, /\.fixed-doc-table-scroll:has\(\.fixed-doc-table--qr-read\)\s*\{[^}]*overflow-x:\s*hidden;/);
-  assert.match(css, /\.fixed-doc-table--read\.fixed-doc-table--qr-read\s*\{[^}]*min-width:\s*0;/);
-  assert.match(css, /\.fixed-doc-table--qr-read th:nth-child\(2\)\s*\{[^}]*width:\s*24%;/);
-  assert.match(css, /\.fixed-doc-table--qr-read td\s*\{[\s\S]*vertical-align:\s*top;/);
-  assert.match(css, /\.fixed-doc-qr-index-cell\s*\{[\s\S]*flex-direction:\s*column;/);
-  assert.match(css, /\.fixed-doc-table--qr-read th\.fixed-doc-qr-no-col,\s*\.fixed-doc-table--qr-read td\.fixed-doc-qr-no-col\s*\{[^}]*width:\s*15%;[\s\S]*?min-width:\s*0;/);
-  assert.doesNotMatch(css, /\.fixed-doc-table--qr-read th\.fixed-doc-qr-no-col,\s*\.fixed-doc-table--qr-read td\.fixed-doc-qr-no-col\s*\{[^}]*width:\s*128px;/);
-  assert.match(css, /\.fixed-doc-table--qr-read th\.fixed-doc-qr-no-col,[\s\S]*?white-space:\s*nowrap;/);
+  // QR 設定ビュー撤去に伴うスタイルも削除済み（参照ゼロのセレクタを除去）
+  assert.match(css, /\.fixed-doc-preview-hotspot\s*\{[\s\S]*border:\s*2px solid #175cd3;/);
+  assert.match(css, /\.fixed-doc-preview-hotspot\.is-missing\s*\{[\s\S]*border-color:\s*#e31b54;/);
+  assert.doesNotMatch(css, /\.fixed-doc-preview-region-draft/);
+  assert.doesNotMatch(css, /\.fixed-doc-qr-source-/);
+  assert.doesNotMatch(css, /\.fixed-doc-table-qr-/);
+  assert.doesNotMatch(css, /\.fixed-doc-table--qr-read/);
+  assert.doesNotMatch(css, /\.fixed-doc-read-mode-switch/);
+  assert.doesNotMatch(css, /\.fixed-doc-type-readonly/);
+  assert.doesNotMatch(css, /\.fixed-doc-test-source-label/);
+  assert.match(css, /\.fixed-doc-range-input\.is-error \.el-input__wrapper,/);
   assert.match(main, /function onFixedDocPreviewWheel\(event\)/);
 });

@@ -67,6 +67,13 @@ function subsectionHeadingId(title) {
   return slug ? ` id="fig-${slug}"` : '';
 }
 
+/** 整行删除标记：<del class="change-deleted">| a | b |</del> 仍视为表格行 */
+const WHOLE_ROW_DEL_RE = /^<del class="change-deleted">\|.*\|<\/del>$/;
+
+function isTableRow(line) {
+  return /^\|.+\|$/.test(line) || WHOLE_ROW_DEL_RE.test(line);
+}
+
 function parseMarkdown(md) {
   const lines = md.replace(/\r\n/g, '\n').split('\n');
   const chapters = [];
@@ -124,9 +131,9 @@ function parseMarkdown(md) {
       continue;
     }
 
-    if (/^\|.+\|$/.test(line)) {
+    if (isTableRow(line)) {
       const tableLines = [];
-      while (i < lines.length && /^\|.+\|$/.test(lines[i])) {
+      while (i < lines.length && isTableRow(lines[i])) {
         tableLines.push(lines[i]);
         i += 1;
       }
@@ -158,7 +165,7 @@ function parseMarkdown(md) {
 
     const para = [line];
     i += 1;
-    while (i < lines.length && lines[i].trim() && !/^#{1,6}\s/.test(lines[i]) && !/^\|.+\|$/.test(lines[i]) && !/^---\s*$/.test(lines[i]) && !/^(\d+\.\s+|\-\s+|\*\s+)/.test(lines[i]) && !lines[i].startsWith('```')) {
+    while (i < lines.length && lines[i].trim() && !/^#{1,6}\s/.test(lines[i]) && !isTableRow(lines[i]) && !/^---\s*$/.test(lines[i]) && !/^(\d+\.\s+|\-\s+|\*\s+)/.test(lines[i]) && !lines[i].startsWith('```')) {
       para.push(lines[i]);
       i += 1;
     }
@@ -250,12 +257,17 @@ function renderTable(rows, sections) {
   const bodyRows = rows.filter((row) => !/^\|[\s\-:|]+\|$/.test(row));
   if (!bodyRows.length) return '';
 
-  const parsed = bodyRows.map((row) =>
-    row
-      .slice(1, -1)
-      .split('|')
-      .map((cell) => cell.trim()),
-  );
+  const parsed = bodyRows.map((row) => {
+    const wholeRowDel = row.match(WHOLE_ROW_DEL_RE);
+    const raw = wholeRowDel ? wholeRowDel[0].slice('<del class="change-deleted">'.length, -'</del>'.length) : row;
+    return {
+      deleted: Boolean(wholeRowDel),
+      cells: raw
+        .slice(1, -1)
+        .split('|')
+        .map((cell) => cell.trim()),
+    };
+  });
 
   const [head, ...rest] = parsed;
   const sectionByName = new Map(sections.map((sec) => [sec.label, sec]));
@@ -268,12 +280,15 @@ function renderTable(rows, sections) {
     return inlineMarkdown(cell);
   };
 
-  const thead = `<thead><tr>${head.map((cell) => `<th>${inlineMarkdown(cell)}</th>`).join('')}</tr></thead>`;
+  const thead = `<thead><tr>${head.cells.map((cell) => `<th>${inlineMarkdown(cell)}</th>`).join('')}</tr></thead>`;
   const tbody = `<tbody>${rest
     .map(
       (row) =>
-        `<tr>${row
-          .map((cell, index) => `<td>${renderCell(cell, index)}</td>`)
+        `<tr>${row.cells
+          .map((cell, index) => {
+            const html = renderCell(cell, index);
+            return `<td>${row.deleted ? `<del class="change-deleted">${html}</del>` : html}</td>`;
+          })
           .join('')}</tr>`,
     )
     .join('')}</tbody>`;
