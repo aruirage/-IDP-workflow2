@@ -8,3 +8,16 @@ hatch-runs/
 node_modules/
 .deploy-idp-ph2-prd/
 assets/prd-screenshots/.capture-error.txt
+
+# 本地会话与缓存产物
+.specstory/
+.workbuddy-ai/
+preview/
+.cursor/*.log
+pi-start.sh
+
+# 実診断書の原本（取扱注意のためローカルのみ）
+二维码测试集/
+LIAJ诊断书QR追加确认事项/.cache/
+LIAJ诊断书QR追加确认事项/.slidep/
+LIAJ诊断书QR追加确认事项/preview/
