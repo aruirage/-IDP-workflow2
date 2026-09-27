@@ -4323,9 +4323,8 @@ const appOptions = {
     }
 
     watch(fixedDocSetupStep, (step) => {
-      // QR 設定ビューを廃止したので、旧ビューに入ったときの自動スキャンは Step2 への遷移で代替する。
-      // QR を持たない帳票ではスイッチを切っておけば 1 枠も読まない（＝ OCR だけ）。
-      if (step === 2 && fixedDocQrReadEnabled.value) runFixedDocQrScan({ silent: true });
+      // 読み取りはスイッチを ON にしたときの 1 回だけ。Step2 へ入り直しても自動では読み直さない
+      // （読み直したいときは 再スキャン を押す）。QR を持たない帳票はスイッチを切っておけば 1 枠も読まない。
       if (step === 3) nextTick(autoApplyFixedDocAiMatchingIfNeeded);
     });
 

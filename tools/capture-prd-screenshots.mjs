@@ -42,7 +42,7 @@ async function setNavCollapsed(page, collapsed) {
 
 /**
  * QR 読取 スイッチは既定 OFF（無効 — OCR のみで読取 表示）。PRD 用の図は
- * 「ON にした状態」（槽位条 + パス徽标 + QR スキャン）を見せたいので明示的に ON にする。
+ * 「ON にした状態」（槽位条 + 再スキャン）を見せたいので明示的に ON にする。
  * ON にするとスキャンが走り、枠は 1 つずつ出る。撮るのは読み取り完了後なので idle を待つ。
  */
 async function setQrReadEnabled(page, enabled) {

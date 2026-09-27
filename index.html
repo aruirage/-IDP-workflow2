@@ -408,22 +408,20 @@
                               @keydown.space.prevent="toggleFixedDocQrSlotHighlight(slot.id)"
                             >{{ slot.id }}</div>
                           </div>
-                          <span v-if="!fixedDocQrReadStatus.enabled" class="fixed-doc-qr-result-count">無効 — OCR のみで読取</span>
-                          <span
-                            v-else-if="fixedDocQrScanActive"
-                            class="fixed-doc-qr-result-count"
-                          >スキャン中…</span>
-                          <span
-                            v-else
-                            class="fixed-doc-qr-result-path is-qr"
-                          >複数 QR 読取優先パス適用中</span>
-                          <el-button
-                            class="fixed-doc-qr-scan-btn"
-                            size="small"
-                            :disabled="!fixedDocQrReadStatus.enabled"
-                            :loading="fixedDocQrScanActive"
-                            @click="runFixedDocQrScan"
-                          >再スキャン</el-button>
+                          <div class="fixed-doc-qr-result-status">
+                            <span v-if="!fixedDocQrReadStatus.enabled" class="fixed-doc-qr-result-count">無効 — OCR のみで読取</span>
+                            <span
+                              v-else-if="fixedDocQrScanActive"
+                              class="fixed-doc-qr-result-count"
+                            >スキャン中…</span>
+                            <el-button
+                              class="fixed-doc-qr-scan-btn"
+                              size="small"
+                              :disabled="!fixedDocQrReadStatus.enabled"
+                              :loading="fixedDocQrScanActive"
+                              @click="runFixedDocQrScan"
+                            >再スキャン</el-button>
+                          </div>
                         </div>
                       </div>
                       <div class="fixed-doc-table-panel">

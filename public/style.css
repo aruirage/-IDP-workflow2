@@ -6673,8 +6673,15 @@ code.export-config-meta-value {
   color: #101828;
   white-space: nowrap;
 }
-.fixed-doc-qr-result-count {
+/* 状態文案と再スキャン はひとまとまりにして右端へ寄せる（槽位条には寄せない）。 */
+.fixed-doc-qr-result-status {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
   margin-left: auto;
+}
+.fixed-doc-qr-result-count {
   font-size: 13px;
   color: #475467;
 }
@@ -6715,19 +6722,6 @@ code.export-config-meta-value {
 }
 .fixed-doc-qr-scan-btn {
   flex: none;
-}
-.fixed-doc-qr-result-path {
-  margin-left: auto;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.fixed-doc-qr-result-path.is-qr {
-  color: #027a48;
-  background: #ecfdf3;
-  border: 1px solid #abefc6;
 }
 .fixed-doc-preview-hotspots {
   position: absolute;

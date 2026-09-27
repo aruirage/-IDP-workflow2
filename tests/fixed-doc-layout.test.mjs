@@ -176,11 +176,16 @@ test('fixed document type settings use the diagnosis template layout', async () 
   // 「複数 QR 読取」の横に情報アイコン（tooltip）。LIAJ 診断書テンプレート専用の説明。
   assert.match(html, /class="fixed-doc-qr-result-title">複数 QR 読取<\/span>[\s\S]*?class="fixed-doc-info" tabindex="0">i<\/span>/);
   assert.match(html, /LIAJ診断書テンプレート専用/);
-  // 徽标は 2 態だけ：OFF→「無効」、ON→「複数 QR 読取優先パス適用中」。赤バッジは無い。
-  assert.match(html, /class="fixed-doc-qr-result-path is-qr"[\s\S]*?>複数 QR 読取優先パス適用中</);
-  assert.doesNotMatch(html, /fixed-doc-qr-result-path is-ocr/);
+  // 完了バッジは削除済み（ON でも「スキャン中…」が消えるだけで、状態表示は OFFの「無効」のみ）。赤バッジも無い。
+  assert.doesNotMatch(html, /fixed-doc-qr-result-path/);
+  assert.doesNotMatch(html, /スキャン完了/);
+  assert.doesNotMatch(html, /fixedDocQrReadSlots\.length/);
   assert.doesNotMatch(html, /QR 不足 — OCR で読取/);
-  assert.doesNotMatch(css, /\.fixed-doc-qr-result-path\.is-ocr/);
+  assert.doesNotMatch(css, /\.fixed-doc-qr-result-path/);
+  // 状態文案と 再スキャン は右端のまとまりに置く（槽位条に寄せない）。
+  assert.match(html, /class="fixed-doc-qr-result-status"[\s\S]*?>再スキャン<\/el-button>/);
+  assert.match(css, /\.fixed-doc-qr-result-status\s*\{[\s\S]*?margin-left: auto/);
+  assert.doesNotMatch(css, /\.fixed-doc-qr-result-count\s*\{[^}]*margin-left: auto/);
   assert.doesNotMatch(css, /\.fixed-doc-qr-result-slot\.is-missing|\.fixed-doc-qr-result-slot\.is-scanning|\.fixed-doc-qr-result\.is-incomplete/);
   assert.doesNotMatch(html, /fixed-doc-qr-result-(label|range|id)"/);
   assert.doesNotMatch(html, /\{\{ fixedDocQrReadStatus\.detected \}\}/);
@@ -204,8 +209,8 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(main, /const fixedDocPreviewQrSlots = computed\(\(\) => \{[\s\S]*?fixedDocQrReadSlots\.value/);
   assert.match(main, /async function runFixedDocQrScan\(options = \{\}\) \{[\s\S]*?for \(const slot of fixedDocQrDetectedSegments\.value\)/);
   assert.match(main, /runFixedDocQrScan,/);
-  // QR 設定ビューの代わりに Step2 への遷移で自動スキャンする（ビューは作らない）
-  assert.match(main, /watch\(fixedDocSetupStep, \(step\) => \{[\s\S]*?if \(step === 2 && fixedDocQrReadEnabled\.value\) runFixedDocQrScan\(\{ silent: true \}\);/);
+  // 読むのはスイッチを ON にした 1 回と手動 再スキャン だけ。Step2 への遷移では自動スキャンを走らせない。
+  assert.doesNotMatch(main, /watch\(fixedDocSetupStep[\s\S]{0,400}?runFixedDocQrScan/);
   assert.match(css, /\.fixed-doc-qr-result\.is-disabled\s*\{/);
   assert.match(css, /\.fixed-doc-qr-result-switch\s*\{[\s\S]*?flex:\s*none;/);
   assert.match(css, /\.fixed-doc-qr-result-count\s*\{[\s\S]*?margin-left:\s*auto;/);
