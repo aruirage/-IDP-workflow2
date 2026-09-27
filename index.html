@@ -227,7 +227,7 @@
                               v-for="slot in fixedDocPreviewQrSlots"
                               :key="'qr-hot-' + slot.id"
                               class="fixed-doc-preview-hotspot"
-                              :class="{ 'is-missing': !slot.detected }"
+                              :class="{ 'is-active': fixedDocActiveQrSlotId === slot.id }"
                               :data-source-id="slot.id"
                               :style="{
                                 left: slot.rect.x + '%',
@@ -379,7 +379,7 @@
                           :class="{ 'is-disabled': !fixedDocQrReadStatus.enabled }"
                         >
                         <div class="fixed-doc-qr-result-head">
-                          <span class="fixed-doc-qr-result-title">QR 読取</span>
+                          <span class="fixed-doc-qr-result-title">複数 QR 読取</span>
                           <el-tooltip
                             placement="top"
                             :show-after="200"
@@ -393,14 +393,20 @@
                             @change="onFixedDocQrReadToggle"
                           ></el-switch>
                           <div v-if="fixedDocQrReadStatus.enabled" class="fixed-doc-qr-result-slots">
-                            <template v-for="slot in fixedDocQrReadSlots" :key="slot.id">
-                              <div
-                                v-if="slot.scanned"
-                                class="fixed-doc-qr-result-slot"
-                                :data-source-id="slot.id"
-                                :title="slot.id + ' · 検出'"
-                              >{{ slot.id }}</div>
-                            </template>
+                            <div
+                              v-for="slot in fixedDocQrReadSlots"
+                              :key="slot.id"
+                              class="fixed-doc-qr-result-slot"
+                              :class="{ 'is-active': fixedDocActiveQrSlotId === slot.id }"
+                              :data-source-id="slot.id"
+                              role="button"
+                              tabindex="0"
+                              :aria-pressed="fixedDocActiveQrSlotId === slot.id"
+                              :title="slot.id + ' · 検出'"
+                              @click="toggleFixedDocQrSlotHighlight(slot.id)"
+                              @keydown.enter.prevent="toggleFixedDocQrSlotHighlight(slot.id)"
+                              @keydown.space.prevent="toggleFixedDocQrSlotHighlight(slot.id)"
+                            >{{ slot.id }}</div>
                           </div>
                           <span v-if="!fixedDocQrReadStatus.enabled" class="fixed-doc-qr-result-count">無効 — OCR のみで読取</span>
                           <span
@@ -410,7 +416,7 @@
                           <span
                             v-else
                             class="fixed-doc-qr-result-path is-qr"
-                          >QR 読取優先パス適用中</span>
+                          >複数 QR 読取優先パス適用中</span>
                           <el-button
                             class="fixed-doc-qr-scan-btn"
                             size="small"

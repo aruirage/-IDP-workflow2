@@ -6701,6 +6701,17 @@ code.export-config-meta-value {
   font-size: 13px;
   font-weight: 500;
   color: #175cd3;
+  cursor: pointer;
+}
+/* 選択中の槽位。プレビュー側の同じ槽位の枠も同時に強調する。 */
+.fixed-doc-qr-result-slot.is-active {
+  border-color: #175cd3;
+  background: #eff4ff;
+  box-shadow: 0 0 0 2px rgba(23, 92, 211, 0.18);
+}
+.fixed-doc-qr-result-slot:focus-visible {
+  outline: 2px solid rgba(23, 92, 211, 0.4);
+  outline-offset: 2px;
 }
 .fixed-doc-qr-scan-btn {
   flex: none;
@@ -6731,11 +6742,6 @@ code.export-config-meta-value {
   background: rgba(23, 92, 211, 0.08);
   pointer-events: none;
 }
-.fixed-doc-preview-hotspot.is-missing {
-  border-color: #e31b54;
-  border-style: dashed;
-  background: rgba(227, 27, 84, 0.1);
-}
 .fixed-doc-preview-hotspot-label {
   position: absolute;
   left: 0;
@@ -6746,8 +6752,14 @@ code.export-config-meta-value {
   color: #fff;
   background: #175cd3;
 }
-.fixed-doc-preview-hotspot.is-missing .fixed-doc-preview-hotspot-label {
-  background: #e31b54;
+/* 条で選んだ槽位をプレビュー側でも強調する（重ね表示は読取専用なので、選択状態だけを持つ）。 */
+.fixed-doc-preview-hotspot.is-active {
+  border-color: #175cd3;
+  background: rgba(23, 92, 211, 0.26);
+  box-shadow: 0 0 0 3px rgba(23, 92, 211, 0.25);
+}
+.fixed-doc-preview-hotspot.is-active .fixed-doc-preview-hotspot-label {
+  background: #155eef;
 }
 .fixed-doc-common-prompt .el-textarea__inner {
   min-height: 108px;

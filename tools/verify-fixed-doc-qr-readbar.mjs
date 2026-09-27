@@ -1,13 +1,13 @@
 // QR 読取バー（AI 入力欄の下・項目表の上）を実機で検証する。
-//   0. 既定は OFF（無効 — OCR のみで読取）。枠行もプレビューの QR 枠も出ない
+//   0. 既定は OFF（無効 — OCR のみで読取）。槽位条もプレビューの QR 枠も出ない
 //   1. ON: スイッチを入れるとその場でスキャンが走る。読み取りには時間がかかり、
 //      結果は 1 つずつ出る（全部そろうまでパス徽标は出ず「スキャン中…」）
-//   2. 完了: 掃出せた QR だけが並ぶ（6 個）、プレビューに QR 枠が出る。技術的な数値は出さない
-//   3. OFF: 枠行が消え「無効 — OCR のみで読取」、プレビューの QR 枠も消える
-//   4. ON + QR3 未検出: 枠は予約しない。槽位条は掃出せた分だけを並べ，
-//      赤枠・点線のスキャン中プレースホルダ・アラート行は出さない。
-//      書込値数が項目数に満たないので ok は false（プレビューの QR3 枠のみ is-missing）
-//   5. QR スキャン ボタン: 実行できる（loading 表示 → 結果メッセージ）
+//   2. 完了: 掃出せた槽位だけが並ぶ（演示データは 6 個）、プレビューに QR 枠が出る。技術的な数値は出さない。
+//      予設の枠数・「未検出」という概念を持たない（予約枠・赤枠・点線プレースホルダ・アラート行を描かない）
+//   3. OFF: 槽位条が消え「無効 — OCR のみで読取」、プレビューの QR 枠も消える
+//   4. 再スキャン ボタン: 実行できる（loading 表示 → 結果メッセージ）
+//   5. Step2 遷移: 自動でスキャンが走る（槽位は一気に出ない）
+//   6. 途中で OFF: 走っているスキャンを捨てる
 // 使い方: node tools/verify-fixed-doc-qr-readbar.mjs
 import { chromium } from 'playwright';
 import fs from 'node:fs';
@@ -59,7 +59,7 @@ const READ_BAR = `(() => {
 const STATUS = `(() => {
   const s = ${SETUP};
   const st = s.fixedDocQrReadStatus;
-  return { valueCount: st.valueCount, detected: st.detected, ok: st.ok, enabled: st.enabled, values: s.fixedDocQrValues.length, active: s.fixedDocQrScanActive };
+  return { enabled: st.enabled, slots: s.fixedDocQrReadSlots.length, values: s.fixedDocQrValues.length, active: s.fixedDocQrScanActive };
 })()`;
 
 /** スキャン完了待ち。実機では枠ごとに読み取り時間がかかるので、必ず idle を待ってから検証する。 */
@@ -137,19 +137,19 @@ const on = await page.evaluate(READ_BAR);
 console.log('\n[ON] ', JSON.stringify(on));
 check('ON: テキストエリアの後にある', on.afterTextarea === true, on.afterTextarea);
 check('ON: 項目表の前にある', on.beforeTable === true, on.beforeTable);
-check('ON: 期待枠 6 個', on.slots?.length === 6, on.slots?.length);
-check('ON: 全枠スキャン済み', on.scannedCount === 6 && on.scanningCount === 0, { scanned: on.scannedCount, scanning: on.scanningCount });
-check('ON: 未検出 0', on.missingSlots?.length === 0, on.missingSlots);
+check('ON: 掃出せた槽位だけが並ぶ（演示データは 6 個）', on.slots?.length === 6, on.slots?.length);
+check('ON: 未完スキャンの槽位を残さない', on.scannedCount === 6 && on.scanningCount === 0, { scanned: on.scannedCount, scanning: on.scanningCount });
+check('ON: 槽位条に is-missing を付けない', on.missingSlots?.length === 0, on.missingSlots);
 check('ON: 枠は QR id だけ', on.slots?.every((s) => s.text === s.id) === true, on.slots?.map((s) => s.text));
 check('ON: 槽位条に赤枠・点線枠を残さない', on.placeholderCount === 0 && on.alertPresent === false, { placeholders: on.placeholderCount, alert: on.alertPresent });
-check('ON: パス徽标が出る', on.pathBadge === 'QR 読取優先パス適用中', on.pathBadge);
+check('ON: パス徽标が出る', on.pathBadge === '複数 QR 読取優先パス適用中', on.pathBadge);
 check('ON: 「スキャン中…」が消える', on.scanningLabel === null, on.scanningLabel);
-check('ON: QR スキャンボタンがある', on.scanBtn === 'QR スキャン', on.scanBtn);
+check('ON: QR 再スキャンボタンがある', on.scanBtn === '再スキャン', on.scanBtn);
 check('ON: 技術的な数値（値数/検出数）を出さない', !/値/.test(on.head || '') && !/\d+\s*\/\s*\d+/.test(on.head || ''), on.head);
 check('ON: 警告なし', on.alert === null, on.alert);
 check('ON: プレビューに QR 枠 6 個', on.hotspotCount === 6, on.hotspotIds);
 const onState = await page.evaluate(STATUS);
-check('ON: 内部状態は 407 値・ok', onState.valueCount === 407 && onState.ok === true, onState);
+check('ON: 内部で値 407 件が切れている', onState.values === 407, onState);
 await page.screenshot({ path: `${OUT}/qr-readbar-on.png`, fullPage: true });
 
 // --- 3. QR スキャン ボタン ---
@@ -161,16 +161,15 @@ await waitScanIdle(page);
 const scanned = await page.evaluate(`(() => {
   const s = ${SETUP};
   return {
-    detected: s.fixedDocQrReadStatus.detected,
-    valueCount: s.fixedDocQrReadStatus.valueCount,
-    ok: s.fixedDocQrReadStatus.ok,
+    slots: s.fixedDocQrReadSlots.length,
+    values: s.fixedDocQrValues.length,
     active: s.fixedDocQrScanActive,
     toast: document.querySelector('.el-message')?.textContent.trim() || null,
   };
 })()`);
 console.log('\n[SCAN]', JSON.stringify(scanned));
 check('SCAN: 実行後に loading が解除される', scanned.active === false, scanned.active);
-check('SCAN: 値 407 件で ok', scanned.valueCount === 407 && scanned.ok === true, scanned);
+check('SCAN: 値 407 件', scanned.values === 407, scanned);
 check('SCAN: 成功メッセージ', /QR の読み取りが完了しました/.test(scanned.toast || ''), scanned.toast);
 await page.screenshot({ path: `${OUT}/qr-readbar-scanned.png`, fullPage: true });
 
@@ -186,59 +185,28 @@ check('OFF: 警告なし', offAgain.alert === null, offAgain.alert);
 check('OFF: プレビューの QR 枠も消える', offAgain.hotspotCount === 0, offAgain.hotspotIds);
 check('OFF: スキャンボタンが無効化される', await page.evaluate(`document.querySelector('.fixed-doc-qr-scan-btn')?.disabled === true`) === true, null);
 const offState = await page.evaluate(STATUS);
-check('OFF: 連結をやめて値 0 件', offState.values === 0 && offState.detected === 0, offState);
-check('OFF: ok は true（明示的な選択なので失敗ではない）', offState.ok === true, offState);
+check('OFF: 連結をやめて値 0 件', offState.values === 0, offState);
 await page.screenshot({ path: `${OUT}/qr-readbar-off.png`, fullPage: true });
 
-// --- 5. ON に戻し、QR3 未検出を注入（= 6 個中 5 個しか読めなかったケース）---
+// 直前の OFF セクションでスイッチを切っているため、自動スキャン検証の前提として ON に戻す
 await page.click('.fixed-doc-qr-result-switch');
-await page.waitForTimeout(320);
-check('PARTIAL: ON 直後はスキャン中', (await page.evaluate(READ_BAR)).scanningLabel === 'スキャン中…', null);
 await waitScanIdle(page);
-await page.evaluate(`(() => { const s = ${SETUP}; s.fixedDocQrUndetectedIds.add('QR3'); })()`);
-await page.waitForTimeout(700);
-const partial = await page.evaluate(READ_BAR);
-console.log('\n[PARTIAL]', JSON.stringify(partial));
-check('PARTIAL: 槽位条に赤枠・点線枠を出さない', partial.placeholderCount === 0 && partial.missingSlots.length === 0, { placeholders: partial.placeholderCount, missing: partial.missingSlots });
-check('PARTIAL: is-incomplete を付けない', !partial.classes?.includes('is-incomplete'), partial.classes);
-check('PARTIAL: 技術的な数値（値数/検出数）を出さない', !/値/.test(partial.head || '') && !/\d+\s*\/\s*\d+/.test(partial.head || ''), partial.head);
-check('PARTIAL: 配置端にアラート行を出さない', partial.alertPresent === false && partial.alert === null, { present: partial.alertPresent, alert: partial.alert });
-check('PARTIAL: プレビューの QR3 枠が is-missing', await page.evaluate(`document.querySelector('.fixed-doc-preview-hotspot[data-source-id="QR3"]')?.classList.contains('is-missing') === true`) === true, null);
-const partialState = await page.evaluate(STATUS);
-console.log('PARTIAL state:', JSON.stringify(partialState));
-check('PARTIAL: 値数が 407 から減る', partialState.valueCount !== 407, partialState);
-check('PARTIAL: ok は false', partialState.ok === false, partialState);
-await page.screenshot({ path: `${OUT}/qr-readbar-partial.png`, fullPage: true });
 
-// --- 6. 再スキャンで欠落が回復する ---
-await page.click('.fixed-doc-qr-scan-btn');
-await waitScanIdle(page);
-const recovered = await page.evaluate(READ_BAR);
-const recoveredState = await page.evaluate(STATUS);
-console.log('\n[RECOVER]', JSON.stringify({ missing: recovered.missingSlots, alert: recovered.alert, valueCount: recoveredState.valueCount, ok: recoveredState.ok }));
-check('RECOVER: 再スキャンで未検出 0・値 407・ok に戻る', recovered.missingSlots.length === 0 && recoveredState.valueCount === 407 && recoveredState.ok === true, { recoveredState });
-
-// --- 7. Step2 に入ると自動スキャンが走る（旧 QR 設定ビューの自動スキャンの代替）---
-await page.evaluate(`(() => {
-  const s = ${SETUP};
-  s.fixedDocQrUndetectedIds.add('QR5');
-  s.fixedDocSetupStep = 1;
-})()`);
+// --- 6. Step2 に入ると自動スキャンが走る（旧 QR 設定ビューの自動スキャンの代替）---
+await page.evaluate(`(() => { const s = ${SETUP}; s.fixedDocSetupStep = 1; })()`);
 await page.waitForTimeout(300);
-const dirty = await page.evaluate(`(${SETUP}).fixedDocQrUndetectedIds.size`);
 await page.evaluate(`(${SETUP}).fixedDocSetupStep = 2`);
 await page.waitForTimeout(400);
 const autoMid = await page.evaluate(READ_BAR);
-check('AUTO: Step2 遷移でも枠は一気に出ない', autoMid.scannedCount < 6, { scanned: autoMid.scannedCount });
+check('AUTO: Step2 遷移でも槽位は一気に出ない', autoMid.scannedCount < 6, { scanned: autoMid.scannedCount });
 await waitScanIdle(page);
 const autoScanned = await page.evaluate(STATUS);
 const autoActive = await page.evaluate(`(${SETUP}).fixedDocQrScanActive`);
-console.log('\n[AUTO]', JSON.stringify({ dirty, ...autoScanned, active: autoActive }));
-check('AUTO: 汚した状態を作れた', dirty === 1, dirty);
-check('AUTO: Step2 遷移で再スキャンされ値 407・ok に戻る', autoScanned.detected === 6 && autoScanned.valueCount === 407 && autoScanned.ok === true, autoScanned);
+console.log('\n[AUTO]', JSON.stringify({ ...autoScanned, active: autoActive }));
+check('AUTO: Step2 遷移で再スキャンされ値 407 件', autoScanned.values === 407, autoScanned);
 check('AUTO: loading が残らない', autoActive === false, autoActive);
 
-// --- 8. スキャン中にスイッチを切ったら止まる ---
+// --- 7. スキャン中にスイッチを切ったら止まる ---
 await page.click('.fixed-doc-qr-result-switch');
 await page.waitForTimeout(300);
 await page.click('.fixed-doc-qr-result-switch');

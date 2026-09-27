@@ -2272,7 +2272,7 @@ const appOptions = {
     /**
      * スキャン済みの枠 ID。実機のスキャナは枠ごとに結果を返すので、試作でも
      * 1 枠ずつ順に確定させる。ここに入っていない枠は「まだ結果が無い」= スキャン中として描く。
-     * 全部まとめて出すと、スイッチを入れた瞬間に 6 枠そろって見えてしまう。
+     * 扫出几个就几个，够不够是执行端的事。掃出せた分だけを順に確定させる。
      */
     const fixedDocQrScannedIds = reactive(new Set());
     /** 1 枠あたりのスキャン所要時間（ms）。枠数ぶん足すと数秒の読取待ちになる。 */
@@ -2375,20 +2375,24 @@ const appOptions = {
      * OFF のときは 1 枠も連結しないので、値は OCR 側だけで埋まる（暗黙のフォールバックではなく明示的な選択）。
      */
     const fixedDocQrReadEnabled = ref(false);
-    /** 帳票側で決まっている QR 枠。未検出でも枠は一覧に残す（欠落を可視化するため）。 */
-    const fixedDocQrExpectedSlots = computed(() => Object.keys(FIXED_DOC_QR_SOURCE_RECTS)
+    /**
+     * 帳票のスキャン区に並ぶ QR の位置。スキャナが返すのは「掃出せた分」だけなので、
+     * ここは位置の候補であって「槽位は何個ある」という決め事ではない
+     * （掃出せなかった枠を補って描く、ということはしない）。
+     */
+    const fixedDocQrScanRegionSlots = computed(() => Object.keys(FIXED_DOC_QR_SOURCE_RECTS)
       .sort((a, b) => Number(String(a).replace(/\D/g, '')) - Number(String(b).replace(/\D/g, '')))
       .map((id) => {
         const def = FIXED_DOC_QR_SOURCE_DEFAULTS.find((item) => item.id === id) || { id, label: id };
         return { id, label: def.label, rect: { ...FIXED_DOC_QR_SOURCE_RECTS[id] } };
       }));
-    /** 検出できなかった QR。実機ではスキャナが埋める。試作では既定で空（= 全枠検出）。 */
-    const fixedDocQrUndetectedIds = reactive(new Set());
-    /** 検出済みかつデータ QR の payload だけを、QR 番号順に。 */
+    /**
+     * 掃出せて、かつデータ QR だった槽位だけを QR 番号順に。
+     * ID 類（'$' を含まない）は槽位に数えない —— 槽位数そのものはスキャン結果で決まり、予設しない。
+     */
     const fixedDocQrDetectedSegments = computed(() => {
       if (!fixedDocQrReadEnabled.value) return [];
-      return fixedDocQrExpectedSlots.value
-        .filter((slot) => !fixedDocQrUndetectedIds.has(slot.id))
+      return fixedDocQrScanRegionSlots.value
         .map((slot) => ({ ...slot, payload: FIXED_DOC_QR_SAMPLE_PAYLOADS[slot.id] || '' }))
         .filter((slot) => slot.payload.includes('$'));
     });
@@ -2399,17 +2403,22 @@ const appOptions = {
       return payload ? payload.split(FIXED_DOC_QR_SPLIT_PATTERN) : [];
     });
     /**
-     * 読取結果バー用。期待枠を全部並べ、未検出の枠も detected:false で残す。
-     * 「検出できた分だけ描く」と欠落が見えなくなるため、必ず全枠を描く。
+     * 読取結果バー用。掃出せた槽位だけを、スキャンが確定した順に並べる。
+     * 予設の枠数は持たない（掃出せなかった枠を並べることも、赤く塗ることもしない）。
      * rect はプレビューの重ね表示（fixedDocPreviewQrSlots）で使う。
      */
-    const fixedDocQrReadSlots = computed(() => fixedDocQrExpectedSlots.value.map((slot) => ({
-      id: slot.id,
-      label: slot.label,
-      rect: { ...slot.rect },
-      scanned: fixedDocQrScannedIds.has(slot.id),
-      detected: fixedDocQrDetectedSegments.value.some((segment) => segment.id === slot.id),
-    })));
+    const fixedDocQrReadSlots = computed(() => fixedDocQrDetectedSegments.value
+      .filter((slot) => fixedDocQrScannedIds.has(slot.id))
+      .map((slot) => ({ id: slot.id, label: slot.label, rect: { ...slot.rect } })));
+    /**
+     * 条で選択中の槽位。条の枠を押すと、左のプレビュー上で同じ槽位の枠を強調する。
+     * プレビュー側は読取専用の重ね表示なので、選択状態はここで 1 つだけ持つ
+     * （もう一度押すと解除。再スキャン・スイッチ OFF でも解除する）。
+     */
+    const fixedDocActiveQrSlotId = ref('');
+    function toggleFixedDocQrSlotHighlight(slotId) {
+      fixedDocActiveQrSlotId.value = fixedDocActiveQrSlotId.value === slotId ? '' : slotId;
+    }
     /**
      * 読取バーの表示状態。設定画面では値数の合否を判定しない ——
      * 項目表はまだ配り終えていないので分母が決まらず、正否を出せない。
@@ -2418,8 +2427,6 @@ const appOptions = {
      */
     const fixedDocQrReadStatus = computed(() => ({
       enabled: fixedDocQrReadEnabled.value,
-      expected: fixedDocQrExpectedSlots.value.length,
-      detected: fixedDocQrDetectedSegments.value.length,
     }));
     /** プレビューに重ねる QR 枠。Step2 のテキスト読取かつ QR 読取が有効なときだけ表示する。 */
     const fixedDocPreviewQrSlots = computed(() => {
@@ -2428,7 +2435,7 @@ const appOptions = {
       if (fixedDocReadTab.value !== 'text') return [];
       if (!fixedDocPreviewImage.value) return [];
       // スキャン中はまだ確定していない枠を重ねない（枠が出る順番を条と合わせる）。
-      return fixedDocQrReadSlots.value.filter((slot) => slot.scanned);
+      return fixedDocQrReadSlots.value;
     });
     /** 項目名（結合索引順）と分割値を 1 対 1 で対応させたもの。順序がそのまま通番になる。 */
     const fixedDocQrFieldMappings = computed(() => FIXED_DOC_QR_FIELD_NAMES.map((name, index) => ({
@@ -3657,20 +3664,16 @@ const appOptions = {
       if (fixedDocQrScanActive.value) return false;
       fixedDocQrScanActive.value = true;
       fixedDocQrScannedIds.clear();
+      // 読み直すと枠も引き直しになるので、選択も解除する（無い枠を指したままにしない）。
+      fixedDocActiveQrSlotId.value = '';
       try {
-        const slots = fixedDocQrExpectedSlots.value;
-        const undetected = slots
-          .filter((slot) => !String(FIXED_DOC_QR_SAMPLE_PAYLOADS[slot.id] || '').includes('$'))
-          .map((slot) => slot.id);
-        fixedDocQrUndetectedIds.clear();
-        undetected.forEach((id) => fixedDocQrUndetectedIds.add(id));
-        // 枠ごとに結果を確定させる。読み取りには時間がかかるので、条の枠は左から順に出る。
-        // 検出できなかった枠は出さない（掃出せた分だけを並べる）。
-        for (const slot of slots) {
+        // 掃出せた槽位だけを、スキャナが返した順に 1 つずつ確定させる
+        // （読取には時間がかかるので、条の枠は左から順に出る）。
+        for (const slot of fixedDocQrDetectedSegments.value) {
           await waitFixedDocQrScan(FIXED_DOC_QR_SCAN_STEP_MS);
           // 途中でスイッチを切られたら、残りの枠は出さずに捨てる。
           if (!fixedDocQrReadEnabled.value) return false;
-          if (!fixedDocQrUndetectedIds.has(slot.id)) fixedDocQrScannedIds.add(slot.id);
+          fixedDocQrScannedIds.add(slot.id);
         }
         // 設定画面では合否を出さない（分母が決まらない）。読み取れた分だけを確定させ、
         // 項目数に足りているかは実行側（Step5 test）の読取ラベルで分かる。
@@ -3690,7 +3693,7 @@ const appOptions = {
       if (!enabled) {
         fixedDocQrReadEnabled.value = false;
         fixedDocQrScannedIds.clear();
-        fixedDocQrUndetectedIds.clear();
+        fixedDocActiveQrSlotId.value = '';
         return;
       }
       fixedDocQrReadEnabled.value = true;
@@ -3726,8 +3729,8 @@ const appOptions = {
       // マスク改至 Step4（本期要做，需求未明确故先不加）；预览暂不打码
       return String(value ?? '');
     }
-    function getFixedDocTestSourceLabel(useQrPreview) {
-      return useQrPreview ? 'QR読取' : 'OCR読取';
+    function getFixedDocTestSourceLabel(isQrRead) {
+      return isQrRead ? 'QR読取' : 'OCR読取';
     }
     function parseFixedDocConfidencePercent(value) {
       const num = Number.parseFloat(String(value ?? '').replace(/[^\d.]/g, ''));
@@ -3859,39 +3862,43 @@ const appOptions = {
         ],
       },
     ];
-    /** Step5 mock：覆盖部分字段的读取路径，便于展示 QR / 兜底 / 纯 OCR 与要確認 */
+    /** Step5 mock：要確認の見せ方だけを上書きする（読取経路は帳票単位で決まるので項目ごとには持たない） */
     const FIXED_DOC_TEST_READ_SCENARIOS = {
-      ICD10コード: { path: 'ocr' },
       通院日数: { confidence: '62.0 %' },
-      医療機関名: { path: 'fallback', confidence: '62.0 %' },
     };
-    function resolveFixedDocTestReadContext(fieldName, fieldRule, row) {
+    /**
+     * Step5 の読取方法は帳票単位で 1 つに決まる。項目ごとに QR / OCR を混ぜない。
+     * スイッチ ON かつ全項目に QR 値が行き渡ったときだけ全項目 QR読取。
+     * 値数が項目数に足りないときは 1 項目だけ OCR に回すのではなく、帳票全体を OCR読取 にする。
+     * ここが「値数が項目数に足りているか」の判定点（設定側では分母が決まらないので判定しない）。
+     */
+    const fixedDocTestEligibleRows = computed(() => fixedDocTextRows.value.filter((row) => !row.mask));
+    const fixedDocTestReadMode = computed(() => {
+      if (!fixedDocQrReadEnabled.value) return 'ocr';
+      const rows = fixedDocTestEligibleRows.value;
+      if (!rows.length) return 'ocr';
+      const allFieldsReadByQr = rows.every((row) => {
+        const rule = { ...row, ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)) };
+        return fixedDocQrValueByName.value.has(row.name) && !!getFixedDocQrFieldPreviewValue(rule);
+      });
+      return allFieldsReadByQr ? 'qr' : 'ocr';
+    });
+    function resolveFixedDocTestReadContext(fieldName, fieldRule, row, isQrRead) {
       const scenario = FIXED_DOC_TEST_READ_SCENARIOS[fieldName];
-      let rule = fieldRule;
-      // ここが「値数が項目数に足りているか」の判定点。設定側では分母が決まらないので判定しない。
-      // スイッチ ON でも QR 値が空なら OCR に回るので、ラベルが OCR読取 の項目は
-      // QR から値を受け取っていない = 値数が項目数に足りない、と読める。
-      let hasQrMapping = fixedDocQrValueByName.value.has(fieldName);
-      if (scenario?.confidence) {
-        rule = { ...rule, confidence: scenario.confidence };
-      }
-      if (scenario?.path === 'ocr') {
-        hasQrMapping = false;
-      }
-      let qrValue = hasQrMapping ? getFixedDocQrFieldPreviewValue(rule) : '';
-      if (scenario?.path === 'fallback') {
-        qrValue = '';
-      }
-      const useQrPreview = hasQrMapping && !!qrValue;
+      const rule = scenario?.confidence ? { ...fieldRule, confidence: scenario.confidence } : fieldRule;
+      const hasQrMapping = fixedDocQrValueByName.value.has(fieldName);
+      const qrValue = hasQrMapping ? getFixedDocQrFieldPreviewValue(rule) : '';
       const ocrValue = row.sample;
+      // 帳票単位の判定結果をそのまま使う：項目ごとに QR / OCR を混ぜない。
+      const useQrPreview = isQrRead;
       const readValue = useQrPreview ? qrValue : ocrValue;
       return { rule, hasQrMapping, qrValue, ocrValue, useQrPreview, readValue };
     }
     const fixedDocTestRows = computed(() => {
       // Step5 のテスト対象は Step2（読取モデル設定）・Step3 と同じ字段集合（Step2 でマスクした字段のみ除外）。
       // 番号と並び順は Step2・Step3 の行番号（row.no）に揃える。
-      return fixedDocTextRows.value
-        .filter((row) => !row.mask)
+      const isQrRead = fixedDocTestReadMode.value === 'qr';
+      return fixedDocTestEligibleRows.value
         .map((row) => {
           const baseRule = { ...row, ...(fixedDocFieldRules[row.fieldId] || getDefaultFixedDocFieldRule(row.name)) };
           const {
@@ -3901,7 +3908,7 @@ const appOptions = {
             ocrValue,
             useQrPreview,
             readValue,
-          } = resolveFixedDocTestReadContext(row.name, baseRule, row);
+          } = resolveFixedDocTestReadContext(row.name, baseRule, row, isQrRead);
           const postProcess = fieldRule.rule || 'OCR読取';
           const processedValue = readValue || '—';
           const review = evaluateFixedDocTestReview(fieldRule, readValue, hasQrMapping, qrValue, ocrValue, useQrPreview);
@@ -13613,7 +13620,8 @@ const appOptions = {
       fixedDocQrReadSlots,
       fixedDocQrReadStatus,
       fixedDocQrValues,
-      fixedDocQrUndetectedIds,
+      fixedDocActiveQrSlotId,
+      toggleFixedDocQrSlotHighlight,
       fixedDocPreviewQrSlots,
       fixedDocQrSourceCatalog,
       fixedDocQrIgnoredDetections,

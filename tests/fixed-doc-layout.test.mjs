@@ -60,7 +60,10 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(html, /class="fixed-doc-preview-image-wrap"/);
   // QR 枠オーバーレイは「読取結果の可視化」としてのみ残す（設定 UI は持たない）
   assert.match(html, /v-if="fixedDocPreviewQrSlots\.length"[\s\S]*class="fixed-doc-preview-hotspots"/);
-  assert.match(html, /class="fixed-doc-preview-hotspot"[\s\S]*'is-missing': !slot\.detected/);
+  // 槽位は「掃出せた分」しか持たないので、未検出を赤く塗る判定は持たない（赤枠・点線を残さない）。
+  assert.match(html, /class="fixed-doc-preview-hotspot"[\s\S]*'is-active': fixedDocActiveQrSlotId === slot\.id/);
+  assert.doesNotMatch(html, /slot\.detected/);
+  assert.doesNotMatch(css, /\.fixed-doc-preview-hotspot\.is-missing/);
   assert.doesNotMatch(html, /fixedDocPreviewQrHotspots|fixedDocPreviewShowQrHotspots/);
   assert.doesNotMatch(html, /fixedDocActiveQrSourceId|fixedDocQrSourceCatalog/);
   assert.match(html, /fixedDocPreviewFit/);
@@ -126,7 +129,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(main, /const fixedDocQrValues = computed\(\(\) => \{[\s\S]*?payload\.split\(FIXED_DOC_QR_SPLIT_PATTERN\)/);
   assert.match(main, /const fixedDocQrFieldMappings = computed\(\(\) => FIXED_DOC_QR_FIELD_NAMES\.map/);
   assert.match(main, /function getFixedDocQrFieldPreviewValue\(fieldRule = \{\}\) \{[\s\S]*?fixedDocQrValueByName\.value\.get\(name\)/);
-  assert.match(main, /let hasQrMapping = fixedDocQrValueByName\.value\.has\(fieldName\);/);
+  assert.match(main, /const hasQrMapping = fixedDocQrValueByName\.value\.has\(fieldName\);/);
   // QR 読取結果バー：AI 入力欄の下・項目表の上に置き、ON/OFF スイッチと再スキャンを持つ
   assert.match(html, /:model-value="fixedDocCommonPrompt"[\s\S]*?class="fixed-doc-qr-result"[\s\S]*?<div class="fixed-doc-table-panel">/);
   // 配置端に赤い「不完全」枠・未検出の赤枠・点線のスキャン中プレースホルダは出さない。
@@ -142,29 +145,39 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(main, /if \(options\.silent\) return true;[\s\S]*?ElMessage\.success\('QR の読み取りが完了しました'\)/);
   // 設定側に合否アラートを残さない（不完全・項目数不一致の警告も出さない）。
   assert.doesNotMatch(main, /ElMessage\.warning\([\s\S]{0,160}不完全/);
-  // 実行側（Step5 test）は読取ラベルで判定する：QR 値が無ければ OCR読取 に回る。
-  assert.match(main, /function getFixedDocTestSourceLabel\(useQrPreview\) \{[\s\S]*?return useQrPreview \? 'QR読取' : 'OCR読取';/);
+  // Step5 の読取ラベルは帳票単位で 1 つに決まる（項目ごとに QR / OCR を混ぜない）。
+  assert.match(main, /function getFixedDocTestSourceLabel\(isQrRead\) \{[\s\S]*?return isQrRead \? 'QR読取' : 'OCR読取';/);
+  assert.match(main, /const fixedDocTestReadMode = computed\(\(\) => \{[\s\S]*?return allFieldsReadByQr \? 'qr' : 'ocr';/);
   assert.match(html, /<div v-if="fixedDocQrReadStatus\.enabled" class="fixed-doc-qr-result-slots">/);
-  // 枠は検出できた分だけ描く（掃出せた数だけ出る）。未検出の枠の赤枠・点線プレースホルダは無い。
-  assert.match(html, /<template v-for="slot in fixedDocQrReadSlots"[\s\S]*?v-if="slot\.scanned"[\s\S]*class="fixed-doc-qr-result-slot"[\s\S]*:data-source-id="slot\.id"/);
+  // 枠は掃出せた分だけを描く（予設の枠数を並べない、赤枠・点線プレースホルダも無い）。
+  assert.match(html, /v-for="slot in fixedDocQrReadSlots"[\s\S]*?class="fixed-doc-qr-result-slot"[\s\S]*?:data-source-id="slot\.id"/);
+  // 槽位リスト自体が「掃出せて確定した分」だけなので、テンプレ側に scanned 判定を持たない。
+  assert.doesNotMatch(html, /slot\.scanned/);
   // QR 槽位条には is-missing / is-scanning を付けない（掃出せた分だけ出る）。
   // 预览图（preview-hotspot）の is-missing は別物なので、槽位条に限定して検査する。
   assert.doesNotMatch(html, /fixed-doc-qr-result-slot[^"]*is-missing|fixed-doc-qr-result-slot[^"]*is-scanning/);
   assert.doesNotMatch(css, /\.fixed-doc-qr-result-slot\.is-missing|\.fixed-doc-qr-result-slot\.is-scanning/);
   // 読取には時間がかかる。枠は 1 つずつ確定させ、全部そろうまでパス徽标は出さない。
   assert.match(main, /const FIXED_DOC_QR_SCAN_STEP_MS = \d+;/);
-  assert.match(main, /for \(const slot of slots\) \{[\s\S]*?await waitFixedDocQrScan\(FIXED_DOC_QR_SCAN_STEP_MS\);[\s\S]*?if \(!fixedDocQrUndetectedIds\.has\(slot\.id\)\) fixedDocQrScannedIds\.add\(slot\.id\);/);
+  assert.match(main, /for \(const slot of fixedDocQrDetectedSegments\.value\) \{[\s\S]*?await waitFixedDocQrScan\(FIXED_DOC_QR_SCAN_STEP_MS\);[\s\S]*?fixedDocQrScannedIds\.add\(slot\.id\);/);
   assert.match(html, /class="fixed-doc-qr-result-count"[\s\S]*?>スキャン中…</);
-  assert.match(main, /fixedDocQrReadSlots\.value\.filter\(\(slot\) => slot\.scanned\)/);
-  // 6 つの QR 枠はスイッチのすぐ横（ヘッド内、同一行）に並べる。別行の枠行は作らない。
+  assert.match(main, /const fixedDocQrReadSlots = computed\(\(\) => fixedDocQrDetectedSegments\.value[\s\S]*?\.filter\(\(slot\) => fixedDocQrScannedIds\.has\(slot\.id\)\)/);
+  // 槽位はスイッチのすぐ横（ヘッド内、同一行）に並べる。別行の枠行は作らない。
   assert.match(html, /class="fixed-doc-qr-result-switch"[\s\S]*<\/el-switch>[\s\S]*<div v-if="fixedDocQrReadStatus\.enabled" class="fixed-doc-qr-result-slots">/);
   // 枠のラベルは QR id だけ（QR1 / QR2 …）。項目範囲や説明文は出さない。
   assert.match(html, /:data-source-id="slot\.id"[\s\S]*?>\{\{ slot\.id \}\}<\/div>/);
-  // 「QR 読取」の横に情報アイコン（tooltip）。LIAJ 診断書テンプレート専用の説明。
-  assert.match(html, /class="fixed-doc-qr-result-title">QR 読取<\/span>[\s\S]*?class="fixed-doc-info" tabindex="0">i<\/span>/);
+  // 条の枠を押すと、左のプレビュー上で同じ槽位の枠が強調される（もう一度押すと解除）。
+  assert.match(html, /class="fixed-doc-qr-result-slot"[\s\S]*?@click="toggleFixedDocQrSlotHighlight\(slot\.id\)"/);
+  assert.match(html, /v-for="slot in fixedDocPreviewQrSlots"[\s\S]*?:class="\{ 'is-active': fixedDocActiveQrSlotId === slot\.id \}"/);
+  assert.match(main, /const fixedDocActiveQrSlotId = ref\(''\);\s*\n\s*function toggleFixedDocQrSlotHighlight\(slotId\) \{\s*\n\s*fixedDocActiveQrSlotId\.value = fixedDocActiveQrSlotId\.value === slotId \? '' : slotId;/);
+  assert.match(main, /fixedDocActiveQrSlotId,\n      toggleFixedDocQrSlotHighlight,/);
+  assert.match(css, /\.fixed-doc-qr-result-slot\.is-active\s*\{/);
+  assert.match(css, /\.fixed-doc-preview-hotspot\.is-active\s*\{/);
+  // 「複数 QR 読取」の横に情報アイコン（tooltip）。LIAJ 診断書テンプレート専用の説明。
+  assert.match(html, /class="fixed-doc-qr-result-title">複数 QR 読取<\/span>[\s\S]*?class="fixed-doc-info" tabindex="0">i<\/span>/);
   assert.match(html, /LIAJ診断書テンプレート専用/);
-  // 徽标は 2 態だけ：OFF→「無効」、ON→「QR 読取優先パス適用中」。赤バッジは無い。
-  assert.match(html, /class="fixed-doc-qr-result-path is-qr"[\s\S]*?>QR 読取優先パス適用中</);
+  // 徽标は 2 態だけ：OFF→「無効」、ON→「複数 QR 読取優先パス適用中」。赤バッジは無い。
+  assert.match(html, /class="fixed-doc-qr-result-path is-qr"[\s\S]*?>複数 QR 読取優先パス適用中</);
   assert.doesNotMatch(html, /fixed-doc-qr-result-path is-ocr/);
   assert.doesNotMatch(html, /QR 不足 — OCR で読取/);
   assert.doesNotMatch(css, /\.fixed-doc-qr-result-path\.is-ocr/);
@@ -181,13 +194,15 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.doesNotMatch(html, /class="fixed-doc-qr-result-(add|remove|parse|actions)"/);
   // QR 連結読取 は既定 OFF。admin が明示的に ON にした帳票だけ QR 優先パスになる。
   assert.match(main, /const fixedDocQrReadEnabled = ref\(false\);/);
-  assert.match(main, /const fixedDocQrExpectedSlots = computed\(\(\) => Object\.keys\(FIXED_DOC_QR_SOURCE_RECTS\)/);
-  assert.match(main, /const fixedDocQrUndetectedIds = reactive\(new Set\(\)\);/);
-  assert.match(main, /const fixedDocQrDetectedSegments = computed\(\(\) => \{[\s\S]*?if \(!fixedDocQrReadEnabled\.value\) return \[\];/);
-  assert.match(main, /const fixedDocQrReadSlots = computed\(\(\) => fixedDocQrExpectedSlots\.value\.map/);
-  assert.match(main, /const fixedDocQrReadStatus = computed\(\(\) => \(\{[\s\S]*?enabled: fixedDocQrReadEnabled\.value,[\s\S]*?detected: fixedDocQrDetectedSegments\.value\.length,/);
+  // 予設の槽位（何個あるか）と「未検出」という概念を持たない：槽位数はスキャン結果で決まる。
+  assert.match(main, /const fixedDocQrScanRegionSlots = computed\(\(\) => Object\.keys\(FIXED_DOC_QR_SOURCE_RECTS\)/);
+  assert.doesNotMatch(main, /fixedDocQrUndetectedIds/);
+  assert.doesNotMatch(main, /fixedDocQrExpectedSlots/);
+  assert.match(main, /const fixedDocQrDetectedSegments = computed\(\(\) => \{[\s\S]*?if \(!fixedDocQrReadEnabled\.value\) return \[\];[\s\S]*?return fixedDocQrScanRegionSlots\.value/);
+  assert.match(main, /const fixedDocQrReadStatus = computed\(\(\) => \(\{[\s\S]*?enabled: fixedDocQrReadEnabled\.value,/);
+  assert.doesNotMatch(main, /fixedDocQrReadStatus = computed\(\(\) => \(\{[\s\S]{0,120}expected:/);
   assert.match(main, /const fixedDocPreviewQrSlots = computed\(\(\) => \{[\s\S]*?fixedDocQrReadSlots\.value/);
-  assert.match(main, /async function runFixedDocQrScan\(options = \{\}\) \{[\s\S]*?\.includes\('\$'\)[\s\S]*?fixedDocQrUndetectedIds\.clear\(\);[\s\S]*?fixedDocQrUndetectedIds\.add\(id\)/);
+  assert.match(main, /async function runFixedDocQrScan\(options = \{\}\) \{[\s\S]*?for \(const slot of fixedDocQrDetectedSegments\.value\)/);
   assert.match(main, /runFixedDocQrScan,/);
   // QR 設定ビューの代わりに Step2 への遷移で自動スキャンする（ビューは作らない）
   assert.match(main, /watch\(fixedDocSetupStep, \(step\) => \{[\s\S]*?if \(step === 2 && fixedDocQrReadEnabled\.value\) runFixedDocQrScan\(\{ silent: true \}\);/);
@@ -195,7 +210,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(css, /\.fixed-doc-qr-result-switch\s*\{[\s\S]*?flex:\s*none;/);
   assert.match(css, /\.fixed-doc-qr-result-count\s*\{[\s\S]*?margin-left:\s*auto;/);
   assert.match(css, /\.fixed-doc-qr-scan-btn\s*\{[\s\S]*?flex:\s*none;/);
-  assert.match(css, /\.fixed-doc-preview-hotspot\.is-missing\s*\{[\s\S]*border-color:\s*#e31b54;/);
+  assert.match(css, /\.fixed-doc-preview-hotspot\.is-active\s*\{[\s\S]*box-shadow:\s*0 0 0 3px rgba\(23, 92, 211, 0\.25\);/);
   assert.match(main, /function parseFixedDocQrSourcesFromTemplate\(\)/);
   assert.match(main, /function runFixedDocQrSourcesScan/);
   assert.match(main, /function focusFixedDocQrSource\(sourceId\)/);
@@ -329,7 +344,10 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(html, /fixed-doc-test-error">\{\{ row\.errorMessage \}\}/);
   assert.match(main, /const FIXED_DOC_TEST_READ_SCENARIOS =/);
   assert.match(main, /function resolveFixedDocTestReadContext\(/);
-  assert.match(main, /path: 'fallback', confidence: '62\.0 %'/);
+  // 値数が足りないときは項目単位で OCR に落とさず、帳票全体を OCR読取 に切り替える。
+  assert.doesNotMatch(main, /path: 'fallback'/);
+  assert.doesNotMatch(main, /ICD10コード: \{ path: 'ocr' \}/);
+  assert.match(main, /const useQrPreview = isQrRead;/);
   assert.match(main, /const FIXED_DOC_TEST_OCR_REVIEW_MESSAGE = '信頼度が閾値未満'/);
   assert.match(main, /function getFixedDocTestReviewReasonLabel\(/);
   assert.match(main, /reviewReasonLabel: getFixedDocTestReviewReasonLabel\(review\.reason\)/);
@@ -534,7 +552,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(css, /\.fixed-doc-preview-stage\s*\{[^}]*width:\s*min\(100%, 520px\);/);
   // QR 設定ビュー撤去に伴うスタイルも削除済み（参照ゼロのセレクタを除去）
   assert.match(css, /\.fixed-doc-preview-hotspot\s*\{[\s\S]*border:\s*2px solid #175cd3;/);
-  assert.match(css, /\.fixed-doc-preview-hotspot\.is-missing\s*\{[\s\S]*border-color:\s*#e31b54;/);
+  assert.doesNotMatch(css, /\.fixed-doc-preview-hotspot\.is-missing/);
   assert.doesNotMatch(css, /\.fixed-doc-preview-region-draft/);
   assert.doesNotMatch(css, /\.fixed-doc-qr-source-/);
   assert.doesNotMatch(css, /\.fixed-doc-table-qr-/);
