@@ -127,7 +127,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(main, /const fixedDocQrFieldMappings = computed\(\(\) => FIXED_DOC_QR_FIELD_NAMES\.map/);
   assert.match(main, /function getFixedDocQrFieldPreviewValue\(fieldRule = \{\}\) \{[\s\S]*?fixedDocQrValueByName\.value\.get\(name\)/);
   assert.match(main, /let hasQrMapping = fixedDocQrValueByName\.value\.has\(fieldName\);/);
-  // QR 読取結果バー：AI 入力欄の下・項目表の上に置き、ON/OFF スイッチと QR スキャンを持つ
+  // QR 読取結果バー：AI 入力欄の下・項目表の上に置き、ON/OFF スイッチと再スキャンを持つ
   assert.match(html, /:model-value="fixedDocCommonPrompt"[\s\S]*?class="fixed-doc-qr-result"[\s\S]*?<div class="fixed-doc-table-panel">/);
   // 配置端に赤い「不完全」枠・未検出の赤枠・点線のスキャン中プレースホルダは出さない。
   // 掃出せた分だけを並べる（「掃出せた数だけ出る」）。判定は実行時の書き込み値数のみ。
@@ -136,8 +136,14 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(html, /class="fixed-doc-qr-result-switch"[\s\S]*:model-value="fixedDocQrReadEnabled"[\s\S]*@change="onFixedDocQrReadToggle"/);
   // スイッチを入れたらその場でスキャンを走らせる（枠を出さずに終わらせない）。
   assert.match(main, /function onFixedDocQrReadToggle\(enabled\) \{[\s\S]*?fixedDocQrReadEnabled\.value = true;[\s\S]*?runFixedDocQrScan\(\);/);
-  // 門は帳票の項目定義数（= QR 仕様の値数）と比べる。デモの項目表は一部しか描いていない。
-  assert.match(main, /const expectedValues = FIXED_DOC_QR_FIELD_NAMES\.length;/);
+  // 設定側では値数の合否を判定しない（項目表が配り終わっておらず分母が決まらない）。
+  // 判定は実行側（Step5 test）の読取ラベルで行う。
+  assert.doesNotMatch(main, /const expectedValues = FIXED_DOC_QR_FIELD_NAMES\.length;/);
+  assert.match(main, /if \(options\.silent\) return true;[\s\S]*?ElMessage\.success\('QR の読み取りが完了しました'\)/);
+  // 設定側に合否アラートを残さない（不完全・項目数不一致の警告も出さない）。
+  assert.doesNotMatch(main, /ElMessage\.warning\([\s\S]{0,160}不完全/);
+  // 実行側（Step5 test）は読取ラベルで判定する：QR 値が無ければ OCR読取 に回る。
+  assert.match(main, /function getFixedDocTestSourceLabel\(useQrPreview\) \{[\s\S]*?return useQrPreview \? 'QR読取' : 'OCR読取';/);
   assert.match(html, /<div v-if="fixedDocQrReadStatus\.enabled" class="fixed-doc-qr-result-slots">/);
   // 枠は検出できた分だけ描く（掃出せた数だけ出る）。未検出の枠の赤枠・点線プレースホルダは無い。
   assert.match(html, /<template v-for="slot in fixedDocQrReadSlots"[\s\S]*?v-if="slot\.scanned"[\s\S]*class="fixed-doc-qr-result-slot"[\s\S]*:data-source-id="slot\.id"/);
@@ -167,8 +173,8 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.doesNotMatch(html, /\{\{ fixedDocQrReadStatus\.detected \}\}/);
   assert.doesNotMatch(html, /値 \{\{ fixedDocQrReadStatus\.valueCount \}\}/);
   assert.match(html, /v-if="!fixedDocQrReadStatus\.enabled" class="fixed-doc-qr-result-count">無効 — OCR のみで読取<\/span>/);
-  // QR スキャンは残す（QR を読む運用では必須）
-  assert.match(html, /class="fixed-doc-qr-scan-btn"[\s\S]*?:disabled="!fixedDocQrReadStatus\.enabled"[\s\S]*?:loading="fixedDocQrScanActive"[\s\S]*?@click="runFixedDocQrScan"[\s\S]*?>QR スキャン<\/el-button>/);
+  // 再スキャンは残す（読み直したいときの唯一の入口）
+  assert.match(html, /class="fixed-doc-qr-scan-btn"[\s\S]*?:disabled="!fixedDocQrReadStatus\.enabled"[\s\S]*?:loading="fixedDocQrScanActive"[\s\S]*?@click="runFixedDocQrScan"[\s\S]*?>再スキャン<\/el-button>/);
   // 顧客向け文言。技術的な数値（値数/項目数）は出さない。配置端にはアラート行も出さない。
   assert.doesNotMatch(html, /fixed-doc-qr-result-alert|読み取りが不完全です|項目数と一致しません/);
   assert.doesNotMatch(html, /項目位置がずれています/);
@@ -179,7 +185,7 @@ test('fixed document type settings use the diagnosis template layout', async () 
   assert.match(main, /const fixedDocQrUndetectedIds = reactive\(new Set\(\)\);/);
   assert.match(main, /const fixedDocQrDetectedSegments = computed\(\(\) => \{[\s\S]*?if \(!fixedDocQrReadEnabled\.value\) return \[\];/);
   assert.match(main, /const fixedDocQrReadSlots = computed\(\(\) => fixedDocQrExpectedSlots\.value\.map/);
-  assert.match(main, /const fixedDocQrReadStatus = computed\(\(\) => \{[\s\S]*?const complete = valueCount === expectedValues;[\s\S]*?ok: !enabled \|\| complete/);
+  assert.match(main, /const fixedDocQrReadStatus = computed\(\(\) => \(\{[\s\S]*?enabled: fixedDocQrReadEnabled\.value,[\s\S]*?detected: fixedDocQrDetectedSegments\.value\.length,/);
   assert.match(main, /const fixedDocPreviewQrSlots = computed\(\(\) => \{[\s\S]*?fixedDocQrReadSlots\.value/);
   assert.match(main, /async function runFixedDocQrScan\(options = \{\}\) \{[\s\S]*?\.includes\('\$'\)[\s\S]*?fixedDocQrUndetectedIds\.clear\(\);[\s\S]*?fixedDocQrUndetectedIds\.add\(id\)/);
   assert.match(main, /runFixedDocQrScan,/);

@@ -2411,31 +2411,16 @@ const appOptions = {
       detected: fixedDocQrDetectedSegments.value.some((segment) => segment.id === slot.id),
     })));
     /**
-     * 読取の完全性。ゲートにするのは「QR から連結して書き込む値の数 === 項目総数」のみ。
-     * 欠けた枠は連結値のトークン数に直結するため、値数が項目総数に満たなければ
-     * 自ずと不完全になる（赤枠でどの QR が未検出か診断表示する）。
+     * 読取バーの表示状態。設定画面では値数の合否を判定しない ——
+     * 項目表はまだ配り終えていないので分母が決まらず、正否を出せない。
+     * 合っているかどうかは実行側（Step5 test）で、項目ごとの読取ラベルを見て判断する：
+     * スイッチ ON なのに OCR読取 になっている項目は、QR から値を受け取っていない。
      */
-    const fixedDocQrReadStatus = computed(() => {
-      const enabled = fixedDocQrReadEnabled.value;
-      const expected = fixedDocQrExpectedSlots.value.length;
-      const detected = fixedDocQrDetectedSegments.value.length;
-      // 門は「帳票の項目定義数」と比べる。QR は値を項目順に 1 つずつ書くので、
-      // 項目定義の数と QR 仕様の値数は一致している前提（設定側で揃える。A01 は 407）。
-      // Step2 の項目表はデモ用に一部だけ描いているので、ここでは定義数を使う。
-      const expectedValues = FIXED_DOC_QR_FIELD_NAMES.length;
-      const valueCount = fixedDocQrValues.value.length;
-      const complete = valueCount === expectedValues;
-      return {
-        enabled,
-        expected,
-        detected,
-        expectedValues,
-        valueCount,
-        delta: valueCount - expectedValues,
-        complete,
-        ok: !enabled || complete,
-      };
-    });
+    const fixedDocQrReadStatus = computed(() => ({
+      enabled: fixedDocQrReadEnabled.value,
+      expected: fixedDocQrExpectedSlots.value.length,
+      detected: fixedDocQrDetectedSegments.value.length,
+    }));
     /** プレビューに重ねる QR 枠。Step2 のテキスト読取かつ QR 読取が有効なときだけ表示する。 */
     const fixedDocPreviewQrSlots = computed(() => {
       if (!fixedDocQrReadEnabled.value) return [];
@@ -3664,9 +3649,9 @@ const appOptions = {
       return runFixedDocQrSourcesScan(options);
     }
     /**
-     * QR スキャン。実機ではスキャナが枠ごとの検出可否を返す。試作ではサンプル payload の有無で代用する。
-     * 検出できなかった枠は fixedDocQrUndetectedIds に入れて、一覧に残したまま赤く表示する。
-     * 「1 枠でも欠けたらスキャン品質の問題」なので、欠落は再アップロードでの再スキャンを促す。
+     * 再スキャン。スイッチ ON のときに 1 度走る読み取りを、ユーザーの任意でもう一度走らせるだけの操作。
+     * 漏検の判定はしない —— 枠が何個あるかを知らないので、欠落は検出できない（だから判定に使わない）。
+     * 分母が要らないので、いつでも押せる。結果は読み取れた分だけで組み直す。
      */
     async function runFixedDocQrScan(options = {}) {
       if (fixedDocQrScanActive.value) return false;
@@ -3687,16 +3672,11 @@ const appOptions = {
           if (!fixedDocQrReadEnabled.value) return false;
           if (!fixedDocQrUndetectedIds.has(slot.id)) fixedDocQrScannedIds.add(slot.id);
         }
-        const status = fixedDocQrReadStatus.value;
-        if (options.silent) return status.ok;
-        if (status.ok) {
-          ElementPlus.ElMessage.success('QR の読み取りが完了しました');
-        } else {
-          ElementPlus.ElMessage.warning(
-            'QR の読み取りが不完全です。画像を再アップロードして再スキャンしてください',
-          );
-        }
-        return status.ok;
+        // 設定画面では合否を出さない（分母が決まらない）。読み取れた分だけを確定させ、
+        // 項目数に足りているかは実行側（Step5 test）の読取ラベルで分かる。
+        if (options.silent) return true;
+        ElementPlus.ElMessage.success('QR の読み取りが完了しました');
+        return true;
       } finally {
         fixedDocQrScanActive.value = false;
       }
@@ -3888,7 +3868,9 @@ const appOptions = {
     function resolveFixedDocTestReadContext(fieldName, fieldRule, row) {
       const scenario = FIXED_DOC_TEST_READ_SCENARIOS[fieldName];
       let rule = fieldRule;
-      // QR 連結読み取りに当該項目が含まれていれば QR 経路
+      // ここが「値数が項目数に足りているか」の判定点。設定側では分母が決まらないので判定しない。
+      // スイッチ ON でも QR 値が空なら OCR に回るので、ラベルが OCR読取 の項目は
+      // QR から値を受け取っていない = 値数が項目数に足りない、と読める。
       let hasQrMapping = fixedDocQrValueByName.value.has(fieldName);
       if (scenario?.confidence) {
         rule = { ...rule, confidence: scenario.confidence };
