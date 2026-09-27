@@ -2433,8 +2433,6 @@ const appOptions = {
         valueCount,
         delta: valueCount - expectedValues,
         complete,
-        // 枠が欠けているか。値数が合わない原因がスキャン側か、項目数側かの切り分けに使う。
-        slotsMissing: enabled && detected < expected,
         ok: !enabled || complete,
       };
     });
@@ -3682,11 +3680,12 @@ const appOptions = {
         fixedDocQrUndetectedIds.clear();
         undetected.forEach((id) => fixedDocQrUndetectedIds.add(id));
         // 枠ごとに結果を確定させる。読み取りには時間がかかるので、条の枠は左から順に出る。
+        // 検出できなかった枠は出さない（掃出せた分だけを並べる）。
         for (const slot of slots) {
           await waitFixedDocQrScan(FIXED_DOC_QR_SCAN_STEP_MS);
           // 途中でスイッチを切られたら、残りの枠は出さずに捨てる。
           if (!fixedDocQrReadEnabled.value) return false;
-          fixedDocQrScannedIds.add(slot.id);
+          if (!fixedDocQrUndetectedIds.has(slot.id)) fixedDocQrScannedIds.add(slot.id);
         }
         const status = fixedDocQrReadStatus.value;
         if (options.silent) return status.ok;
@@ -3705,10 +3704,7 @@ const appOptions = {
     /**
      * QR 読取 スイッチ。ON にしたらその場でスキャンを走らせる（枠は 1 つずつ出る）。
      * OFF にしたら走っているスキャンの結果を捨てて枠を消す（スキャン中の分も止まる）。
-     *
-     * 設定側の検めとして「帳票の項目定義数 === QR 仕様の値数」を入れる予定だが、
-     * 試作の Step2 項目表はデモ用に一部（13 行）しか描いていないので、ここでは検められない。
-     * 項目定義が揃っている前提でスキャンへ進む（PRD「項目数与 QR 值数不一致」参照）。
+     * 設定端では値数校験をしない——値数が合うかどうかはスキャンが終わってから初めて分かる。
      */
     function onFixedDocQrReadToggle(enabled) {
       if (!enabled) {

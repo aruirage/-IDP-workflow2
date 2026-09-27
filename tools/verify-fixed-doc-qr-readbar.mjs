@@ -1,10 +1,12 @@
 // QR 読取バー（AI 入力欄の下・項目表の上）を実機で検証する。
 //   0. 既定は OFF（無効 — OCR のみで読取）。枠行もプレビューの QR 枠も出ない
 //   1. ON: スイッチを入れるとその場でスキャンが走る。読み取りには時間がかかり、
-//      枠は 1 つずつ出る（全部そろうまでパス徽标は出ず「スキャン中…」）
-//   2. 完了: 枠は QR id だけ 6 個、プレビューに QR 枠が出る。技術的な数値は出さない
+//      結果は 1 つずつ出る（全部そろうまでパス徽标は出ず「スキャン中…」）
+//   2. 完了: 掃出せた QR だけが並ぶ（6 個）、プレビューに QR 枠が出る。技術的な数値は出さない
 //   3. OFF: 枠行が消え「無効 — OCR のみで読取」、プレビューの QR 枠も消える
-//   4. ON + QR3 未検出: QR3 が is-missing、再スキャン警告（顧客向け文言）
+//   4. ON + QR3 未検出: 枠は予約しない。槽位条は掃出せた分だけを並べ，
+//      赤枠・点線のスキャン中プレースホルダ・アラート行は出さない。
+//      書込値数が項目数に満たないので ok は false（プレビューの QR3 枠のみ is-missing）
 //   5. QR スキャン ボタン: 実行できる（loading 表示 → 結果メッセージ）
 // 使い方: node tools/verify-fixed-doc-qr-readbar.mjs
 import { chromium } from 'playwright';
@@ -41,8 +43,10 @@ const READ_BAR = `(() => {
     scanningCount: slots.filter((s) => s.scanning).length,
     missingSlots: slots.filter((s) => s.missing).map((s) => s.id),
     pathBadge: bar.querySelector('.fixed-doc-qr-result-path')?.textContent.replace(/\\s+/g, ' ').trim() || null,
-    scanningLabel: bar.querySelector('.fixed-doc-qr-result-count.is-scanning')?.textContent.trim() || null,
+    scanningLabel: bar.querySelector('.fixed-doc-qr-result-count')?.textContent.trim() || null,
     alert: bar.querySelector('.fixed-doc-qr-result-alert')?.textContent.replace(/\\s+/g, ' ').trim() || null,
+    alertPresent: !!bar.querySelector('.fixed-doc-qr-result-alert'),
+    placeholderCount: slots.filter((s) => s.missing || s.scanning).length,
     switchOn: bar.querySelector('.fixed-doc-qr-result-switch')?.classList.contains('is-checked') ?? null,
     scanBtn: bar.querySelector('.fixed-doc-qr-scan-btn')?.textContent.trim() || null,
     afterTextarea: order(textarea, bar),
@@ -112,11 +116,11 @@ console.log('\n[SCANNING]', JSON.stringify(mid));
 check('SCANNING: スイッチが ON', mid.switchOn === true, mid.switchOn);
 check('SCANNING: 枠行が出ている', mid.slotsRowPresent === true, mid.slotsRowPresent);
 check('SCANNING: まだ全部は出ていない', mid.scannedCount < 6, { scanned: mid.scannedCount });
-check('SCANNING: 残りは is-scanning', mid.scanningCount === 6 - mid.scannedCount, { scanning: mid.scanningCount, scanned: mid.scannedCount });
+check('SCANNING: 未確定の枠（点線プレースホルダ）を描かない', mid.placeholderCount === 0, { placeholders: mid.placeholderCount, scanned: mid.scannedCount });
 check('SCANNING: 「スキャン中…」を出す', mid.scanningLabel === 'スキャン中…', mid.scanningLabel);
 check('SCANNING: パス徽标はまだ出ない', mid.pathBadge === null, mid.pathBadge);
 check('SCANNING: 不完全の赤枠にしない', !mid.classes?.includes('is-incomplete'), mid.classes);
-check('SCANNING: 警告もまだ出さない', mid.alert === null, mid.alert);
+check('SCANNING: 警告行もまだ出さない', mid.alertPresent === false, mid.alertPresent);
 check('SCANNING: プレビューの QR 枠も途中まで', mid.hotspotCount === mid.scannedCount, { hotspots: mid.hotspotCount, scanned: mid.scannedCount });
 await page.screenshot({ path: `${OUT}/qr-readbar-scanning.png`, fullPage: true });
 
@@ -137,6 +141,7 @@ check('ON: 期待枠 6 個', on.slots?.length === 6, on.slots?.length);
 check('ON: 全枠スキャン済み', on.scannedCount === 6 && on.scanningCount === 0, { scanned: on.scannedCount, scanning: on.scanningCount });
 check('ON: 未検出 0', on.missingSlots?.length === 0, on.missingSlots);
 check('ON: 枠は QR id だけ', on.slots?.every((s) => s.text === s.id) === true, on.slots?.map((s) => s.text));
+check('ON: 槽位条に赤枠・点線枠を残さない', on.placeholderCount === 0 && on.alertPresent === false, { placeholders: on.placeholderCount, alert: on.alertPresent });
 check('ON: パス徽标が出る', on.pathBadge === 'QR 読取優先パス適用中', on.pathBadge);
 check('ON: 「スキャン中…」が消える', on.scanningLabel === null, on.scanningLabel);
 check('ON: QR スキャンボタンがある', on.scanBtn === 'QR スキャン', on.scanBtn);
@@ -194,10 +199,10 @@ await page.evaluate(`(() => { const s = ${SETUP}; s.fixedDocQrUndetectedIds.add(
 await page.waitForTimeout(700);
 const partial = await page.evaluate(READ_BAR);
 console.log('\n[PARTIAL]', JSON.stringify(partial));
-check('PARTIAL: QR3 が is-missing', partial.missingSlots?.join() === 'QR3', partial.missingSlots);
-check('PARTIAL: is-incomplete が付く', partial.classes?.includes('is-incomplete') === true, partial.classes);
+check('PARTIAL: 槽位条に赤枠・点線枠を出さない', partial.placeholderCount === 0 && partial.missingSlots.length === 0, { placeholders: partial.placeholderCount, missing: partial.missingSlots });
+check('PARTIAL: is-incomplete を付けない', !partial.classes?.includes('is-incomplete'), partial.classes);
 check('PARTIAL: 技術的な数値（値数/検出数）を出さない', !/値/.test(partial.head || '') && !/\d+\s*\/\s*\d+/.test(partial.head || ''), partial.head);
-check('PARTIAL: 再スキャン警告（顧客向け文言）', /QR の読み取りが不完全です。画像を再アップロードして再スキャンしてください。/.test(partial.alert || ''), partial.alert);
+check('PARTIAL: 配置端にアラート行を出さない', partial.alertPresent === false && partial.alert === null, { present: partial.alertPresent, alert: partial.alert });
 check('PARTIAL: プレビューの QR3 枠が is-missing', await page.evaluate(`document.querySelector('.fixed-doc-preview-hotspot[data-source-id="QR3"]')?.classList.contains('is-missing') === true`) === true, null);
 const partialState = await page.evaluate(STATUS);
 console.log('PARTIAL state:', JSON.stringify(partialState));

@@ -6650,10 +6650,6 @@ code.export-config-meta-value {
   background: #fff;
   padding: 10px 12px;
 }
-.fixed-doc-qr-result.is-incomplete {
-  border-color: #fda29b;
-  background: #fffbfa;
-}
 .fixed-doc-qr-result.is-disabled {
   background: #fcfcfd;
 }
@@ -6682,12 +6678,6 @@ code.export-config-meta-value {
   font-size: 13px;
   color: #475467;
 }
-.fixed-doc-qr-result-count.is-scanning {
-  color: #667085;
-}
-.fixed-doc-qr-result.is-incomplete .fixed-doc-qr-result-count {
-  color: #b42318;
-}
 .fixed-doc-qr-result-dot {
   margin: 0 2px;
   color: #98a2b3;
@@ -6712,29 +6702,6 @@ code.export-config-meta-value {
   font-weight: 500;
   color: #175cd3;
 }
-.fixed-doc-qr-result-slot.is-missing {
-  border-color: #fda29b;
-  border-style: dashed;
-  background: #fef3f2;
-  color: #b42318;
-}
-/* スキャン中：まだ結果が返っていない枠。結果が出た枠から通常表示に変わる。 */
-.fixed-doc-qr-result-slot.is-scanning {
-  border-style: dashed;
-  border-color: #d0d5dd;
-  background: #fcfcfd;
-  color: #98a2b3;
-  animation: fixed-doc-qr-scan-pulse 1s ease-in-out infinite;
-}
-@keyframes fixed-doc-qr-scan-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.45;
-  }
-}
 .fixed-doc-qr-scan-btn {
   flex: none;
 }
@@ -6750,11 +6717,6 @@ code.export-config-meta-value {
   color: #027a48;
   background: #ecfdf3;
   border: 1px solid #abefc6;
-}
-.fixed-doc-qr-result-alert {
-  margin: 8px 0 0;
-  font-size: 13px;
-  color: #b42318;
 }
 .fixed-doc-preview-hotspots {
   position: absolute;

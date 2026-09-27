@@ -376,10 +376,7 @@
                       </div>
                         <div
                           class="fixed-doc-qr-result"
-                          :class="{
-                            'is-incomplete': fixedDocQrReadStatus.enabled && !fixedDocQrReadStatus.ok && !fixedDocQrScanActive,
-                            'is-disabled': !fixedDocQrReadStatus.enabled,
-                          }"
+                          :class="{ 'is-disabled': !fixedDocQrReadStatus.enabled }"
                         >
                         <div class="fixed-doc-qr-result-head">
                           <span class="fixed-doc-qr-result-title">QR 読取</span>
@@ -396,25 +393,22 @@
                             @change="onFixedDocQrReadToggle"
                           ></el-switch>
                           <div v-if="fixedDocQrReadStatus.enabled" class="fixed-doc-qr-result-slots">
-                            <div
-                              v-for="slot in fixedDocQrReadSlots"
-                              :key="slot.id"
-                              class="fixed-doc-qr-result-slot"
-                              :class="{
-                                'is-scanning': !slot.scanned,
-                                'is-missing': slot.scanned && !slot.detected,
-                              }"
-                              :data-source-id="slot.id"
-                              :title="slot.id + ' · ' + (!slot.scanned ? 'スキャン中' : (slot.detected ? '検出' : '未検出'))"
-                            >{{ slot.id }}</div>
+                            <template v-for="slot in fixedDocQrReadSlots" :key="slot.id">
+                              <div
+                                v-if="slot.scanned"
+                                class="fixed-doc-qr-result-slot"
+                                :data-source-id="slot.id"
+                                :title="slot.id + ' · 検出'"
+                              >{{ slot.id }}</div>
+                            </template>
                           </div>
                           <span v-if="!fixedDocQrReadStatus.enabled" class="fixed-doc-qr-result-count">無効 — OCR のみで読取</span>
                           <span
                             v-else-if="fixedDocQrScanActive"
-                            class="fixed-doc-qr-result-count is-scanning"
+                            class="fixed-doc-qr-result-count"
                           >スキャン中…</span>
                           <span
-                            v-else-if="fixedDocQrReadStatus.ok"
+                            v-else
                             class="fixed-doc-qr-result-path is-qr"
                           >QR 読取優先パス適用中</span>
                           <el-button
@@ -425,13 +419,6 @@
                             @click="runFixedDocQrScan"
                           >QR スキャン</el-button>
                         </div>
-                        <p
-                          v-if="fixedDocQrReadStatus.enabled && !fixedDocQrReadStatus.ok && !fixedDocQrScanActive"
-                          class="fixed-doc-qr-result-alert"
-                        >
-                          <template v-if="fixedDocQrReadStatus.slotsMissing">QR の読み取りが不完全です。画像を再アップロードして再スキャンしてください。</template>
-                          <template v-else>QR から読み取った値の数が項目数と一致しません。項目の設定を確認してください。</template>
-                        </p>
                       </div>
                       <div class="fixed-doc-table-panel">
                         <div class="fixed-doc-table-scroll">
