@@ -31,3 +31,14 @@ test('生成的 PRD 预览与源文件使用同一判定口径', () => {
   assert.doesNotMatch(preview, /写入值数等于(该模板的)?字段总数/);
   assert.doesNotMatch(preview, /写入值数门禁/);
 });
+
+// 旧口径の「値数门槛」句は削除済み。ソースにも生成プレビューにも戻らないようにする。
+test('PRD 与生成的预览都不再出现值数门槛句', () => {
+  const sentence = /门槛：写入值数必须等于该模板类型的 QR 仕样值数/;
+  const prd = readFileSync(join(root, 'PRD.zh-CN.md'), 'utf8');
+  assert.doesNotMatch(prd, sentence);
+
+  const previewPath = join(root, 'prd-public/index.html');
+  if (!existsSync(previewPath)) return;
+  assert.doesNotMatch(readFileSync(previewPath, 'utf8'), sentence);
+});

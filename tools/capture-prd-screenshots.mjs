@@ -162,6 +162,17 @@ async function runCapture(page) {
       },
     },
     {
+      // 开关 OFF（既定・無効）：整份 OCR のみ。槽位条・路径徽标は出ず、条内は「無効 — OCR のみで読取」、再スキャン は無効。
+      file: 'fixed-doc-step2-qr-off.png',
+      run: async () => {
+        await openFixedDocReadTab(page);
+        await setQrReadEnabled(page, false);
+        await page.locator('.fixed-doc-qr-result').waitFor({ state: 'visible', timeout: 15000 });
+        await page.locator('.fixed-doc-qr-result').scrollIntoViewIfNeeded();
+        await sleep(500);
+      },
+    },
+    {
       // QR 連結読取 バー（开关 + 槽位条 + 路径徽标 + QR スキャン）。OCR設定 / QR設定 の切替は廃止済み。
       file: 'fixed-doc-step2-qr.png',
       run: async () => {
