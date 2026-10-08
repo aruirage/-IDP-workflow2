@@ -278,7 +278,7 @@ Step1 上传 template → Step2 字段读取 · 複数 QR 読取 开关 ON → S
 | <ins class="change-added">快捷键</ins> | <ins class="change-added">可用</ins> | <ins class="change-added">可用</ins> |
 | <ins class="change-added">工具栏（ノードを追加 / 元に戻す / 缩放 / 整列）</ins> | <ins class="change-added">可用</ins> | <ins class="change-added">可用</ins> |
 
-<ins class="change-added">也就是说，範囲選択モード 下无法编辑节点设置（不打开右侧编辑面板）、无法直接点卡片叉号或连线 × 删除、也无法从节点卡片上的 ＋ 拖出连接；能做的只有框选后整组拖动 / 複製 / 削除（右键菜单或快捷键），外加工具栏的「ノードを追加」。</ins>
+<ins class="change-added">也就是说，範囲選択モード 下无法编辑节点设置（不打开右侧编辑面板）、无法直接点卡片叉号或连线 × 删除、也无法从节点卡片上的 ＋ 拖出连接；能做的只有框选后整组拖动、複製（右键菜单）、削除（右键菜单或 ⌫），外加工具栏的「ノードを追加」。</ins>
 
 <ins class="change-added">功能点：</ins>
 
