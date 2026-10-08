@@ -603,7 +603,7 @@ test('keeps Step4 field columns equal and field lists scrollable', async () => {
   assert.match(style, /\.export-config--step \.export-field-table \.col-value\s*\{\s*width:\s*46%;/);
 });
 
-test('places workflow reset at the end of the canvas history toolbar', async () => {
+test('replaces workflow reset with a toggleable pointer selection tool', async () => {
   const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
   const step2Start = index.indexOf('<template v-else-if="workflowSetupStep === 2">');
@@ -624,9 +624,67 @@ test('places workflow reset at the end of the canvas history toolbar', async () 
   assert.doesNotMatch(step2Toolbar, /resetWorkflowCanvas/);
   assert.equal((step2DraftToolbar.match(/<el-button/g) || []).length, 4);
   assert.equal((step2PublishedToolbar.match(/<el-button/g) || []).length, 2);
-  assert.match(historyToolbar, /title="リセット"[\s\S]*@click="resetWorkflowCanvas"/);
-  assert.ok(historyToolbar.lastIndexOf('@click="resetWorkflowCanvas"') > historyToolbar.lastIndexOf('</el-popover>'));
-  assert.match(main, /ElementPlus\.ElMessageBox\.confirm\('開始ノード以外のすべてのノードと接続を削除します。続行しますか？'/);
+  assert.doesNotMatch(historyToolbar, /resetWorkflowCanvas|title="リセット"/);
+  assert.match(historyToolbar, /class="wf-canvas-tool-btn wf-canvas-select-tool"[\s\S]*:class="\{ 'is-active': wfSelectionMode \}"[\s\S]*:aria-pressed="wfSelectionMode"[\s\S]*@click="toggleWfSelectionMode"/);
+  assert.match(main, /const wfSelectionMode = ref\(false\)/);
+  assert.match(main, /function toggleWfSelectionMode\(\)[\s\S]*wfSelectionMode\.value = !wfSelectionMode\.value/);
+});
+
+test('selects workflow nodes with a marquee only in pointer mode', async () => {
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
+  const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
+  const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
+
+  assert.match(main, /const wfSelectedNodeIds = reactive\(new Set\(\)\)/);
+  assert.match(main, /function startWorkflowMarqueeSelection\(event\)[\s\S]*querySelectorAll\('\.wf-node-shell\[data-node-id\]'\)/);
+  assert.match(main, /if \(wfSelectionMode\.value\)[\s\S]*startWorkflowMarqueeSelection\(event\)/);
+  assert.match(index, /class="wf-selection-marquee"[\s\S]*:style="wfSelectionBoxStyle"/);
+  assert.match(index, /'is-multi-selected': wfSelectedNodeIds\.has\(node\.id\)/);
+  assert.match(index, /:data-node-id="node\.id"/);
+  assert.match(style, /\.wf-selection-marquee\s*\{[^}]*position:\s*absolute;[^}]*border:/s);
+  assert.match(style, /\.wf-node-shell\.is-multi-selected \.wf-node-card/);
+});
+
+test('copies pastes and deletes the marquee node selection', async () => {
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
+  const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
+  const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
+
+  // 範囲選択の操作は右クリックメニューに一本化（左下のフローティングバーは持たない）。
+  assert.doesNotMatch(index, /wf-multi-selection-actions/);
+  assert.match(main, /function copySelectedWorkflowNodes\(options = \{\}\)[\s\S]*wfSelectionClipboard\.value/);
+  assert.match(main, /function pasteSelectedWorkflowNodes\(options = \{\}\)[\s\S]*idMap[\s\S]*markWorkflowEdited\('選択ノードを貼り付け'\)/);
+  assert.match(main, /function removeSelectedWorkflowNodes\(\)[\s\S]*wf\.nodes = [\s\S]*wf\.edges = [\s\S]*markWorkflowEdited\('選択ノードを削除'\)/);
+  // 変更履歴のラベルは既存の数種類に寄せる。貼り付け専用のラベルを履歴に出さない
+  // （ノードが増えるので「ノード構成を変更」で足りる）。
+  assert.match(main, /function normalizeWorkflowHistoryLabel\(label\)[\s\S]*text\.includes\('貼り付け'\)[\s\S]*return 'ノード構成を変更';/);
+  assert.match(main, /mod && event\.key\.toLowerCase\(\) === 'c'[\s\S]*copySelectedWorkflowNodes\(\)/);
+  assert.match(main, /mod && event\.key\.toLowerCase\(\) === 'v'[\s\S]*pasteSelectedWorkflowNodes\(\)/);
+  assert.match(main, /mod && event\.key\.toLowerCase\(\) === 'd'[\s\S]*duplicateSelectedWorkflowNodes\(\)/);
+  assert.match(main, /event\.key === 'Delete'[\s\S]*wfSelectedNodeIds\.size[\s\S]*removeSelectedWorkflowNodes\(\)/);
+  // 範囲選択の右クリックメニュー。複製はコピー + 貼り付けを一度にやる。
+  assert.match(index, /@contextmenu\.prevent="openWfCanvasContextMenu"/);
+  assert.match(index, /class="wf-canvas-context-menu"[\s\S]*@click="duplicateSelectedWorkflowNodes"[\s\S]*@click="removeSelectedWorkflowNodes"/);
+  assert.match(main, /function duplicateSelectedWorkflowNodes\(\)[\s\S]*copySelectedWorkflowNodes\(\{ silent: true \}\)[\s\S]*pasteSelectedWorkflowNodes\(\{ silent: true \}\)/);
+  assert.match(main, /function openWfCanvasContextMenu\(event\)[\s\S]*wfCanvasContextMenu\.visible = true/);
+  // 範囲選択のハイライト。選択中ノードを囲む矩形をビューポート座標で引き直す
+  // （ステージ座標で覚える方式だとパン・ズーム後にズレる）。
+  assert.match(index, /class="wf-selection-region"[\s\S]*:style="wfSelectionRegionStyle"[\s\S]*@mousedown="onWfSelectionRegionPointerDown"/);
+  assert.match(main, /const wfSelectionRegion = computed\(\(\) => \{[\s\S]*x: wfViewport\.x \+ \(minX - pad\) \* scale/);
+  // 枠はノードより上のレイヤーに置き、自分で mousedown を受ける。こうすると枠の中は
+  // ノードの上でも隙間でも必ず同じ経路になり、「どこを押してもドラッグ」が成立する。
+  assert.match(style, /\.wf-selection-region\s*\{[^}]*position:\s*absolute;[^}]*z-index:\s*4;[^}]*background:[^}]*pointer-events:\s*auto;/s);
+  assert.match(main, /function onWfSelectionRegionPointerDown\(event\)[\s\S]*startWorkflowNodeGroupDrag\(event, wfSelectedNodeIds/);
+  assert.match(style, /\.wf-node-shell\.is-multi-selected \.wf-node-card\s*\{[^}]*background:/s);
+  // 選択枠の中は「どこを掴んでも」丸ごと動く。ノードの上でも、隙間や余白の空白でも
+  // 同じ整組ドラッグに入る（dify 互換）。
+  assert.match(main, /function isPointInsideWorkflowSelectionRegion\(event\)[\s\S]*localX >= region\.x && localX <= region\.x \+ region\.w/);
+  assert.match(main, /function startWorkflowNodeGroupDrag\(event, ids, leadId\)/);
+  assert.match(main, /if \(wfSelectionMode\.value\) \{\s*\/\/ 選択枠の中[\s\S]*if \(wfSelectedNodeIds\.size && isPointInsideWorkflowSelectionRegion\(event\)\) \{\s*startWorkflowNodeGroupDrag\(event, wfSelectedNodeIds/);
+  assert.match(main, /function onWfNodePointerDown\(event, node\)[\s\S]*startWorkflowNodeGroupDrag\(event, wfSelectedNodeIds, node\.id\)/);
+  // 選択枠の中は未選択ノードを掴んでも「かたまりを動かす」だけ。選択を 1 件に置き換えない
+  // よう、離したあとの click は動きが無くても捨てる。
+  assert.match(main, /if \(wfSelectionMode\.value\) \{\s*\/\/ 選択枠の中は[\s\S]*if \(!wfSelectedNodeIds\.size \|\| !isPointInsideWorkflowSelectionRegion\(event\)\) return;[\s\S]*wfNodeClickSuppressed = true;/);
 });
 
 test('offers admin as a hitl node role and a notification recipient', async () => {
@@ -659,6 +717,19 @@ test('deletes workflow nodes immediately without a confirmation dialog', async (
   assert.match(removeHandler, /開始ノードは削除できません/);
   assert.match(removeHandler, /removeWorkflowNode\(id\)/);
   assert.match(removeHandler, /ノードを削除しました/);
+});
+
+test('keeps canvas cross buttons without a node delete action in the inspector', async () => {
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
+  const style = await readFile(new URL('../style.css', import.meta.url), 'utf8');
+  const canvasStart = index.indexOf('class="idp-canvas-viewport"');
+  const inspectorStart = index.indexOf('class="idp-inspector"', canvasStart);
+  const canvas = index.slice(canvasStart, inspectorStart);
+  const inspector = index.slice(inspectorStart);
+
+  assert.match(canvas, /class="wf-node-action/);
+  assert.doesNotMatch(inspector, /@click="confirmRemoveSelectedWorkflowNode"[\s\S]*>削除<\/el-button>/);
+  assert.match(style, /\.wf-node-action\s*\{[^}]*width:\s*24px;[^}]*height:\s*24px;[^}]*font-size:\s*16px;/s);
 });
 
 test('deletes edges from a red midpoint control without inline insertion', async () => {

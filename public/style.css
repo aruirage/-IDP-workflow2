@@ -9951,6 +9951,69 @@ code.export-config-meta-value {
   background-size: 20px 20px;
 }
 body.wf-panning .idp-canvas-viewport { cursor: grabbing; }
+.idp-canvas-viewport.is-selection-mode { cursor: crosshair; }
+/* 範囲選択モードは「選んで丸ごと動かす」だけのモード。
+   ノード追加（＋）と接続削除（×）のボタンは出さない。 */
+.idp-canvas-viewport.is-selection-mode .wf-node-add-btn,
+.idp-canvas-viewport.is-selection-mode .wf-edge-delete-btn {
+  display: none;
+}
+.wf-selection-marquee {
+  position: absolute;
+  z-index: 12;
+  border: 1px solid var(--el-color-primary);
+  background: color-mix(in srgb, var(--el-color-primary) 10%, transparent);
+  pointer-events: none;
+}
+/* 選択中ノードを囲むハイライト。ビューポート座標で描くので、パン・ズームしても
+   ドラッグした範囲とズレない。
+   この矩形は「選択中のかたまりを動かすための当たり判定」そのものなので、
+   ノードより上（z-index 4）に置き、pointer-events も受ける。こうすると枠の中は
+   ノードの上でも隙間でも必ずこの要素がイベントを受け取るので、押した場所によって
+   挙動が変わらない（＝枠の中はどこでもドラッグ）。
+   ツールバー(5)・フローティング操作(8)・右クリックメニュー(30)より下にすること。 */
+.wf-selection-region {
+  position: absolute;
+  z-index: 4;
+  border: 1px solid var(--el-color-primary);
+  background: color-mix(in srgb, var(--el-color-primary) 7%, transparent);
+  pointer-events: auto;
+  cursor: move;
+}
+.wf-selection-region:active,
+body.wf-node-dragging .wf-selection-region {
+  cursor: grabbing;
+}
+.wf-canvas-context-menu {
+  position: absolute;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 148px;
+  padding: 4px;
+  border: 1px solid var(--neutral-line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
+}
+.wf-canvas-context-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 30px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #344054;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.wf-canvas-context-menu-item:hover { background: #f2f4f7; }
+.wf-canvas-context-menu-item.is-danger { color: var(--el-color-danger); }
 .idp-canvas-stage {
   position: absolute;
   top: 0;
@@ -10751,6 +10814,12 @@ body.wf-connecting .wf-node-shell.wf-node--connect-target .wf-node-port--in {
   border-color: var(--wf-node-accent, var(--el-color-primary));
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--wf-node-accent, var(--el-color-primary)) 18%, transparent), 0 4px 10px rgba(16, 24, 40, 0.08);
 }
+.wf-node-shell.is-multi-selected { z-index: 3; }
+.wf-node-shell.is-multi-selected .wf-node-card {
+  border-color: var(--el-color-primary);
+  background: color-mix(in srgb, var(--el-color-primary) 10%, #fff);
+  box-shadow: 0 0 0 2px var(--el-color-primary), 0 4px 10px rgba(16, 24, 40, 0.08);
+}
 .inspector-field-hint code {
   font-size: 12px;
 }
@@ -11062,13 +11131,17 @@ body.wf-connecting .wf-node-shell.wf-node--connect-target .wf-node-port--in {
   white-space: nowrap;
 }
 .wf-node-action {
-  width: 14px;
-  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   background: transparent;
   color: #d92d20;
-  font-size: 11px;
+  font-size: 16px;
   line-height: 1;
   cursor: pointer;
   flex-shrink: 0;
@@ -11263,12 +11336,8 @@ body.wf-connecting .wf-node-shell.wf-node--connect-target .wf-node-port--in {
   white-space: nowrap;
 }
 .wf-node-action--terminal {
-  width: 16px;
-  height: 16px;
   margin-left: auto;
-  font-size: 12px;
 }
-
 .wf-start-node-banner {
   background: #f6fef9;
   border: 1px solid #abefc6;

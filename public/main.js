@@ -1093,6 +1093,7 @@ const appOptions = {
       ['エラー', '错误'],
       ['クリア', '清空'],
       ['コピー', '复制'],
+      ['複製', '复制'],
       ['タイプ', '类型'],
       ['右回転', '向右旋转'],
       ['下書き', '草稿'],
@@ -3987,6 +3988,9 @@ const appOptions = {
     const inspectorMode = ref('node');
     const wfLibraryDrag = reactive({ type: null });
     const wfNodeDrag = reactive({ id: null, startX: 0, startY: 0, originX: 0, originY: 0, moved: false });
+    // 範囲選択モードでかたまりを動かした直後の click を捨てるためのフラグ。
+    // これが無いと、ドラッグを離した瞬間の click が選択を1件に潰してしまう。
+    let wfNodeClickSuppressed = false;
     const wfConnectDrag = reactive({ fromId: null, branch: null, clientX: 0, clientY: 0, active: false });
     const wfConnectHoverTargetId = ref(null);
     let wfConnectSuppressClick = false;
@@ -4039,6 +4043,54 @@ const appOptions = {
     const workflowSetupFullscreen = ref(false);
     const wfCanvasNodesCollapsed = ref(false);
     const wfPanDrag = reactive({ active: false, startX: 0, startY: 0, originX: 0, originY: 0 });
+    const wfSelectionMode = ref(false);
+    const wfSelectedNodeIds = reactive(new Set());
+    const wfSelectionClipboard = ref({ nodes: [], edges: [] });
+    let wfSelectionPasteCount = 0;
+    const wfSelectionBox = reactive({ active: false, startX: 0, startY: 0, currentX: 0, currentY: 0 });
+    const wfSelectionBoxStyle = computed(() => ({
+      left: `${Math.min(wfSelectionBox.startX, wfSelectionBox.currentX)}px`,
+      top: `${Math.min(wfSelectionBox.startY, wfSelectionBox.currentY)}px`,
+      width: `${Math.abs(wfSelectionBox.currentX - wfSelectionBox.startX)}px`,
+      height: `${Math.abs(wfSelectionBox.currentY - wfSelectionBox.startY)}px`,
+    }));
+    // 範囲選択のハイライト。選択中ノードを囲む矩形をビューポート座標で計算する。
+    // ステージ座標で覚えておく方式だと、DOM 上の親がステージでない場合にパン・ズームへ
+    // 追従できずズレる（＝ドラッグした範囲と違う場所に出る）。ノードの実寸から毎回引く。
+    const WF_SELECTION_REGION_PADDING = 14;
+    const wfSelectionRegion = computed(() => {
+      const nodes = getActiveWf()?.nodes || [];
+      const selected = nodes.filter((node) => wfSelectedNodeIds.has(node.id));
+      if (!selected.length) return { active: false, x: 0, y: 0, w: 0, h: 0 };
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      for (const node of selected) {
+        const size = getWorkflowNodeDisplaySize(node);
+        minX = Math.min(minX, node.x);
+        minY = Math.min(minY, node.y);
+        maxX = Math.max(maxX, node.x + size.w);
+        maxY = Math.max(maxY, node.y + size.h);
+      }
+      if (!Number.isFinite(minX)) return { active: false, x: 0, y: 0, w: 0, h: 0 };
+      const scale = wfViewport.scale || 1;
+      const pad = WF_SELECTION_REGION_PADDING;
+      return {
+        active: true,
+        x: wfViewport.x + (minX - pad) * scale,
+        y: wfViewport.y + (minY - pad) * scale,
+        w: (maxX - minX + pad * 2) * scale,
+        h: (maxY - minY + pad * 2) * scale,
+      };
+    });
+    const wfSelectionRegionStyle = computed(() => ({
+      left: `${wfSelectionRegion.value.x}px`,
+      top: `${wfSelectionRegion.value.y}px`,
+      width: `${wfSelectionRegion.value.w}px`,
+      height: `${wfSelectionRegion.value.h}px`,
+    }));
+    const wfCanvasContextMenu = reactive({ visible: false, x: 0, y: 0 });
 
     function getFlowNodeKey() {
       return 'case';
@@ -4367,17 +4419,20 @@ const appOptions = {
       wfHistoryIndex.value = 0;
     }
 
+    /**
+     * 履歴スナップショットのノードを、今のノードと突き合わせて復元する。
+     * **スナップショットにあるフィールドは必ずスナップショットの値で上書きする。**
+     * ここで現在値を優先すると、条件・閾値・通知・OCR 設定といったノード設定が
+     * 復元されず、「履歴をクリックしても何も戻らない」ように見える。
+     * 現在値から拾うのは、スナップショットに存在しないフィールド（UI 用の一時状態など）だけ。
+     */
     function mergeWorkflowNodeForCanvasRestore(restoredNode, currentNode) {
-      if (!currentNode || currentNode.type !== restoredNode.type) return restoredNode;
-      return {
-        ...cloneJson(currentNode),
-        id: restoredNode.id,
-        type: restoredNode.type,
-        label: restoredNode.label,
-        x: restoredNode.x,
-        y: restoredNode.y,
-        isStart: restoredNode.isStart,
-      };
+      if (!currentNode) return restoredNode;
+      const merged = { ...restoredNode };
+      for (const key of Object.keys(currentNode)) {
+        if (!(key in merged)) merged[key] = currentNode[key];
+      }
+      return merged;
     }
 
     function restoreWorkflowSnapshot(snapshot) {
@@ -4410,6 +4465,7 @@ const appOptions = {
         text.includes('ノードを追加')
         || text.includes('ノードを挿入')
         || text.includes('ノードを削除')
+        || text.includes('貼り付け')   // 選択ノードを貼り付け = ノードが増えるので構成変更に寄せる
         || text.includes('開始ノードを挿入')
         || text.includes('終了ノードを挿入')
       ) return 'ノード構成を変更';
@@ -5200,6 +5256,260 @@ const appOptions = {
         nextTick(() => fitWorkflowToView());
         ElementPlus.ElMessage.info('リセットしました');
       }).catch(() => {});
+    }
+
+    function toggleWfSelectionMode() {
+      if (!assertWorkflowTopologyEditable()) return;
+      wfSelectionMode.value = !wfSelectionMode.value;
+      closeWfNodePicker();
+      closeWfNodePlacement();
+      cancelWorkflowConnectMode();
+      closeWfCanvasContextMenu();
+    }
+
+    function getEditableSelectedWorkflowNodeIds() {
+      const workflow = getActiveWf();
+      return new Set((workflow?.nodes || [])
+        .filter((node) => wfSelectedNodeIds.has(node.id) && node.type !== 'start' && !node.isStart)
+        .map((node) => node.id));
+    }
+
+    /**
+     * 単一選択（編集パネルを開いているノード）でも ⌘C / ⌘D を使えるように、
+     * そのノードを複数選択セットへ引き上げる。開始ノードは複製・削除の対象外なので false。
+     */
+    function adoptSingleWorkflowSelection() {
+      if (wfSelectedNodeIds.size) return true;
+      const id = selectedWorkflowNodeId.value;
+      if (!id) return false;
+      const node = getActiveWf()?.nodes?.find((n) => n.id === id);
+      if (!node || node.type === 'start' || node.isStart) return false;
+      wfSelectedNodeIds.add(id);
+      return true;
+    }
+
+    function copySelectedWorkflowNodes(options = {}) {
+      const workflow = getActiveWf();
+      const selectedIds = getEditableSelectedWorkflowNodeIds();
+      if (!workflow || !selectedIds.size) {
+        if (!options.silent) ElementPlus.ElMessage.warning('コピーできるノードを選択してください');
+        return false;
+      }
+      wfSelectionClipboard.value = {
+        nodes: cloneJson(workflow.nodes.filter((node) => selectedIds.has(node.id))),
+        edges: cloneJson(workflow.edges.filter((edge) => selectedIds.has(edge.from) && selectedIds.has(edge.to))),
+      };
+      wfSelectionPasteCount = 0;
+      if (!options.silent) ElementPlus.ElMessage.success(`${selectedIds.size} 件のノードをコピーしました`);
+      return true;
+    }
+
+    function pasteSelectedWorkflowNodes(options = {}) {
+      if (!assertWorkflowTopologyEditable()) return false;
+      const workflow = getActiveWf();
+      const clipboard = wfSelectionClipboard.value;
+      if (!workflow || !clipboard.nodes.length) return false;
+      wfSelectionPasteCount += 1;
+      const offset = 48 * wfSelectionPasteCount;
+      const stamp = Date.now();
+      const idMap = new Map();
+      clipboard.nodes.forEach((node, index) => {
+        idMap.set(node.id, `${node.type || 'node'}-copy-${stamp}-${index}`);
+      });
+      const pastedNodes = clipboard.nodes.map((node) => ({
+        ...cloneJson(node),
+        id: idMap.get(node.id),
+        x: Number(node.x || 0) + offset,
+        y: Number(node.y || 0) + offset,
+        isStart: false,
+      }));
+      const pastedEdges = clipboard.edges.map((edge, index) => {
+        const pastedEdge = {
+          ...cloneJson(edge),
+          from: idMap.get(edge.from),
+          to: idMap.get(edge.to),
+        };
+        if (pastedEdge.id) pastedEdge.id = `${pastedEdge.id}-copy-${stamp}-${index}`;
+        return pastedEdge;
+      });
+      workflow.nodes.push(...pastedNodes);
+      workflow.edges.push(...pastedEdges);
+      workflow.isTemplate = false;
+      workflow.topologyCustomized = true;
+      wfSelectedNodeIds.clear();
+      pastedNodes.forEach((node) => wfSelectedNodeIds.add(node.id));
+      selectedWorkflowNodeId.value = null;
+      selectedWorkflowEdgeKey.value = null;
+      markWorkflowEdited('選択ノードを貼り付け');
+      if (!options.silent) ElementPlus.ElMessage.success(`${pastedNodes.length} 件のノードを貼り付けました`);
+      return true;
+    }
+
+    /** コピーしてその場に貼る（Ctrl+D / 右クリックメニューの「複製」） */
+    function duplicateSelectedWorkflowNodes() {
+      if (!copySelectedWorkflowNodes({ silent: true })) {
+        // 開始ノードだけを選んでいると複製も無反応に見えるので理由を出す。
+        if (wfSelectedNodeIds.size) ElementPlus.ElMessage.warning('開始ノードは複製できません。');
+        return false;
+      }
+      if (!pasteSelectedWorkflowNodes({ silent: true })) return false;
+      closeWfCanvasContextMenu();
+      ElementPlus.ElMessage.success(`${wfSelectedNodeIds.size} 件のノードを複製しました`);
+      return true;
+    }
+
+    function removeSelectedWorkflowNodes() {
+      if (!assertWorkflowTopologyEditable()) return false;
+      const wf = getActiveWf();
+      const selectedIds = getEditableSelectedWorkflowNodeIds();
+      if (!wf || !selectedIds.size) {
+        // 「開始」は削除対象外。開始ノードだけを選んでいると何も起きず無反応に見えるので理由を出す。
+        if (wfSelectedNodeIds.size) ElementPlus.ElMessage.warning('開始ノードは削除できません。');
+        return false;
+      }
+      wf.nodes = wf.nodes.filter((node) => !selectedIds.has(node.id));
+      wf.edges = wf.edges.filter((edge) => !selectedIds.has(edge.from) && !selectedIds.has(edge.to));
+      wf.isTemplate = false;
+      wf.topologyCustomized = true;
+      wfSelectedNodeIds.clear();
+      selectedWorkflowNodeId.value = null;
+      selectedWorkflowEdgeKey.value = null;
+      closeWfCanvasContextMenu();
+      syncCurrentNodeFromWorkflow(null);
+      closeWorkflowInspector();
+      markWorkflowEdited('選択ノードを削除');
+      ElementPlus.ElMessage.success(`${selectedIds.size} 件のノードを削除しました`);
+      return true;
+    }
+
+    function toggleWorkflowNodeSelection(nodeId, event) {
+      if (!wfSelectionMode.value) return;
+      event?.preventDefault?.();
+      if (!event?.shiftKey) wfSelectedNodeIds.clear();
+      if (wfSelectedNodeIds.has(nodeId)) wfSelectedNodeIds.delete(nodeId);
+      else wfSelectedNodeIds.add(nodeId);
+      selectedWorkflowNodeId.value = null;
+      selectedWorkflowEdgeKey.value = null;
+      syncCurrentNodeFromWorkflow(null);
+      closeWorkflowInspector();
+    }
+
+    /**
+     * ノードのクリック。範囲選択モードでは編集パネルを開かず、選択のトグルだけ
+     * （かたまりを動かした直後の click は捨てる）。
+     */
+    function onWfNodeClick(node, event) {
+      if (wfSelectionMode.value) {
+        if (wfNodeClickSuppressed) {
+          wfNodeClickSuppressed = false;
+          return;
+        }
+        toggleWorkflowNodeSelection(node.id, event);
+        return;
+      }
+      selectWorkflowNode(node.id);
+    }
+
+    function closeWfCanvasContextMenu() {
+      wfCanvasContextMenu.visible = false;
+    }
+
+    /** 右クリックメニュー。選択中のノード（無ければ右クリックしたノード）を対象にする。 */
+    function openWfCanvasContextMenu(event) {
+      if (!isWorkflowTopologyEditable.value) return;
+      const viewport = wfCanvasViewportRef.value;
+      if (!viewport) return;
+      if (!getEditableSelectedWorkflowNodeIds().size) {
+        const nodeElement = event.target?.closest?.('.wf-node-shell[data-node-id]');
+        if (!nodeElement) {
+          closeWfCanvasContextMenu();
+          return;
+        }
+        wfSelectedNodeIds.clear();
+        wfSelectedNodeIds.add(nodeElement.dataset.nodeId);
+      }
+      const viewportRect = viewport.getBoundingClientRect();
+      const menuWidth = 148;
+      const menuHeight = 82;
+      wfCanvasContextMenu.visible = true;
+      wfCanvasContextMenu.x = Math.max(4, Math.min(viewportRect.width - menuWidth, event.clientX - viewportRect.left));
+      wfCanvasContextMenu.y = Math.max(4, Math.min(viewportRect.height - menuHeight, event.clientY - viewportRect.top));
+    }
+
+    /**
+     * 押した位置が「選択枠の内側」かどうか。選択枠の中はノードの隙間も余白も
+     * ひっくるめて「かたまりを動かす」領域なので、生の矩形で判定する。
+     */
+    function isPointInsideWorkflowSelectionRegion(event) {
+      const viewport = wfCanvasViewportRef.value;
+      const region = wfSelectionRegion.value;
+      if (!viewport || !region.active) return false;
+      const rect = viewport.getBoundingClientRect();
+      const localX = event.clientX - rect.left;
+      const localY = event.clientY - rect.top;
+      return localX >= region.x && localX <= region.x + region.w
+        && localY >= region.y && localY <= region.y + region.h;
+    }
+
+    /**
+     * 選択枠（ハイライト矩形）自身の mousedown。
+     * 枠はノードより上のレイヤーにあり pointer-events も受けるので、枠の中の操作は
+     * ノードの上だろうと隙間だろうと必ずここに来る。押した場所に関係なく
+     * 選択中のかたまりを丸ごと動かす。
+     */
+    function onWfSelectionRegionPointerDown(event) {
+      if (event.button !== 0) return;
+      if (!wfSelectedNodeIds.size) return;
+      // ビューポート側のハンドラまで届くと新しい範囲選択が始まってしまうので止める。
+      event.stopPropagation();
+      startWorkflowNodeGroupDrag(event, wfSelectedNodeIds, [...wfSelectedNodeIds][0]);
+    }
+
+    function startWorkflowMarqueeSelection(event) {
+      const viewport = wfCanvasViewportRef.value;
+      if (!viewport || event.button !== 0) return;
+      event.preventDefault();
+      closeWfCanvasContextMenu();
+      const viewportRect = viewport.getBoundingClientRect();
+      const toLocalX = (clientX) => Math.max(0, Math.min(viewportRect.width, clientX - viewportRect.left));
+      const toLocalY = (clientY) => Math.max(0, Math.min(viewportRect.height, clientY - viewportRect.top));
+      if (!event.shiftKey) wfSelectedNodeIds.clear();
+      Object.assign(wfSelectionBox, {
+        active: true,
+        startX: toLocalX(event.clientX),
+        startY: toLocalY(event.clientY),
+        currentX: toLocalX(event.clientX),
+        currentY: toLocalY(event.clientY),
+      });
+      const onMove = (moveEvent) => {
+        wfSelectionBox.currentX = toLocalX(moveEvent.clientX);
+        wfSelectionBox.currentY = toLocalY(moveEvent.clientY);
+      };
+      const onUp = () => {
+        const selectionRect = {
+          left: viewportRect.left + Math.min(wfSelectionBox.startX, wfSelectionBox.currentX),
+          top: viewportRect.top + Math.min(wfSelectionBox.startY, wfSelectionBox.currentY),
+          right: viewportRect.left + Math.max(wfSelectionBox.startX, wfSelectionBox.currentX),
+          bottom: viewportRect.top + Math.max(wfSelectionBox.startY, wfSelectionBox.currentY),
+        };
+        viewport.querySelectorAll('.wf-node-shell[data-node-id]').forEach((element) => {
+          const nodeRect = element.getBoundingClientRect();
+          const intersects = nodeRect.right >= selectionRect.left
+            && nodeRect.left <= selectionRect.right
+            && nodeRect.bottom >= selectionRect.top
+            && nodeRect.top <= selectionRect.bottom;
+          if (intersects) wfSelectedNodeIds.add(element.dataset.nodeId);
+        });
+        wfSelectionBox.active = false;
+        selectedWorkflowNodeId.value = null;
+        selectedWorkflowEdgeKey.value = null;
+        syncCurrentNodeFromWorkflow(null);
+        closeWorkflowInspector();
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
     }
 
     function validateWorkflowNotificationConfig() {
@@ -7446,14 +7756,33 @@ const appOptions = {
         placeWorkflowNodeAtPointer(event.clientX, event.clientY);
         return;
       }
-      if (event.target.closest('.wf-node') || event.target.closest('.idp-edge-path') || event.target.closest('.wf-node-picker') || event.target.closest('.wf-canvas-toolbar') || event.target.closest('.wf-canvas-floating-actions')) return;
-      closeWfNodePicker();
-      cancelWorkflowConnectMode();
-      if (wfConnectDrag.fromId) return;
-      selectedWorkflowEdgeKey.value = null;
-      selectedWorkflowNodeId.value = null;
-      syncCurrentNodeFromWorkflow(null);
-      closeWorkflowInspector();
+      // 注意：.idp-edge-path は pointer-events:none なので event.target にはならない。
+      // 実際に当たるのは透明な当たり判定用の .idp-edge-hit（stroke-width 16 / pointer-events:stroke）。
+      if (event.target.closest('.wf-node') || event.target.closest('.wf-node-picker') || event.target.closest('.wf-canvas-toolbar') || event.target.closest('.wf-canvas-floating-actions')) return;
+      // 線の上で押した場合。範囲選択モードならそのまま範囲選択を始める（選択モードの意図は常に範囲選択）。
+      // 通常モードでは「空白クリック」扱いにしない＝選択解除もパネルを閉じるもしない。
+      // クリックは後続の @click="selectWorkflowEdge" が拾って線を選択する。ドラッグでのパンは下で維持する。
+      const onEdgeHit = !!event.target.closest('.idp-edge-hit');
+      if (wfSelectionMode.value) {
+        // 選択枠の中（ノードの隙間や余白を含む）で押したら、そのかたまりを丸ごと動かす。
+        if (wfSelectedNodeIds.size && isPointInsideWorkflowSelectionRegion(event)) {
+          startWorkflowNodeGroupDrag(event, wfSelectedNodeIds, [...wfSelectedNodeIds][0]);
+          return;
+        }
+        startWorkflowMarqueeSelection(event);
+        return;
+      }
+      if (!onEdgeHit) {
+        closeWfNodePicker();
+        cancelWorkflowConnectMode();
+        if (wfConnectDrag.fromId) return;
+        selectedWorkflowEdgeKey.value = null;
+        selectedWorkflowNodeId.value = null;
+        wfSelectedNodeIds.clear();
+        closeWfCanvasContextMenu();
+        syncCurrentNodeFromWorkflow(null);
+        closeWorkflowInspector();
+      }
       if (event.button !== 0) return;
       wfPanDrag.active = true;
       wfPanDrag.startX = event.clientX;
@@ -9446,6 +9775,21 @@ const appOptions = {
       const tag = event.target?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || event.target?.isContentEditable) return;
       const mod = event.metaKey || event.ctrlKey;
+      if (mod && event.key.toLowerCase() === 'c' && adoptSingleWorkflowSelection()) {
+        event.preventDefault();
+        copySelectedWorkflowNodes();
+        return;
+      }
+      if (mod && event.key.toLowerCase() === 'v' && wfSelectionClipboard.value.nodes.length) {
+        event.preventDefault();
+        pasteSelectedWorkflowNodes();
+        return;
+      }
+      if (mod && event.key.toLowerCase() === 'd' && adoptSingleWorkflowSelection()) {
+        event.preventDefault();
+        duplicateSelectedWorkflowNodes();
+        return;
+      }
       if (mod && event.key.toLowerCase() === 'z') {
         event.preventDefault();
         if (event.shiftKey) redoWorkflow();
@@ -9453,7 +9797,10 @@ const appOptions = {
         return;
       }
       if (event.key === 'Delete' || event.key === 'Backspace') {
-        if (selectedWorkflowNodeId.value) {
+        if (wfSelectedNodeIds.size) {
+          event.preventDefault();
+          removeSelectedWorkflowNodes();
+        } else if (selectedWorkflowNodeId.value) {
           event.preventDefault();
           confirmRemoveSelectedWorkflowNode();
         } else if (selectedWorkflowEdgeKey.value) {
@@ -9467,6 +9814,9 @@ const appOptions = {
         event.preventDefault();
         openWfNodePickerFromShortcut();
       }
+      if (event.key === 'Escape') {
+        closeWfCanvasContextMenu();
+      }
       if (event.key === 'Escape' && wfNodePlacement.active) {
         event.preventDefault();
         closeWfNodePlacement();
@@ -9476,6 +9826,13 @@ const appOptions = {
         event.preventDefault();
         cancelWorkflowConnectMode();
       }
+    }
+
+    /** 右クリックメニューの外側を押したら閉じる */
+    function onDocumentMouseDownCloser(event) {
+      if (!wfCanvasContextMenu.visible) return;
+      if (event.target?.closest?.('.wf-canvas-context-menu')) return;
+      closeWfCanvasContextMenu();
     }
 
     function getWorkflowPortPosition(node, branch) {
@@ -9754,6 +10111,7 @@ const appOptions = {
     }
 
     function selectWorkflowNode(id) {
+      wfSelectedNodeIds.clear();
       selectedWorkflowEdgeKey.value = null;
       exitWorkflowConnectMode();
       inspectorExpanded.value = false;
@@ -9997,24 +10355,58 @@ const appOptions = {
       createWorkflowNodeAt(type, pos.x - 120, pos.y - 36);
     }
 
-    function onWfNodePointerDown(event, node) {
+    /**
+     * 選択中ノードのかたまりを丸ごと動かす。範囲選択モードでは
+     * 「ノードの上で掴む」でも「選択枠の中の空白で掴む」でもここに来る。
+     */
+    function startWorkflowNodeGroupDrag(event, ids, leadId) {
       if (event.button !== 0) return;
       if (!isWorkflowTopologyEditable.value) return;
+      const dragIds = [...ids];
+      if (!dragIds.length) return;
+      const liveNodes = () => getActiveWf()?.nodes || [];
+      const origins = new Map();
+      dragIds.forEach((id) => {
+        const target = liveNodes().find((n) => n.id === id);
+        if (target) origins.set(id, { x: target.x, y: target.y });
+      });
+      if (!origins.size) return;
+      const lead = liveNodes().find((n) => n.id === leadId)
+        || liveNodes().find((n) => n.id === dragIds[0]);
+      if (!lead) return;
       event.preventDefault();
       document.body.classList.add('wf-node-dragging');
-      wfNodeDrag.id = node.id;
+      wfNodeDrag.id = lead.id;
       wfNodeDrag.startX = event.clientX;
       wfNodeDrag.startY = event.clientY;
-      wfNodeDrag.originX = node.x;
-      wfNodeDrag.originY = node.y;
+      wfNodeDrag.originX = lead.x;
+      wfNodeDrag.originY = lead.y;
       wfNodeDrag.moved = false;
       const onMove = (ev) => {
-        const target = getActiveWf().nodes.find((n) => n.id === wfNodeDrag.id);
-        if (!target) return;
-        target.x = Math.max(8, wfNodeDrag.originX + (ev.clientX - wfNodeDrag.startX) / wfViewport.scale);
-        target.y = Math.max(8, wfNodeDrag.originY + (ev.clientY - wfNodeDrag.startY) / wfViewport.scale);
-        wfNodeDrag.moved = Math.abs(target.x - wfNodeDrag.originX) > 1
-          || Math.abs(target.y - wfNodeDrag.originY) > 1;
+        const scale = wfViewport.scale || 1;
+        let dx = (ev.clientX - wfNodeDrag.startX) / scale;
+        let dy = (ev.clientY - wfNodeDrag.startY) / scale;
+        if (origins.size > 1) {
+          // 端でグループが潰れないよう、はみ出す分だけ全体を止める
+          let minX = Infinity;
+          let minY = Infinity;
+          origins.forEach((origin) => {
+            minX = Math.min(minX, origin.x);
+            minY = Math.min(minY, origin.y);
+          });
+          dx = Math.max(8 - minX, dx);
+          dy = Math.max(8 - minY, dy);
+        }
+        const nodes = liveNodes();
+        origins.forEach((origin, id) => {
+          const target = nodes.find((n) => n.id === id);
+          if (!target) return;
+          target.x = Math.max(8, origin.x + dx);
+          target.y = Math.max(8, origin.y + dy);
+        });
+        const leadNode = nodes.find((n) => n.id === wfNodeDrag.id);
+        wfNodeDrag.moved = !!leadNode && (Math.abs(leadNode.x - wfNodeDrag.originX) > 1
+          || Math.abs(leadNode.y - wfNodeDrag.originY) > 1);
       };
       const onUp = () => {
         const target = getActiveWf().nodes.find((n) => n.id === wfNodeDrag.id);
@@ -10027,10 +10419,30 @@ const appOptions = {
         document.body.classList.remove('wf-node-dragging');
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
-        if (moved) markWorkflowEdited('ノード位置を移動');
+        if (moved) {
+          markWorkflowEdited('ノード位置を移動');
+          // 離した直後の click で選択を潰さないようにする
+          if (wfSelectionMode.value) wfNodeClickSuppressed = true;
+        }
       };
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
+    }
+
+    function onWfNodePointerDown(event, node) {
+      wfNodeClickSuppressed = false;
+      if (event.button !== 0) return;
+      // 範囲選択モードでは「選択済みのかたまりを丸ごと動かす」だけ。単独ノードは動かさない。
+      if (wfSelectionMode.value) {
+        // 選択枠の中は「どこを掴んでも」かたまりを動かす。枠の中にある
+        // 未選択ノードを掴んでも、選択をそのノード 1 件に置き換えたりはしない。
+        if (!wfSelectedNodeIds.size || !isPointInsideWorkflowSelectionRegion(event)) return;
+        // 離した直後の click で選択が置き換わらないよう、動きが無くても click は捨てる。
+        wfNodeClickSuppressed = true;
+        startWorkflowNodeGroupDrag(event, wfSelectedNodeIds, node.id);
+        return;
+      }
+      startWorkflowNodeGroupDrag(event, [node.id], node.id);
     }
 
     function onDecisionConditionTypeChange(typeValue) {
@@ -13056,6 +13468,7 @@ const appOptions = {
         // 不监听 characterData：翻译会改文本，监听会导致翻译↔观察死循环卡死页面
       });
       document.addEventListener('keydown', onWfKeyDown);
+      document.addEventListener('mousedown', onDocumentMouseDownCloser);
     });
     onBeforeUnmount(() => {
       if (wfTemplateHintTimer) clearTimeout(wfTemplateHintTimer);
@@ -13065,6 +13478,7 @@ const appOptions = {
       clearSceneSetupLinkCheckDisplay();
       closeWfNodePlacement();
       document.removeEventListener('keydown', onWfKeyDown);
+      document.removeEventListener('mousedown', onDocumentMouseDownCloser);
     });
     return {
       uiLanguage,
@@ -13774,6 +14188,19 @@ const appOptions = {
       swapSelectedWorkflowNode,
       wfConnectPreviewPath,
       selectedWorkflowNodeId,
+      wfSelectionMode,
+      wfSelectedNodeIds,
+      wfSelectionBox,
+      wfSelectionBoxStyle,
+      wfSelectionRegion,
+      wfSelectionRegionStyle,
+      wfCanvasContextMenu,
+      openWfCanvasContextMenu,
+      closeWfCanvasContextMenu,
+      copySelectedWorkflowNodes,
+      pasteSelectedWorkflowNodes,
+      duplicateSelectedWorkflowNodes,
+      removeSelectedWorkflowNodes,
       selectedWorkflowNode,
       inspectorPanel,
       inspectorTitle,
@@ -13800,6 +14227,8 @@ const appOptions = {
       workflowEdgePaths,
       selectWorkflowNode,
       resetWorkflowCanvas,
+      toggleWfSelectionMode,
+      toggleWorkflowNodeSelection,
       removeWorkflowNode,
       confirmRemoveSelectedWorkflowNode,
       canUndoWorkflow,
@@ -13833,6 +14262,8 @@ const appOptions = {
       onWfCanvasDragOver,
       onWfCanvasDrop,
       onWfNodePointerDown,
+      onWfNodeClick,
+      onWfSelectionRegionPointerDown,
       getWorkflowNodeMeta,
       getWorkflowNodePickerSummary,
       getWorkflowNodePickerDescription,
