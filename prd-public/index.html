@@ -379,7 +379,7 @@
       </div>
     </aside>
     <main class="main">
-      <div class="main__meta">由 PRD.zh-CN.md 生成 · 2026/10/8 10:37:47</div>
+      <div class="main__meta">由 PRD.zh-CN.md 生成 · 2026/10/8 11:52:45</div>
       <article class="paper">
 <h1>NeosAI 日本保险 IDP — 产品需求文档</h1>
 <p>本稿表记：<mark class="change-modified">黄色＝修改</mark>、<ins class="change-added">蓝色＝新增</ins>、<del class="change-deleted">红色＝删除</del>。</p>
@@ -459,8 +459,8 @@
 <h4 class="subsection-heading" id="fig-step2-工作流画布本期增量">Step2 工作流画布（本期增量）</h4>
 <div class="figure-row figure-row--single">
 <figure class="screenshot-figure">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/wf-preprocess-inspector.png?v=1790739549708" data-caption="业务场景 Step2 · 前処理节点右侧配置（画像不正検知二级检测各自选账票、敏感情報検出、回転/補正）">
-    <img src="assets/wf-preprocess-inspector.png?v=1790739549708" alt="业务场景 Step2 · 前処理节点右侧配置（画像不正検知二级检测各自选账票、敏感情報検出、回転/補正）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/wf-preprocess-inspector.png?v=1791427278011" data-caption="业务场景 Step2 · 前処理节点右侧配置（画像不正検知二级检测各自选账票、敏感情報検出、回転/補正）">
+    <img src="assets/wf-preprocess-inspector.png?v=1791427278011" alt="业务场景 Step2 · 前処理节点右侧配置（画像不正検知二级检测各自选账票、敏感情報検出、回転/補正）" loading="lazy" />
   </button>
   <figcaption>业务场景 Step2 · 前処理节点右侧配置（画像不正検知二级检测各自选账票、敏感情報検出、回転/補正）</figcaption>
 </figure>
@@ -481,18 +481,15 @@
 </figure>
 </div>
 <p>画布工具栏的「リセット」按钮（一键删除開始ノード以外的全部节点与连接）已移除，该位置改为範囲選択モード的切换按钮。批量删除不再由单个按钮一次完成，改为先框选、再删除；框选出的节点可在选中框内任意位置整组拖动，复制与删除走右键菜单或快捷键。</p>
+<p>画布编辑分「ドラッグモード」（默认）与「範囲選択モード」两种操作模式。两种模式下可做的事完全相同（增删节点、改连接、复制、撤销），差别只在鼠标动作落在哪里：</p>
+<table><thead><tr><th>操作</th><th>ドラッグモード（默认）</th><th>範囲選択モード</th></tr></thead><tbody><tr><td>点击节点</td><td>打开右侧编辑面板</td><td>只切换选中，不打开编辑面板</td></tr><tr><td>拖动节点</td><td>移动该节点</td><td>移动当前选中整组；框内任意位置（含未选中的节点、节点之间的空隙与连线）都是整组拖动</td></tr><tr><td>拖动画布空白</td><td>平移画布</td><td>框选（不平移）；起点落在已有选中框内时改为整组拖动</td></tr><tr><td>卡片上的 ＋（ノード追加・接続）/ 连线上的 ×（接続削除）</td><td>显示</td><td>隐藏，不响应</td></tr><tr><td>卡片右上角的叉号（节点削除）</td><td>显示，可直接点击</td><td>显示但被选中框覆盖，框内点击不响应；删除走右键菜单或 ⌫</td></tr><tr><td>右键菜单 複製 / 削除</td><td>可用（作用于当前选中的单个节点）</td><td>可用（作用于整个选中集合）</td></tr><tr><td>快捷键</td><td>可用</td><td>可用</td></tr></tbody></table>
 <p>功能点：</p>
-<ol><li>範囲選択モード开关：开启后画布进入选择模式，点击节点只切换选中、不打开右侧编辑面板；关闭后回到拖拽模式。</li><li>框选：在选择模式下于画布按住左键拖出矩形，节点卡片与矩形有任意重叠即被选中，不要求完全框住。</li><li>选中框：松开后以包围全部选中节点的矩形高亮。框内（含节点之间的空白与连线）都是拖动面，按住任意位置即可整组移动。</li><li>整组复制与删除：右键菜单提供 複製 与 削除；快捷键 ⌘C 复制、⌘V 粘贴、⌘D 复制副本、⌫（Delete）删除。删除会同时移除选中节点两端的连接。</li><li>開始ノード不参与复制与删除。</li><li>选择模式下点击空白处清空选中；按住 ⇧ 框选为追加选择。</li></ol>
+<ol><li>範囲選択モード开关：开启后画布进入选择模式，点击节点只切换选中、不打开右侧编辑面板；关闭后回到ドラッグモード。</li><li>框选：在选择模式下于画布按住左键拖出矩形，节点卡片与矩形有任意重叠即被选中，不要求完全框住。</li><li>选中框：松开后以包围全部选中节点的矩形高亮——实线边框、直角、外扩一圈内边距。框内（含节点之间的空白与连线）都是拖动面，按住任意位置即可整组移动。</li><li>整组复制与删除：右键菜单提供 複製 与 削除；快捷键 ⌘C 复制、⌘V 粘贴、⌘D 复制副本、⌫（Delete）删除。删除会同时移除选中节点两端的连接。</li><li>開始ノード不参与复制与删除。</li><li>选择模式下点击空白处清空选中；按住 ⇧ 框选为追加选择。</li></ol>
+<p>画布快捷键（两种模式通用）：</p>
+<table><thead><tr><th>快捷键</th><th>动作</th></tr></thead><tbody><tr><td>⌘Z / ⇧⌘Z</td><td>元に戻す / やり直し</td></tr><tr><td>⌘C / ⌘V</td><td>コピー / 貼り付け（选中节点及节点之间的连接一并复制）</td></tr><tr><td>⌘D</td><td>複製（复制并立即粘贴出副本）</td></tr><tr><td>⌫ / Delete</td><td>删除选中节点；无节点选中时删除选中的连接</td></tr></tbody></table>
+<p>以上增删改操作都会写入画布工具栏的「変更履歴」，按 ノード構成を変更 / ノード位置を変更 / 接続を変更 / ノード設定を編集 四类归档；履歴仅在本画面打开期间保留。</p>
 <p>页面与入口：业务场景设置 Step2 工作流画布；入口为画布工具栏最右的範囲選択モード按钮，拓扑不可编辑时不显示。</p>
-<table><thead><tr><th>按钮</th><th>界面文案（日语）</th><th>适用场景</th><th>启用条件</th><th>点击后</th></tr></thead><tbody><tr><td>範囲選択モード</td><td>範囲選択モード</td><td>Step2 画布</td><td>拓扑可编辑</td><td>进入选择模式，按钮高亮；再点一次退出，回到拖拽模式</td></tr><tr><td>複製</td><td>複製</td><td>选择模式 · 右键菜单</td><td>选中集合内有開始ノード以外的节点</td><td>复制选中节点与节点之间的连接；副本相对原节点向右下偏移 48px，连续粘贴逐次累加</td></tr><tr><td>削除</td><td>削除</td><td>选择模式 · 右键菜单</td><td>选中集合内有開始ノード以外的节点</td><td>删除选中节点及与其相连的连接</td></tr></tbody></table>
-<h4 class="subsection-heading" id="fig-step2-自定义函数本期增量">Step2 自定义函数（本期增量）</h4>
-<p>工作流新增「カスタム関数」节点（节点分类：拡張 Node），用途是批量生成文件名：接收上游文件列表与案件字段，执行一段 JavaScript 后返回改名结果，作为该节点的执行结果向下游传递。主处理链推荐顺序为 前処理 → OCR抽出 → データマッピング → AI検証 → カスタム関数。</p>
-<p>功能点：</p>
-<ol><li>节点配置分两块：入力変数（变量名 + 参照元）与 JavaScript スクリプト。</li><li>入力変数 只保存「参照元」，不复制上游值；参照元在上游改名或删除后该行失效。</li><li>脚本以 <code>function main(inputs) {...}</code> 形式编写，<code>inputs</code> 的键即 入力変数 的变量名；脚本返回值作为该节点的执行结果保存，默认脚本返回改名后的 <code>files</code> 与 <code>renamedFileCount</code>。</li><li>新建节点时预置默认 入力変数 三行（<code>files</code> = 上游文件列表、<code>claimno</code> = 保険請求書.証券番号、<code>requestNo</code> = 保険請求書.請求番号）与默认脚本。</li><li>默认脚本行为：按帳票タイプ ID 映射文件代码（未配置时以 <code>DOC-</code> + ID 后 8 位兜底）；文件名 = <code>タイムスタンプ_証券番号_請求番号_ファイルコード_連番</code> + 原拡張子；同一文件代码按出现顺序两位编号；<code>\ / : * ? &quot; &lt; &gt; |</code> 与空白替换为 <code>_</code> 并去掉首尾 <code>_</code>；証券番号 / 請求番号 缺失时分别回落 <code>NO-CLAIM</code> / <code>NO-REQUEST</code>。</li></ol>
-<p>页面与入口：业务场景设置 Step2 工作流画布；入口为画布工具栏「ノードを追加」的「拡張 Node」分类。</p>
-<table><thead><tr><th>字段/参数</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th></tr></thead><tbody><tr><td>入力変数</td><td>入力変数 N</td><td>列表 + ＋ 追加</td><td>—</td><td>N 为已配置行数；无行时显示 <code>データがありません</code></td></tr><tr><td>变量名</td><td>変数名</td><td>文本</td><td>是</td><td>最长 64 字符；英字或 <code>_</code> 开头，仅英数字与 <code>_</code></td></tr><tr><td>参照元</td><td>参照元</td><td>级联选择</td><td>是</td><td>引用上游节点输出变量，可搜索；选中后显示该变量的数据类型</td></tr><tr><td>脚本</td><td>JavaScript スクリプト</td><td>多行文本</td><td>—</td><td>默认 <code>function main(inputs) {...}</code>，返回值即节点输出</td></tr></tbody></table>
-<p>异常与边界：</p>
-<table><thead><tr><th>场景</th><th>条件</th><th>用户提示 / 处理</th></tr></thead><tbody><tr><td>変数名 为空</td><td>追加/编辑 入力変数 时未填</td><td>报错（<code>変数名を入力してください</code>），不保存</td></tr><tr><td>変数名 格式非法</td><td>非英字或 <code>_</code> 开头，或含其他字符</td><td>报错（<code>変数名は英字または _ で始め、英数字と _ のみ使用してください</code>）</td></tr><tr><td>変数名 重名</td><td>与同一节点已有行同名</td><td>报错（<code>同じ変数名が既に存在します</code>）</td></tr><tr><td>参照元 未选</td><td>入力変数 为空</td><td>报错（<code>入力変数を選択してください</code>）</td></tr></tbody></table>
+<table><thead><tr><th>按钮</th><th>界面文案（日语）</th><th>适用场景</th><th>启用条件</th><th>点击后</th></tr></thead><tbody><tr><td>範囲選択モード</td><td>範囲選択モード</td><td>Step2 画布</td><td>拓扑可编辑</td><td>进入选择模式，按钮高亮；再点一次退出，回到ドラッグモード</td></tr><tr><td>複製</td><td>複製</td><td>画布 · 右键菜单</td><td>选中集合内有開始ノード以外的节点</td><td>复制选中节点与节点之间的连接；副本相对原节点向右下偏移 48px，连续粘贴逐次累加</td></tr><tr><td>削除</td><td>削除</td><td>画布 · 右键菜单</td><td>选中集合内有開始ノード以外的节点</td><td>删除选中节点及与其相连的连接</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-step3-通知设置本期增量">Step3 通知设置（本期增量）</h4>
 <div class="figure-row figure-row--single">
 <figure class="screenshot-figure">
@@ -506,7 +503,7 @@
 <ol><li>通知渠道新增邮件：可多选站内信 + 邮件；勾选邮件须填邮箱地址；共用件名/正文与变量渲染。</li></ol>
 <table><thead><tr><th>字段/参数</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th></tr></thead><tbody><tr><td>通知渠道</td><td>通知チャネル</td><td>多选</td><td>是</td><td>选项：システム通知、メール，至少选一</td></tr><tr><td>站内信</td><td>システム通知</td><td>复选</td><td>—</td><td>通知チャネル多选之一；勾选后须选通知対象</td></tr><tr><td>邮件</td><td>メール</td><td>复选</td><td>—</td><td>通知チャネル多选之一</td></tr><tr><td>邮箱地址</td><td>メール宛先</td><td>文本</td><td>勾选邮件时</td><td>多地址以 <code>,</code> 或 <code>，</code> 分隔；各地址段前后空格保存时去除空格；邮箱本体须半角格式</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-异常与边界">异常与边界</h4>
-<table><thead><tr><th>场景</th><th>条件</th><th>用户提示 / 处理</th></tr></thead><tbody><tr><td>Step2 · 敏感情报检出失败</td><td>敏感情报检出模块执行失败</td><td>preprocessStatus=failed；走案件异常；不新增脱敏专用待办</td></tr><tr><td>Step2 · 画像不正不通过</td><td>画像不正検知判「不通过」</td><td>preprocessResult=reviewRequired；返回不正类型（PS / AI生成 / 帳票特徴 / 筆跡）给后端；进前处理人工确认</td></tr><tr><td>Step3 · 邮件地址分隔与空白</td><td>メール宛先 输入全角逗号 <code>，</code> 或地址段前后含空格</td><td>允许：<code>,</code> / <code>，</code> 均可作多地址分隔符；各段 trim 后校验；不因分隔符全半角或首尾空格报错</td></tr><tr><td>Step3 · 勾选站内信未选对象</td><td>渠道含システム通知但通知対象为空</td><td>保存报错（<code>通知対象を選択してください</code>）</td></tr><tr><td>Step3 · 勾选邮件未填邮箱</td><td>渠道含メール但メール宛先为空</td><td>保存报错（<code>メール宛先を入力してください</code>）</td></tr><tr><td>Step3 · 邮件地址格式错误</td><td>trim 后仍含无效邮箱（如全角 <code>@</code>、缺 <code>@</code> 等）</td><td>保存报错（<code>メールアドレスの形式が正しくありません: …</code>）；列出无效地址</td></tr><tr><td>Step3 · 件名/正文未填</td><td>件名或正文为空</td><td>保存报错（<code>件名を入力してください</code> / <code>内容を入力してください</code>）</td></tr><tr><td>Step3 · 邮件投递失败</td><td>运行时邮件服务失败</td><td>记日志；工作流继续（不阻断）</td></tr><tr><td>Step2 · 範囲選択モード：点击节点</td><td>点击任意节点</td><td>只切换选中；不打开右侧编辑面板</td></tr><tr><td>Step2 · 範囲選択モード：只选中開始ノード</td><td>右键 複製</td><td>提示（<code>開始ノードは複製できません。</code>），不产生副本</td></tr><tr><td>Step2 · 範囲選択モード：只选中開始ノード</td><td>右键 削除 或按 ⌫</td><td>提示（<code>開始ノードは削除できません。</code>），节点保留</td></tr><tr><td>Step2 · 範囲選択モード：选中框覆盖节点卡片</td><td>按卡片右上角的叉号或连接手柄</td><td>框内不响应这两个入口；删除走右键菜单或 ⌫</td></tr><tr><td>Step2 · 範囲選択モード：拓扑不可编辑</td><td>画布为只读</td><td>範囲選択モード按钮不显示</td></tr></tbody></table>
+<table><thead><tr><th>场景</th><th>条件</th><th>用户提示 / 处理</th></tr></thead><tbody><tr><td>Step2 · 敏感情报检出失败</td><td>敏感情报检出模块执行失败</td><td>preprocessStatus=failed；走案件异常；不新增脱敏专用待办</td></tr><tr><td>Step2 · 画像不正不通过</td><td>画像不正検知判「不通过」</td><td>preprocessResult=reviewRequired；返回不正类型（PS / AI生成 / 帳票特徴 / 筆跡）给后端；进前处理人工确认</td></tr><tr><td>Step3 · 邮件地址分隔与空白</td><td>メール宛先 输入全角逗号 <code>，</code> 或地址段前后含空格</td><td>允许：<code>,</code> / <code>，</code> 均可作多地址分隔符；各段 trim 后校验；不因分隔符全半角或首尾空格报错</td></tr><tr><td>Step3 · 勾选站内信未选对象</td><td>渠道含システム通知但通知対象为空</td><td>保存报错（<code>通知対象を選択してください</code>）</td></tr><tr><td>Step3 · 勾选邮件未填邮箱</td><td>渠道含メール但メール宛先为空</td><td>保存报错（<code>メール宛先を入力してください</code>）</td></tr><tr><td>Step3 · 邮件地址格式错误</td><td>trim 后仍含无效邮箱（如全角 <code>@</code>、缺 <code>@</code> 等）</td><td>保存报错（<code>メールアドレスの形式が正しくありません: …</code>）；列出无效地址</td></tr><tr><td>Step3 · 件名/正文未填</td><td>件名或正文为空</td><td>保存报错（<code>件名を入力してください</code> / <code>内容を入力してください</code>）</td></tr><tr><td>Step3 · 邮件投递失败</td><td>运行时邮件服务失败</td><td>记日志；工作流继续（不阻断）</td></tr><tr><td>Step2 · 範囲選択モード：点击节点</td><td>点击任意节点</td><td>只切换选中；不打开右侧编辑面板</td></tr><tr><td>Step2 · 画布：选中集合只含開始ノード</td><td>右键 複製 或按 ⌘D</td><td>提示（<code>開始ノードは複製できません。</code>），不产生副本</td></tr><tr><td>Step2 · 画布：选中集合只含開始ノード</td><td>右键 削除 或按 ⌫</td><td>提示（<code>開始ノードは削除できません。</code>），节点保留</td></tr><tr><td>Step2 · 範囲選択モード：选中框覆盖节点卡片</td><td>按卡片右上角的叉号（节点削除）</td><td>框内不响应，删除走右键菜单或 ⌫（＋ 连接手柄与连线 × 在该模式下不显示）</td></tr><tr><td>Step2 · 範囲選択モード：拓扑不可编辑</td><td>画布为只读</td><td>範囲選択モード按钮不显示</td></tr></tbody></table>
 <h3 id="sec-6-03" class="section-heading">6.03 账票类型设置</h3>
 <h4 class="subsection-heading" id="fig-功能点">功能点</h4>
 <p>Step1：新增分類信頼度閾値（0～100，必填）；template 样张供 QR 扫描。</p>
@@ -644,14 +641,14 @@
   <figcaption>账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 开关 OFF（默认：无槽位条、无状态徽标，条内为「無効 — OCR のみで読取」，再スキャン 禁用；整份按 OCR 读取）</figcaption>
 </figure>
 <figure class="screenshot-figure" data-carousel-slide="1">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="1" data-src="assets/fixed-doc-step2-qr.png?v=1790739527187" data-caption="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条（开关置 ON 并扫描完成后的状态：只剩 QR1–QR6 槽位与 再スキャン，条内不再显示状态徽标；开关默认 OFF，此时只显示「無効 — OCR のみで読取」）">
-    <img src="assets/fixed-doc-step2-qr.png?v=1790739527187" alt="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条（开关置 ON 并扫描完成后的状态：只剩 QR1–QR6 槽位与 再スキャン，条内不再显示状态徽标；开关默认 OFF，此时只显示「無効 — OCR のみで読取」）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="1" data-src="assets/fixed-doc-step2-qr.png?v=1791427278010" data-caption="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条（开关置 ON 并扫描完成后的状态：只剩 QR1–QR6 槽位与 再スキャン，条内不再显示状态徽标；开关默认 OFF，此时只显示「無効 — OCR のみで読取」）">
+    <img src="assets/fixed-doc-step2-qr.png?v=1791427278010" alt="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条（开关置 ON 并扫描完成后的状态：只剩 QR1–QR6 槽位与 再スキャン，条内不再显示状态徽标；开关默认 OFF，此时只显示「無効 — OCR のみで読取」）" loading="lazy" />
   </button>
   <figcaption>账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条（开关置 ON 并扫描完成后的状态：只剩 QR1–QR6 槽位与 再スキャン，条内不再显示状态徽标；开关默认 OFF，此时只显示「無効 — OCR のみで読取」）</figcaption>
 </figure>
 <figure class="screenshot-figure" data-carousel-slide="2">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="2" data-src="assets/fixed-doc-step2-qr-scanning.png?v=1790739531746" data-caption="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 扫描中（槽位条随扫描进度逐个追加已检出的 QR，不画虚线占位符也不标红；条内显示「スキャン中…」，扫完即消失，不换成完成徽标）">
-    <img src="assets/fixed-doc-step2-qr-scanning.png?v=1790739531746" alt="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 扫描中（槽位条随扫描进度逐个追加已检出的 QR，不画虚线占位符也不标红；条内显示「スキャン中…」，扫完即消失，不换成完成徽标）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="2" data-src="assets/fixed-doc-step2-qr-scanning.png?v=1791427278008" data-caption="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 扫描中（槽位条随扫描进度逐个追加已检出的 QR，不画虚线占位符也不标红；条内显示「スキャン中…」，扫完即消失，不换成完成徽标）">
+    <img src="assets/fixed-doc-step2-qr-scanning.png?v=1791427278008" alt="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 扫描中（槽位条随扫描进度逐个追加已检出的 QR，不画虚线占位符也不标红；条内显示「スキャン中…」，扫完即消失，不换成完成徽标）" loading="lazy" />
   </button>
   <figcaption>账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 扫描中（槽位条随扫描进度逐个追加已检出的 QR，不画虚线占位符也不标红；条内显示「スキャン中…」，扫完即消失，不换成完成徽标）</figcaption>
 </figure></div>
