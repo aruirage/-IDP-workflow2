@@ -5204,60 +5204,6 @@ const appOptions = {
       backdrop.scrollLeft = event.currentTarget.scrollLeft;
     }
 
-    function resetWorkflowCanvas() {
-      ElementPlus.ElMessageBox.confirm('開始ノード以外のすべてのノードと接続を削除します。続行しますか？', '', {
-        confirmButtonText: 'OK',
-        cancelButtonText: 'キャンセル',
-        type: 'warning',
-      }).then(() => {
-        const currentWorkflow = getActiveWf();
-        const currentStart = (currentWorkflow?.nodes || []).find((node) =>
-          node.type === 'start' || node.isStart || node.id === currentWorkflow?.startNodeId);
-        const minimalWorkflow = typeof buildMinimalCaseWorkflow === 'function'
-          ? buildMinimalCaseWorkflow()
-          : null;
-        const fallbackStart = minimalWorkflow?.nodes?.[0] || {
-          id: 'wf-start',
-          type: 'start',
-          label: '開始',
-          x: 72,
-          y: 144,
-          isStart: true,
-        };
-        const startNode = {
-          ...fallbackStart,
-          ...(currentStart || {}),
-          type: 'start',
-          isStart: true,
-        };
-        form.workflows.case = {
-          ...(minimalWorkflow || {}),
-          nodes: [startNode],
-          edges: [],
-          startNodeId: startNode.id,
-          layoutVersion: 12,
-          templateVersion: CASE_WORKFLOW_TEMPLATE_VERSION,
-          isTemplate: false,
-          topologyCustomized: true,
-        };
-        form.workflows.case.isTemplate = false;
-        form.workflows.case.topologyCustomized = true;
-        form.workflowTestStatus = 'untested';
-        form.scene.publishStatus = 'draft';
-        form.outputConfigStatus = 'unsaved';
-        selectedWorkflowNodeId.value = '';
-        selectedWorkflowEdgeKey.value = null;
-        selectedWorkflowNodeId.value = startNode.id;
-        inspectorMode.value = 'workflow';
-        syncCurrentNodeFromWorkflow(startNode);
-        resetWorkflowEditTracking('Workflow をクリア');
-        savedSnapshot.value = JSON.stringify(form);
-        saveStorage(currentSceneId.value, form);
-        nextTick(() => fitWorkflowToView());
-        ElementPlus.ElMessage.info('リセットしました');
-      }).catch(() => {});
-    }
-
     function toggleWfSelectionMode() {
       if (!assertWorkflowTopologyEditable()) return;
       wfSelectionMode.value = !wfSelectionMode.value;
@@ -14226,7 +14172,6 @@ const appOptions = {
       inspectorMode,
       workflowEdgePaths,
       selectWorkflowNode,
-      resetWorkflowCanvas,
       toggleWfSelectionMode,
       toggleWorkflowNodeSelection,
       removeWorkflowNode,
