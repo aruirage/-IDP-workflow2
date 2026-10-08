@@ -6,10 +6,10 @@
 //     3b. 選択枠の中（ノードの隙間・余白）の空白を掴んでも同じように丸ごと動く
 //     3c. 枠の中にある未選択ノードを掴んでも選択は置き換わらず、丸ごと動く
 //     3d. 枠はノードより上のレイヤーにあり、枠の中の全点が枠自身に当たる（カーソルも move）
-//     4. ⌘/Ctrl + Z / ⇧Z / V / C / D と ⌫ は効く
+//     4. ⌘/Ctrl + Z / ⇧Z / V / C と ⌫ は効く（⌘D は無効）
 //   編集モード
 //     5. クリックで編集パネルが開く
-//     6. 単一選択でも ⌘C / ⌘D / ⌫ が効く
+//     6. 単一選択でも ⌘C / ⌫ が効く（⌘D は無効）
 // 使い方: node tools/verify-workflow-selection-mode.mjs
 import { chromium } from 'playwright';
 import fs from 'node:fs';
@@ -309,7 +309,7 @@ await setMode(true);
   await page.keyboard.press('Meta+d');
   await page.waitForTimeout(450);
   const afterDup = await snap();
-  check('mouse: ⌘D で複製', afterDup.nodeCount > beforeDup, `${beforeDup} → ${afterDup.nodeCount}`);
+  check('mouse: ⌘D は無効（複製されない）', afterDup.nodeCount === beforeDup, `${beforeDup} → ${afterDup.nodeCount}`);
 
   await page.keyboard.press('Meta+z');
   await page.waitForTimeout(450);
@@ -363,7 +363,7 @@ await setMode(false);
   await page.keyboard.press('Meta+d');
   await page.waitForTimeout(450);
   const afterDup = await snap();
-  check('drag: 単一選択でも ⌘D', afterDup.nodeCount > beforeDup, `${beforeDup} → ${afterDup.nodeCount}`);
+  check('drag: 単一選択でも ⌘D は無効', afterDup.nodeCount === beforeDup, `${beforeDup} → ${afterDup.nodeCount}`);
 
   await clickNode(target);
   const beforeDel = (await snap()).nodeCount;

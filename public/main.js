@@ -5221,7 +5221,7 @@ const appOptions = {
     }
 
     /**
-     * 単一選択（編集パネルを開いているノード）でも ⌘C / ⌘D を使えるように、
+     * 単一選択（編集パネルを開いているノード）でも ⌘C を使えるように、
      * そのノードを複数選択セットへ引き上げる。開始ノードは複製・削除の対象外なので false。
      */
     function adoptSingleWorkflowSelection() {
@@ -9744,11 +9744,6 @@ const appOptions = {
       if (mod && event.key.toLowerCase() === 'v' && wfSelectionClipboard.value.nodes.length) {
         event.preventDefault();
         pasteSelectedWorkflowNodes();
-        return;
-      }
-      if (mod && event.key.toLowerCase() === 'd' && adoptSingleWorkflowSelection()) {
-        event.preventDefault();
-        duplicateSelectedWorkflowNodes();
         return;
       }
       if (mod && event.key.toLowerCase() === 'z') {

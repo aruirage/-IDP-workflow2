@@ -660,7 +660,8 @@ test('copies pastes and deletes the marquee node selection', async () => {
   assert.match(main, /function normalizeWorkflowHistoryLabel\(label\)[\s\S]*text\.includes\('貼り付け'\)[\s\S]*return 'ノード構成を変更';/);
   assert.match(main, /mod && event\.key\.toLowerCase\(\) === 'c'[\s\S]*copySelectedWorkflowNodes\(\)/);
   assert.match(main, /mod && event\.key\.toLowerCase\(\) === 'v'[\s\S]*pasteSelectedWorkflowNodes\(\)/);
-  assert.match(main, /mod && event\.key\.toLowerCase\(\) === 'd'[\s\S]*duplicateSelectedWorkflowNodes\(\)/);
+  // ⌘D は廃止した（ブラウザのブックマーク追加と衝突するため）。複製は右クリックメニューのみ。
+  assert.doesNotMatch(main, /event\.key\.toLowerCase\(\) === 'd'/);
   assert.match(main, /event\.key === 'Delete'[\s\S]*wfSelectedNodeIds\.size[\s\S]*removeSelectedWorkflowNodes\(\)/);
   // 範囲選択の右クリックメニュー。複製はコピー + 貼り付けを一度にやる。
   assert.match(index, /@contextmenu\.prevent="openWfCanvasContextMenu"/);
