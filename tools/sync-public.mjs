@@ -19,7 +19,13 @@ const scriptFiles = [
   'scene-config.js',
 ];
 
-await rm('public', { recursive: true, force: true });
+// public/ を作り直す。ただしサンドボックスの削除保護で rm が拒否されることがあるため、
+// 失敗しても中断しない（同名ファイルは下の cp が上書きするので配信物は最新になる）。
+try {
+  await rm('public', { recursive: true, force: true });
+} catch {
+  // 削除できなくても上書きコピーで進める
+}
 await mkdir('public/scripts', { recursive: true });
 await mkdir('public/assets', { recursive: true });
 

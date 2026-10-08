@@ -379,7 +379,7 @@
       </div>
     </aside>
     <main class="main">
-      <div class="main__meta">由 PRD.zh-CN.md 生成 · 2026/9/27 18:03:38</div>
+      <div class="main__meta">由 PRD.zh-CN.md 生成 · 2026/10/8 10:37:47</div>
       <article class="paper">
 <h1>NeosAI 日本保险 IDP — 产品需求文档</h1>
 <p>本稿表记：<mark class="change-modified">黄色＝修改</mark>、<ins class="change-added">蓝色＝新增</ins>、<del class="change-deleted">红色＝删除</del>。</p>
@@ -459,8 +459,8 @@
 <h4 class="subsection-heading" id="fig-step2-工作流画布本期增量">Step2 工作流画布（本期增量）</h4>
 <div class="figure-row figure-row--single">
 <figure class="screenshot-figure">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/wf-preprocess-inspector.png?v=1790500225186" data-caption="业务场景 Step2 · 前処理节点右侧配置（画像不正検知二级检测各自选账票、敏感情報検出、回転/補正）">
-    <img src="assets/wf-preprocess-inspector.png?v=1790500225186" alt="业务场景 Step2 · 前処理节点右侧配置（画像不正検知二级检测各自选账票、敏感情報検出、回転/補正）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/wf-preprocess-inspector.png?v=1790739549708" data-caption="业务场景 Step2 · 前処理节点右侧配置（画像不正検知二级检测各自选账票、敏感情報検出、回転/補正）">
+    <img src="assets/wf-preprocess-inspector.png?v=1790739549708" alt="业务场景 Step2 · 前処理节点右侧配置（画像不正検知二级检测各自选账票、敏感情報検出、回転/補正）" loading="lazy" />
   </button>
   <figcaption>业务场景 Step2 · 前処理节点右侧配置（画像不正検知二级检测各自选账票、敏感情報検出、回転/補正）</figcaption>
 </figure>
@@ -469,13 +469,35 @@
 <pre><code>画像不正検知 → 画像回転 → 画像補正 → 画像整列 → 敏感情报检出</code></pre>
 <table><thead><tr><th>步骤</th><th>模块</th><th>理由</th></tr></thead><tbody><tr><td>1</td><td>画像不正検知</td><td>优先在原实例上判定篡改/伪造风险；一级开关；二级 PS / AI生成 / 帳票特徴 / 筆跡各自开关 + 对象账票（分开选）；运行时四项并行；不通过时返回不正类型</td></tr><tr><td>2～4</td><td>回転 → 補正 → 整列</td><td>几何预处理</td></tr><tr><td>5</td><td>敏感情报检出</td><td>几何完成后对对象账票执行脱敏工程；字段级打码范围见账票类型 Step2 マスク；OCR 读处理后实例；无业务待办</td></tr></tbody></table>
 <p>文件状态四段枚举不变；子模块进度汇总至 preprocessStatus / preprocessResult，不在案件一覧展示子模块名。</p>
-<ol><li>前处理面板：画像不正检测（一级开关 + 二级四项「开关 + 对象账票」分开选）、回転/補正/整列与敏感情报检出（各：开关 + 对象账票）；执行顺序为不正检测 → 回転/補正/整列 → 脱敏。</li><li>敏感情报检出：模块 ON 且实例账票在对象列表时执行账票级脱敏。对象账票可选范围 = 业务场景 Step1 关联账票。字段级打码范围见账票类型 Step2 マスク开关；与节点脱敏工程的衔接待后续明确。</li><li>画像不正检测：模块 ON 时仅执行二级开关为 ON 的检测项；四项运行时并行，各检测项仅对自身对象账票生效；标题旁 i 注释说明各检测具体内容；输出通过/不通过；判「不通过」时须返回不正类型字段给后端（多项命中时覆盖全部命中项），并设 preprocessResult=reviewRequired → 人工确认。</li><li>OCR 抽出节点配置面板为开关 + 对象账票，本期无新增配置项；QR 读取、正常值校验、后处理规则、字段 HITL 均在账票类型 Step2/Step3 配置，由运行时引擎在该节点执行时读取。</li></ol>
+<ol><li>前处理面板：画像不正检测（一级开关 + 二级四项「开关 + 对象账票」分开选）、回転/補正/整列与敏感情报检出（各：开关 + 对象账票）；执行顺序为不正检测 → 回転/補正/整列 → 脱敏。</li><li>敏感情报检出：模块 ON 且实例账票在对象列表时执行账票级脱敏。对象账票可选范围 = 业务场景 Step1 关联账票。字段级打码范围见账票类型 Step2 マスク开关；与节点脱敏工程的衔接待后续明确。</li><li>画像不正检测：模块 ON 时仅执行二级开关为 ON 的检测项；四项运行时并行，各检测项仅对自身对象账票生效；标题旁 i 注释说明各检测具体内容；输出通过/不通过；判「不通过」时须返回不正类型字段给后端（多项命中时覆盖全部命中项），并设 preprocessResult=reviewRequired → 人工确认。</li><li>OCR 抽出节点配置面板为开关 + 对象账票，本期无新增配置项；QR 读取、正常值校验、后处理规则、字段 HITL 均在账票类型 Step2/Step3 配置，由运行时引擎在该节点执行时读取。</li><li>工作流节点通过画布卡片右上角的叉号删除；右侧编辑面板不显示「削除」按钮，避免同一操作出现两个入口。</li></ol>
 <table><thead><tr><th>信号</th><th>新增或变化</th></tr></thead><tbody><tr><td>preprocessResult=reviewRequired</td><td>画像不正判「不通过」</td></tr><tr><td>不正类型（返回后端）</td><td>不通过时必填；与命中的二级检测对应（PS / AI生成 / 帳票特徴 / 筆跡）；通过时为空</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-step2-範囲選択モード本期增量">Step2 範囲選択モード（本期增量）</h4>
+<div class="figure-row figure-row--single">
+<figure class="screenshot-figure">
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/wf-selection-mode.png?v=1790739558202" data-caption="业务场景 Step2 · 範囲選択モード（框选后整组高亮，框内任意位置可整组拖动；框内右键菜单提供 複製 / 削除。原「リセット」一键清空按钮已由该模式取代）">
+    <img src="assets/wf-selection-mode.png?v=1790739558202" alt="业务场景 Step2 · 範囲選択モード（框选后整组高亮，框内任意位置可整组拖动；框内右键菜单提供 複製 / 削除。原「リセット」一键清空按钮已由该模式取代）" loading="lazy" />
+  </button>
+  <figcaption>业务场景 Step2 · 範囲選択モード（框选后整组高亮，框内任意位置可整组拖动；框内右键菜单提供 複製 / 削除。原「リセット」一键清空按钮已由该模式取代）</figcaption>
+</figure>
+</div>
+<p>画布工具栏的「リセット」按钮（一键删除開始ノード以外的全部节点与连接）已移除，该位置改为範囲選択モード的切换按钮。批量删除不再由单个按钮一次完成，改为先框选、再删除；框选出的节点可在选中框内任意位置整组拖动，复制与删除走右键菜单或快捷键。</p>
+<p>功能点：</p>
+<ol><li>範囲選択モード开关：开启后画布进入选择模式，点击节点只切换选中、不打开右侧编辑面板；关闭后回到拖拽模式。</li><li>框选：在选择模式下于画布按住左键拖出矩形，节点卡片与矩形有任意重叠即被选中，不要求完全框住。</li><li>选中框：松开后以包围全部选中节点的矩形高亮。框内（含节点之间的空白与连线）都是拖动面，按住任意位置即可整组移动。</li><li>整组复制与删除：右键菜单提供 複製 与 削除；快捷键 ⌘C 复制、⌘V 粘贴、⌘D 复制副本、⌫（Delete）删除。删除会同时移除选中节点两端的连接。</li><li>開始ノード不参与复制与删除。</li><li>选择模式下点击空白处清空选中；按住 ⇧ 框选为追加选择。</li></ol>
+<p>页面与入口：业务场景设置 Step2 工作流画布；入口为画布工具栏最右的範囲選択モード按钮，拓扑不可编辑时不显示。</p>
+<table><thead><tr><th>按钮</th><th>界面文案（日语）</th><th>适用场景</th><th>启用条件</th><th>点击后</th></tr></thead><tbody><tr><td>範囲選択モード</td><td>範囲選択モード</td><td>Step2 画布</td><td>拓扑可编辑</td><td>进入选择模式，按钮高亮；再点一次退出，回到拖拽模式</td></tr><tr><td>複製</td><td>複製</td><td>选择模式 · 右键菜单</td><td>选中集合内有開始ノード以外的节点</td><td>复制选中节点与节点之间的连接；副本相对原节点向右下偏移 48px，连续粘贴逐次累加</td></tr><tr><td>削除</td><td>削除</td><td>选择模式 · 右键菜单</td><td>选中集合内有開始ノード以外的节点</td><td>删除选中节点及与其相连的连接</td></tr></tbody></table>
+<h4 class="subsection-heading" id="fig-step2-自定义函数本期增量">Step2 自定义函数（本期增量）</h4>
+<p>工作流新增「カスタム関数」节点（节点分类：拡張 Node），用途是批量生成文件名：接收上游文件列表与案件字段，执行一段 JavaScript 后返回改名结果，作为该节点的执行结果向下游传递。主处理链推荐顺序为 前処理 → OCR抽出 → データマッピング → AI検証 → カスタム関数。</p>
+<p>功能点：</p>
+<ol><li>节点配置分两块：入力変数（变量名 + 参照元）与 JavaScript スクリプト。</li><li>入力変数 只保存「参照元」，不复制上游值；参照元在上游改名或删除后该行失效。</li><li>脚本以 <code>function main(inputs) {...}</code> 形式编写，<code>inputs</code> 的键即 入力変数 的变量名；脚本返回值作为该节点的执行结果保存，默认脚本返回改名后的 <code>files</code> 与 <code>renamedFileCount</code>。</li><li>新建节点时预置默认 入力変数 三行（<code>files</code> = 上游文件列表、<code>claimno</code> = 保険請求書.証券番号、<code>requestNo</code> = 保険請求書.請求番号）与默认脚本。</li><li>默认脚本行为：按帳票タイプ ID 映射文件代码（未配置时以 <code>DOC-</code> + ID 后 8 位兜底）；文件名 = <code>タイムスタンプ_証券番号_請求番号_ファイルコード_連番</code> + 原拡張子；同一文件代码按出现顺序两位编号；<code>\ / : * ? &quot; &lt; &gt; |</code> 与空白替换为 <code>_</code> 并去掉首尾 <code>_</code>；証券番号 / 請求番号 缺失时分别回落 <code>NO-CLAIM</code> / <code>NO-REQUEST</code>。</li></ol>
+<p>页面与入口：业务场景设置 Step2 工作流画布；入口为画布工具栏「ノードを追加」的「拡張 Node」分类。</p>
+<table><thead><tr><th>字段/参数</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th></tr></thead><tbody><tr><td>入力変数</td><td>入力変数 N</td><td>列表 + ＋ 追加</td><td>—</td><td>N 为已配置行数；无行时显示 <code>データがありません</code></td></tr><tr><td>变量名</td><td>変数名</td><td>文本</td><td>是</td><td>最长 64 字符；英字或 <code>_</code> 开头，仅英数字与 <code>_</code></td></tr><tr><td>参照元</td><td>参照元</td><td>级联选择</td><td>是</td><td>引用上游节点输出变量，可搜索；选中后显示该变量的数据类型</td></tr><tr><td>脚本</td><td>JavaScript スクリプト</td><td>多行文本</td><td>—</td><td>默认 <code>function main(inputs) {...}</code>，返回值即节点输出</td></tr></tbody></table>
+<p>异常与边界：</p>
+<table><thead><tr><th>场景</th><th>条件</th><th>用户提示 / 处理</th></tr></thead><tbody><tr><td>変数名 为空</td><td>追加/编辑 入力変数 时未填</td><td>报错（<code>変数名を入力してください</code>），不保存</td></tr><tr><td>変数名 格式非法</td><td>非英字或 <code>_</code> 开头，或含其他字符</td><td>报错（<code>変数名は英字または _ で始め、英数字と _ のみ使用してください</code>）</td></tr><tr><td>変数名 重名</td><td>与同一节点已有行同名</td><td>报错（<code>同じ変数名が既に存在します</code>）</td></tr><tr><td>参照元 未选</td><td>入力変数 为空</td><td>报错（<code>入力変数を選択してください</code>）</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-step3-通知设置本期增量">Step3 通知设置（本期增量）</h4>
 <div class="figure-row figure-row--single">
 <figure class="screenshot-figure">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/scene-step3-notify-add.png?v=1790500229244" data-caption="业务场景 Step3 · 通知ルール追加（メール渠道、メール宛先、前処理触发事件）">
-    <img src="assets/scene-step3-notify-add.png?v=1790500229244" alt="业务场景 Step3 · 通知ルール追加（メール渠道、メール宛先、前処理触发事件）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/scene-step3-notify-add.png?v=1790739553764" data-caption="业务场景 Step3 · 通知ルール追加（メール渠道、メール宛先、前処理触发事件）">
+    <img src="assets/scene-step3-notify-add.png?v=1790739553764" alt="业务场景 Step3 · 通知ルール追加（メール渠道、メール宛先、前処理触发事件）" loading="lazy" />
   </button>
   <figcaption>业务场景 Step3 · 通知ルール追加（メール渠道、メール宛先、前処理触发事件）</figcaption>
 </figure>
@@ -484,7 +506,7 @@
 <ol><li>通知渠道新增邮件：可多选站内信 + 邮件；勾选邮件须填邮箱地址；共用件名/正文与变量渲染。</li></ol>
 <table><thead><tr><th>字段/参数</th><th>界面文案（日语）</th><th>控件</th><th>必填</th><th>说明</th></tr></thead><tbody><tr><td>通知渠道</td><td>通知チャネル</td><td>多选</td><td>是</td><td>选项：システム通知、メール，至少选一</td></tr><tr><td>站内信</td><td>システム通知</td><td>复选</td><td>—</td><td>通知チャネル多选之一；勾选后须选通知対象</td></tr><tr><td>邮件</td><td>メール</td><td>复选</td><td>—</td><td>通知チャネル多选之一</td></tr><tr><td>邮箱地址</td><td>メール宛先</td><td>文本</td><td>勾选邮件时</td><td>多地址以 <code>,</code> 或 <code>，</code> 分隔；各地址段前后空格保存时去除空格；邮箱本体须半角格式</td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-异常与边界">异常与边界</h4>
-<table><thead><tr><th>场景</th><th>条件</th><th>用户提示 / 处理</th></tr></thead><tbody><tr><td>Step2 · 敏感情报检出失败</td><td>敏感情报检出模块执行失败</td><td>preprocessStatus=failed；走案件异常；不新增脱敏专用待办</td></tr><tr><td>Step2 · 画像不正不通过</td><td>画像不正検知判「不通过」</td><td>preprocessResult=reviewRequired；返回不正类型（PS / AI生成 / 帳票特徴 / 筆跡）给后端；进前处理人工确认</td></tr><tr><td>Step3 · 邮件地址分隔与空白</td><td>メール宛先 输入全角逗号 <code>，</code> 或地址段前后含空格</td><td>允许：<code>,</code> / <code>，</code> 均可作多地址分隔符；各段 trim 后校验；不因分隔符全半角或首尾空格报错</td></tr><tr><td>Step3 · 勾选站内信未选对象</td><td>渠道含システム通知但通知対象为空</td><td>保存报错（<code>通知対象を選択してください</code>）</td></tr><tr><td>Step3 · 勾选邮件未填邮箱</td><td>渠道含メール但メール宛先为空</td><td>保存报错（<code>メール宛先を入力してください</code>）</td></tr><tr><td>Step3 · 邮件地址格式错误</td><td>trim 后仍含无效邮箱（如全角 <code>@</code>、缺 <code>@</code> 等）</td><td>保存报错（<code>メールアドレスの形式が正しくありません: …</code>）；列出无效地址</td></tr><tr><td>Step3 · 件名/正文未填</td><td>件名或正文为空</td><td>保存报错（<code>件名を入力してください</code> / <code>内容を入力してください</code>）</td></tr><tr><td>Step3 · 邮件投递失败</td><td>运行时邮件服务失败</td><td>记日志；工作流继续（不阻断）</td></tr></tbody></table>
+<table><thead><tr><th>场景</th><th>条件</th><th>用户提示 / 处理</th></tr></thead><tbody><tr><td>Step2 · 敏感情报检出失败</td><td>敏感情报检出模块执行失败</td><td>preprocessStatus=failed；走案件异常；不新增脱敏专用待办</td></tr><tr><td>Step2 · 画像不正不通过</td><td>画像不正検知判「不通过」</td><td>preprocessResult=reviewRequired；返回不正类型（PS / AI生成 / 帳票特徴 / 筆跡）给后端；进前处理人工确认</td></tr><tr><td>Step3 · 邮件地址分隔与空白</td><td>メール宛先 输入全角逗号 <code>，</code> 或地址段前后含空格</td><td>允许：<code>,</code> / <code>，</code> 均可作多地址分隔符；各段 trim 后校验；不因分隔符全半角或首尾空格报错</td></tr><tr><td>Step3 · 勾选站内信未选对象</td><td>渠道含システム通知但通知対象为空</td><td>保存报错（<code>通知対象を選択してください</code>）</td></tr><tr><td>Step3 · 勾选邮件未填邮箱</td><td>渠道含メール但メール宛先为空</td><td>保存报错（<code>メール宛先を入力してください</code>）</td></tr><tr><td>Step3 · 邮件地址格式错误</td><td>trim 后仍含无效邮箱（如全角 <code>@</code>、缺 <code>@</code> 等）</td><td>保存报错（<code>メールアドレスの形式が正しくありません: …</code>）；列出无效地址</td></tr><tr><td>Step3 · 件名/正文未填</td><td>件名或正文为空</td><td>保存报错（<code>件名を入力してください</code> / <code>内容を入力してください</code>）</td></tr><tr><td>Step3 · 邮件投递失败</td><td>运行时邮件服务失败</td><td>记日志；工作流继续（不阻断）</td></tr><tr><td>Step2 · 範囲選択モード：点击节点</td><td>点击任意节点</td><td>只切换选中；不打开右侧编辑面板</td></tr><tr><td>Step2 · 範囲選択モード：只选中開始ノード</td><td>右键 複製</td><td>提示（<code>開始ノードは複製できません。</code>），不产生副本</td></tr><tr><td>Step2 · 範囲選択モード：只选中開始ノード</td><td>右键 削除 或按 ⌫</td><td>提示（<code>開始ノードは削除できません。</code>），节点保留</td></tr><tr><td>Step2 · 範囲選択モード：选中框覆盖节点卡片</td><td>按卡片右上角的叉号或连接手柄</td><td>框内不响应这两个入口；删除走右键菜单或 ⌫</td></tr><tr><td>Step2 · 範囲選択モード：拓扑不可编辑</td><td>画布为只读</td><td>範囲選択モード按钮不显示</td></tr></tbody></table>
 <h3 id="sec-6-03" class="section-heading">6.03 账票类型设置</h3>
 <h4 class="subsection-heading" id="fig-功能点">功能点</h4>
 <p>Step1：新增分類信頼度閾値（0～100，必填）；template 样张供 QR 扫描。</p>
@@ -542,8 +564,8 @@
 <h4 class="subsection-heading" id="fig-step1-分类设定">Step1 分类设定</h4>
 <div class="figure-row figure-row--single">
 <figure class="screenshot-figure">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step1-classification-threshold.png?v=1790500192135" data-caption="账票类型 Step1 · 分類信頼度閾値（案件集约时的画像分类置信度）">
-    <img src="assets/fixed-doc-step1-classification-threshold.png?v=1790500192135" alt="账票类型 Step1 · 分類信頼度閾値（案件集约时的画像分类置信度）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step1-classification-threshold.png?v=1790739516861" data-caption="账票类型 Step1 · 分類信頼度閾値（案件集约时的画像分类置信度）">
+    <img src="assets/fixed-doc-step1-classification-threshold.png?v=1790739516861" alt="账票类型 Step1 · 分類信頼度閾値（案件集约时的画像分类置信度）" loading="lazy" />
   </button>
   <figcaption>账票类型 Step1 · 分類信頼度閾値（案件集约时的画像分类置信度）</figcaption>
 </figure>
@@ -556,7 +578,7 @@
 <h4 class="subsection-heading" id="fig-step2-按钮读取-ocr">Step2 按钮（读取 · OCR）</h4>
 <p><del class="change-deleted">AI自動生成 不生成 QR 源目录、字段 QR 映射、取値方法、区切り文字、順序；QR 源目录由扫描 / QR扫描 生成，字段映射及相关列须用户手动配置。</del><ins class="change-added">AI自動生成 不生成 QR 相关配置；QR 槽位由开关 ON 后的自动扫描生成（想重读时可点 再スキャン），只读展示，不可手动编辑。</ins></p>
 <table><thead><tr><th>按钮</th><th>界面文案（日语）</th><th>显示条件</th><th>点击后</th></tr></thead><tbody><tr><td>AI自动生成</td><td>AI自動生成</td><td><del class="change-deleted">字段读取 · OCR設定，或表格读取 tab</del><mark class="change-modified">字段读取 / 表格读取 tab</mark></td><td>辅助生成各字段/列 プロンプト（提示词）与 正解サンプル 草稿；生成后由 admin 自行编辑，不按 タイプ 强制模板；不涉及 QR</td></tr><tr><td><del class="change-deleted">AI自动生成</del></td><td><del class="change-deleted">—</del></td><td><del class="change-deleted">字段读取 · QR設定</del></td><td><del class="change-deleted">不显示</del></td></tr></tbody></table>
-<h4 class="subsection-heading" id="fig-step2-提示词">Step2 プロンプト（提示词）</h4>
+<h4 class="subsection-heading" id="fig-step2-プロンプト提示词">Step2 プロンプト（提示词）</h4>
 <p>タイプ（字段类别） 与 プロンプト（提示词） 的关系</p>
 <ul><li>タイプ（字段类别）（Step2 項目タイプ）：声明字段类别——<code>string</code> / <code>number</code> / <code>enum</code> 等；用于 OCR 读取与后处理时的数据形态等。不承载计量单位，不单独决定 Step3 正常条件可否配置（由 処理ルール 决定）。</li><li>プロンプト（提示词）：admin 按字段/列自行编写（或使用 AI自動生成 后编辑），约束读取模型——从账票何处抽取、以何种格式输出、是否需要约定抽出单位及换算等；不由 タイプ（字段类别）推导、不按类型分模板、不做类型校验。</li><li>正解サンプル：与 プロンプト（提示词） 完全对齐的期望输出，供 Step5 test / 调优；不是账面上的原文，而是按 プロンプト（提示词）（含单位换算后）应得到的值。</li></ul>
 <p>配置位置（Step2 <del class="change-deleted">OCR設定</del><mark class="change-modified">字段读取 tab</mark>）</p>
@@ -576,8 +598,8 @@
 <h4 class="subsection-heading" id="fig-step2-hitl-列">Step2 HITL 列</h4>
 <div class="figure-row figure-row--single">
 <figure class="screenshot-figure">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step2-hitl.png?v=1790500215223" data-caption="账票类型 Step2 · 字段读取 tab · マスク / HITL 列（HITL：字段级人工确认对象开关，与 マスク 并列）">
-    <img src="assets/fixed-doc-step2-hitl.png?v=1790500215223" alt="账票类型 Step2 · 字段读取 tab · マスク / HITL 列（HITL：字段级人工确认对象开关，与 マスク 并列）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step2-hitl.png?v=1790739540032" data-caption="账票类型 Step2 · 字段读取 tab · マスク / HITL 列（HITL：字段级人工确认对象开关，与 マスク 并列）">
+    <img src="assets/fixed-doc-step2-hitl.png?v=1790739540032" alt="账票类型 Step2 · 字段读取 tab · マスク / HITL 列（HITL：字段级人工确认对象开关，与 マスク 并列）" loading="lazy" />
   </button>
   <figcaption>账票类型 Step2 · 字段读取 tab · マスク / HITL 列（HITL：字段级人工确认对象开关，与 マスク 并列）</figcaption>
 </figure>
@@ -591,8 +613,8 @@
 <h4 class="subsection-heading" id="fig-step2-脱敏列">Step2 脱敏列</h4>
 <div class="figure-row figure-row--single">
 <figure class="screenshot-figure">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step2-ocr-mask.png?v=1790500211105" data-caption="账票类型 Step2 · 字段读取 tab · マスク列（マスク / HITL 并列开关；マスク=ON 不参与 OCR 读取，下游 Step3/Step5 直接排除）">
-    <img src="assets/fixed-doc-step2-ocr-mask.png?v=1790500211105" alt="账票类型 Step2 · 字段读取 tab · マスク列（マスク / HITL 并列开关；マスク=ON 不参与 OCR 读取，下游 Step3/Step5 直接排除）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step2-ocr-mask.png?v=1790739535915" data-caption="账票类型 Step2 · 字段读取 tab · マスク列（マスク / HITL 并列开关；マスク=ON 不参与 OCR 读取，下游 Step3/Step5 直接排除）">
+    <img src="assets/fixed-doc-step2-ocr-mask.png?v=1790739535915" alt="账票类型 Step2 · 字段读取 tab · マスク列（マスク / HITL 并列开关；マスク=ON 不参与 OCR 读取，下游 Step3/Step5 直接排除）" loading="lazy" />
   </button>
   <figcaption>账票类型 Step2 · 字段读取 tab · マスク列（マスク / HITL 并列开关；マスク=ON 不参与 OCR 读取，下游 Step3/Step5 直接排除）</figcaption>
 </figure>
@@ -616,20 +638,20 @@
 <h4 class="subsection-heading" id="fig-liaj-診断書-qr-連結読取">LIAJ 診断書 QR 連結読取</h4>
 <div class="figure-carousel" data-figure-carousel="anchor-liaj-診断書-qr-連結読取">
   <div class="figure-carousel__stage"><figure class="screenshot-figure is-active" data-carousel-slide="0">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step2-qr-off.png?v=1790500196532" data-caption="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 开关 OFF（默认：无槽位条、无状态徽标，条内为「無効 — OCR のみで読取」，再スキャン 禁用；整份按 OCR 读取）">
-    <img src="assets/fixed-doc-step2-qr-off.png?v=1790500196532" alt="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 开关 OFF（默认：无槽位条、无状态徽标，条内为「無効 — OCR のみで読取」，再スキャン 禁用；整份按 OCR 读取）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step2-qr-off.png?v=1790739521184" data-caption="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 开关 OFF（默认：无槽位条、无状态徽标，条内为「無効 — OCR のみで読取」，再スキャン 禁用；整份按 OCR 读取）">
+    <img src="assets/fixed-doc-step2-qr-off.png?v=1790739521184" alt="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 开关 OFF（默认：无槽位条、无状态徽标，条内为「無効 — OCR のみで読取」，再スキャン 禁用；整份按 OCR 读取）" loading="lazy" />
   </button>
   <figcaption>账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 开关 OFF（默认：无槽位条、无状态徽标，条内为「無効 — OCR のみで読取」，再スキャン 禁用；整份按 OCR 读取）</figcaption>
 </figure>
 <figure class="screenshot-figure" data-carousel-slide="1">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="1" data-src="assets/fixed-doc-step2-qr.png?v=1790500202427" data-caption="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条（开关置 ON 并扫描完成后的状态：只剩 QR1–QR6 槽位与 再スキャン，条内不再显示状态徽标；开关默认 OFF，此时只显示「無効 — OCR のみで読取」）">
-    <img src="assets/fixed-doc-step2-qr.png?v=1790500202427" alt="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条（开关置 ON 并扫描完成后的状态：只剩 QR1–QR6 槽位与 再スキャン，条内不再显示状态徽标；开关默认 OFF，此时只显示「無効 — OCR のみで読取」）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="1" data-src="assets/fixed-doc-step2-qr.png?v=1790739527187" data-caption="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条（开关置 ON 并扫描完成后的状态：只剩 QR1–QR6 槽位与 再スキャン，条内不再显示状态徽标；开关默认 OFF，此时只显示「無効 — OCR のみで読取」）">
+    <img src="assets/fixed-doc-step2-qr.png?v=1790739527187" alt="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条（开关置 ON 并扫描完成后的状态：只剩 QR1–QR6 槽位与 再スキャン，条内不再显示状态徽标；开关默认 OFF，此时只显示「無効 — OCR のみで読取」）" loading="lazy" />
   </button>
   <figcaption>账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条（开关置 ON 并扫描完成后的状态：只剩 QR1–QR6 槽位与 再スキャン，条内不再显示状态徽标；开关默认 OFF，此时只显示「無効 — OCR のみで読取」）</figcaption>
 </figure>
 <figure class="screenshot-figure" data-carousel-slide="2">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="2" data-src="assets/fixed-doc-step2-qr-scanning.png?v=1790500206968" data-caption="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 扫描中（槽位条随扫描进度逐个追加已检出的 QR，不画虚线占位符也不标红；条内显示「スキャン中…」，扫完即消失，不换成完成徽标）">
-    <img src="assets/fixed-doc-step2-qr-scanning.png?v=1790500206968" alt="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 扫描中（槽位条随扫描进度逐个追加已检出的 QR，不画虚线占位符也不标红；条内显示「スキャン中…」，扫完即消失，不换成完成徽标）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="2" data-src="assets/fixed-doc-step2-qr-scanning.png?v=1790739531746" data-caption="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 扫描中（槽位条随扫描进度逐个追加已检出的 QR，不画虚线占位符也不标红；条内显示「スキャン中…」，扫完即消失，不换成完成徽标）">
+    <img src="assets/fixed-doc-step2-qr-scanning.png?v=1790739531746" alt="账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 扫描中（槽位条随扫描进度逐个追加已检出的 QR，不画虚线占位符也不标红；条内显示「スキャン中…」，扫完即消失，不换成完成徽标）" loading="lazy" />
   </button>
   <figcaption>账票类型 Step2 · 字段读取 tab · 複数 QR 読取 条 · 扫描中（槽位条随扫描进度逐个追加已检出的 QR，不画虚线占位符也不标红；条内显示「スキャン中…」，扫完即消失，不换成完成徽标）</figcaption>
 </figure></div>
@@ -662,15 +684,15 @@
 <table><thead><tr><th><ins class="change-added">类型</ins></th><th><ins class="change-added">界面文案（日语）</ins></th><th><ins class="change-added">说明</ins></th></tr></thead><tbody><tr><td><ins class="change-added">开关</ins></td><td><ins class="change-added">複数 QR 読取</ins></td><td><ins class="change-added">账票级 QR 連結読取 开关，默认 OFF</ins></td></tr><tr><td><ins class="change-added">无效态</ins></td><td><ins class="change-added">無効 — OCR のみで読取</ins></td><td><ins class="change-added">开关 OFF；槽位条隐藏</ins></td></tr><tr><td><ins class="change-added">扫描中</ins></td><td><ins class="change-added">スキャン中…</ins></td><td><ins class="change-added">开关 ON 后的扫描期间；显示在同一位置，扫描结束后消失</ins></td></tr><tr><td><ins class="change-added">i 提示</ins></td><td><ins class="change-added">LIAJ診断書テンプレート専用。複数の QR の値を項目にマッピングします。QR が 1 つでも解析に失敗すると、診断書全体を OCR 読み取りに切り替えます。</ins></td><td><ins class="change-added">开关旁 i 图标</ins></td></tr></tbody></table>
 <h4 class="subsection-heading" id="fig-liaj-連結読取-异常与边界">LIAJ 連結読取 · 异常与边界</h4>
 <table><thead><tr><th><ins class="change-added">场景</ins></th><th><ins class="change-added">条件</ins></th><th><ins class="change-added">用户提示 / 处理</ins></th></tr></thead><tbody><tr><td><ins class="change-added">写入值数不足</ins></td><td><ins class="change-added">切出来的写入值数不等于该账票已配置的字段数（字段表行数，A01 当前为 407）</ins></td><td><ins class="change-added">配置端不显示值数结论；执行时（Step5 test）开关 ON 却读到 OCR読取 即值数与字段数对不上，整份诊断书改走 OCR</ins></td></tr><tr><td><ins class="change-added">槽位未检出</ins></td><td><ins class="change-added">某个槽位解码失败、整串读不出内容，或解码结果里没有 <code>$</code></ins></td><td><ins class="change-added">该槽位的值不参与拼接，写入值数因此变少，整份诊断书改走 OCR</ins></td></tr><tr><td><ins class="change-added">段数相抵错位（已知限制）</ins></td><td><ins class="change-added">上游串里多出一个未转义分隔符、同时又少了一段，切出来的段数仍等于字段数</ins></td><td><ins class="change-added">已知限制：每个码里放什么字段是动态的，系统无法逐槽位核对内容，因此运行时识别不出这种错位 —— 值会整体错位写进字段表，不报错、也不改走 OCR。当前不做缓解（无重同步机制），由上游串的生成端保证；本项仅作风险登记，实现不动</ins></td></tr><tr><td><ins class="change-added">开关关闭</ins></td><td><ins class="change-added">複数 QR 読取 开关 OFF</ins></td><td><ins class="change-added">槽位条隐藏，显示「無効 — OCR のみで読取」；全部字段走 OCR</ins></td></tr><tr><td><ins class="change-added">重扫恢复</ins></td><td><ins class="change-added">发现对不上（Step5 里字段读取标签是 OCR読取）后点击 再スキャン</ins></td><td><ins class="change-added">重新扫描；能读全则字段读取标签回到 QR読取，恢复 QR 优先路径</ins></td></tr></tbody></table>
-<h4 class="subsection-heading" id="fig-step3-処理后处理职责">Step3 処理ルール（后处理职责）</h4>
+<h4 class="subsection-heading" id="fig-step3-処理ルール后处理职责">Step3 処理ルール（后处理职责）</h4>
 <p>与正常条件同表（テキスト読取 / テーブル情報読取 双 tab）。QR/OCR 写值均先经固定 処理ルール；后处理成功后，是否做正常条件比较见下方「运行时判定」（须 HITL=ON 且已勾选规则 6/7）。</p>
 <pre><code>Step2 プロンプト（提示词） → 写值 → 固定処理ルール →（确认路径按需）正常条件比较（均不调大模型）</code></pre>
 <ul><li>処理ルール 执行失败 → <code>ocrStatus=failed</code>，案件异常，不进 OCR 确认。</li><li>AIマッチング 仅推荐规则，不生成正常条件。</li><li>処理ルール 保留「QRコード」（及「バーコード」）：用于非诊断书等顶部单码账票。<del class="change-deleted">Step2 QR読取只扫描底部区域，扫不到顶部码；此类字段在 Step2 走 OCR 或未配底部 QR 映射时，可由 Step3 选 QRコード 规则做码值标准化/取值后处理。与 Step2 底部多码映射互补，不互相替代。</del><ins class="change-added">Step2 的 QR 連結読取只扫描底部区域，扫不到顶部码；此类顶部单码字段在 Step2 走 OCR，由 Step3 选 QRコード 规则做码值标准化/取值后处理；LIAJ 診断書模板的底部多码由 QR 連結読取 处理，不经 QRコード 规则。</ins></li></ul>
 <h4 class="subsection-heading" id="fig-step3-正常值范围">Step3 正常值范围</h4>
 <div class="figure-row figure-row--single">
 <figure class="screenshot-figure">
-  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step3-range.png?v=1790500218313" data-caption="账票类型 Step3 · 正常条件（字段读取 + 表格读取）">
-    <img src="assets/fixed-doc-step3-range.png?v=1790500218313" alt="账票类型 Step3 · 正常条件（字段读取 + 表格读取）" loading="lazy" />
+  <button type="button" class="screenshot-trigger" data-lightbox="prd-shots" data-index="0" data-src="assets/fixed-doc-step3-range.png?v=1790739542874" data-caption="账票类型 Step3 · 正常条件（字段读取 + 表格读取）">
+    <img src="assets/fixed-doc-step3-range.png?v=1790739542874" alt="账票类型 Step3 · 正常条件（字段读取 + 表格读取）" loading="lazy" />
   </button>
   <figcaption>账票类型 Step3 · 正常条件（字段读取 + 表格读取）</figcaption>
 </figure>

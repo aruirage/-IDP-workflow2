@@ -53,11 +53,14 @@ function sectionNumber(title) {
 }
 
 function subsectionSlug(title) {
+  // かな（ひらがな・カタカナ）も残す。以前は \u4e00-\u9fff だけだったため、
+  // 「範囲選択モード」のような見出しは モード が黙って落ち、prd-figures.json の
+  // アンカー key と一致せず図が無言で消えていた。
   return title
     .trim()
     .toLowerCase()
     .replace(/\s+/g, '-')
-    .replace(/[^\w\u4e00-\u9fff-]+/g, '')
+    .replace(/[^\w\u3040-\u30ff\u4e00-\u9fff-]+/g, '')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
 }

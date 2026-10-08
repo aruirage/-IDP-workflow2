@@ -48,3 +48,15 @@ test('生成的 PRD 预览引用每张登记截图', () => {
   const missing = figureFiles.filter((file) => !preview.includes(`assets/${file}`));
   assert.deepEqual(missing, [], `not referenced in prd-public/index.html: ${missing.join(', ')}`);
 });
+
+// anchor key 与 #### 标题的 slug 对不上时，图不会报错，只会静默消失。
+// 例：标题「範囲選択モード」曾在 slug 里被吃掉 モード（当时只保留汉字，丢片假名），
+// 结果 prd-figures.json 的 key 永远匹配不上。
+test('图目录的每个 anchor key 都能命中生成的 PRD 小节 id', () => {
+  const previewPath = join(root, 'prd-public', 'index.html');
+  if (!existsSync(previewPath)) return;
+  const preview = readFileSync(previewPath, 'utf8');
+  const keys = Object.keys(readFigures().anchors || {});
+  const missing = keys.filter((key) => !preview.includes(`id="fig-${key}"`));
+  assert.deepEqual(missing, [], `anchor key 与标题 slug 不一致（图会静默丢失）: ${missing.join(', ')}`);
+});

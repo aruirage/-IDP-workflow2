@@ -262,6 +262,61 @@ async function runCapture(page) {
         await sleep(400);
       },
     },
+    {
+      // 範囲選択モード：ノードを囲んで選び、選択枠の中を右クリック（複製 / 削除）。
+      // 旧「リセット」ボタン（開始ノード以外を一括削除）の置き換えであることが分かる 1 枚。
+      // 選択状態を残したまま撮るので、他のショットに影響しないようこの配列の最後に置く。
+      file: 'wf-selection-mode.png',
+      run: async () => {
+        await goWorkflowStep(page, 2);
+        await page.evaluate(`(() => {
+          const s = document.querySelector('#app')?.__vue_app__?._container?._vnode?.component?.setupState;
+          if (s && !s.wfSelectionMode) s.toggleWfSelectionMode();
+        })()`);
+        await sleep(400);
+        const bounds = await page.evaluate(`(() => {
+          const vp = document.querySelector('.idp-canvas-viewport')?.getBoundingClientRect();
+          const shells = [...document.querySelectorAll('.wf-node-shell[data-node-id]')];
+          if (!vp || !shells.length) return null;
+          let left = Infinity; let top = Infinity; let right = -Infinity; let bottom = -Infinity;
+          for (const el of shells) {
+            const b = el.getBoundingClientRect();
+            left = Math.min(left, b.left); top = Math.min(top, b.top);
+            right = Math.max(right, b.right); bottom = Math.max(bottom, b.bottom);
+          }
+          return {
+            vp: { left: vp.left, top: vp.top, right: vp.right, bottom: vp.bottom },
+            nodes: { left, top, right, bottom },
+          };
+        })()`);
+        if (!bounds) throw new Error('workflow nodes not found on canvas');
+        const from = {
+          x: Math.max(bounds.vp.left + 8, bounds.nodes.left - 40),
+          y: Math.max(bounds.vp.top + 8, bounds.nodes.top - 40),
+        };
+        const to = {
+          x: Math.min(bounds.vp.right - 8, bounds.nodes.right + 40),
+          y: Math.min(bounds.vp.bottom - 8, bounds.nodes.bottom + 40),
+        };
+        await page.mouse.move(from.x, from.y);
+        await page.mouse.down();
+        await page.mouse.move((from.x + to.x) / 2, (from.y + to.y) / 2, { steps: 6 });
+        await page.mouse.move(to.x, to.y, { steps: 6 });
+        await page.mouse.up();
+        await sleep(500);
+        // 選択枠の左下（ノードの無い余白帯）を右クリック → 複製 / 削除 メニュー。
+        // メニューがノードに重ならないよう、枠の内側でも必ず余白になる角を選ぶ。
+        const gap = await page.evaluate(`(() => {
+          const el = document.querySelector('.wf-selection-region');
+          if (!el) return null;
+          const b = el.getBoundingClientRect();
+          return { x: b.left + 6, y: b.bottom - 6 };
+        })()`);
+        if (!gap) throw new Error('selection region not found');
+        await page.mouse.click(gap.x, gap.y, { button: 'right' });
+        await sleep(500);
+      },
+    },
   ];
 
   for (const shot of shots) {
