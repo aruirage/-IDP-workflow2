@@ -306,8 +306,8 @@ Step1 上传 template → Step2 字段读取 · 複数 QR 読取 开关 ON → S
 | <ins class="change-added">按钮</ins> | <ins class="change-added">界面文案（日语）</ins> | <ins class="change-added">适用场景</ins> | <ins class="change-added">启用条件</ins> | <ins class="change-added">点击后</ins> |
 | -------- | -------- | ----------- | --------------------- | -------------------------------------------------------- |
 | <ins class="change-added">範囲選択モード</ins> | <ins class="change-added">範囲選択モード</ins> | <ins class="change-added">Step2 画布</ins> | <ins class="change-added">拓扑可编辑</ins> | <ins class="change-added">进入选择模式，按钮高亮；再点一次退出，回到編集モード</ins> |
-| <ins class="change-added">複製</ins> | <ins class="change-added">複製</ins> | <ins class="change-added">画布 · 右键菜单</ins> | <ins class="change-added">选中集合内有開始ノード以外的节点</ins> | <ins class="change-added">复制选中节点与节点之间的连接；副本相对原节点向右下偏移 48px，连续粘贴逐次累加</ins> |
-| <ins class="change-added">削除</ins> | <ins class="change-added">削除</ins> | <ins class="change-added">画布 · 右键菜单</ins> | <ins class="change-added">选中集合内有開始ノード以外的节点</ins> | <ins class="change-added">删除选中节点及与其相连的连接</ins> |
+| <ins class="change-added">複製</ins> | <ins class="change-added">複製</ins> | <ins class="change-added">範囲選択モード · 右键菜单</ins> | <ins class="change-added">选中集合内有開始ノード以外的节点</ins> | <ins class="change-added">复制选中节点与节点之间的连接；副本相对原节点向右下偏移 48px，连续粘贴逐次累加</ins> |
+| <ins class="change-added">削除</ins> | <ins class="change-added">削除</ins> | <ins class="change-added">範囲選択モード · 右键菜单</ins> | <ins class="change-added">选中集合内有開始ノード以外的节点</ins> | <ins class="change-added">删除选中节点及与其相连的连接</ins> |
 
 
 #### Step3 通知设置（本期增量）
@@ -339,8 +339,8 @@ Step1 上传 template → Step2 字段读取 · 複数 QR 読取 开关 ON → S
 | Step3 · 件名/正文未填   | 件名或正文为空                       | 保存报错（`件名を入力してください` / `内容を入力してください`）                    |
 | Step3 · 邮件投递失败    | 运行时邮件服务失败                     | 记日志；工作流继续（不阻断）                                         |
 | Step2 · 範囲選択モード：点击节点 | 点击任意节点                   | 只切换选中；不打开右侧编辑面板                                    |
-| Step2 · 画布：选中集合只含開始ノード | 右键 複製 或按 ⌘D              | 提示（`開始ノードは複製できません。`），不产生副本                         |
-| Step2 · 画布：选中集合只含開始ノード | 右键 削除 或按 ⌫               | 提示（`開始ノードは削除できません。`），节点保留                          |
+| Step2 · 範囲選択モード：选中集合只含開始ノード | 右键 複製 或按 ⌘D              | 提示（`開始ノードは複製できません。`），不产生副本                         |
+| Step2 · 範囲選択モード：选中集合只含開始ノード | 右键 削除 或按 ⌫               | 提示（`開始ノードは削除できません。`），节点保留                          |
 | Step2 · 範囲選択モード：选中框覆盖节点卡片 | 按卡片右上角的叉号（节点削除）           | 框内不响应，删除走右键菜单或 ⌫（＋ 连接手柄与连线 × 在该模式下不显示）               |
 | Step2 · 範囲選択モード：拓扑不可编辑 | 画布为只读                    | 範囲選択モード按钮不显示                                       |
 

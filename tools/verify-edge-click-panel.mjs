@@ -1,5 +1,5 @@
 // 验证：连线点击 → 打开「接続設定」面板；范围选择模式下的连线点击不再误触发框选；
-//       右键菜单不显示快捷键；只选中「開始」时删除给出日文提示。
+//       右键菜单为範囲選択モード専用（編集モードでは出ない）、不显示快捷键；只选中「開始」时删除给出日文提示。
 import { chromium } from 'playwright';
 
 const BASE = process.env.PREVIEW_URL || 'http://127.0.0.1:4175/';
@@ -123,9 +123,21 @@ await page.waitForTimeout(400);
 console.log('选择模式下从连线拖动: marquee =', marqueeActive);
 check('选择模式下从连线开始拖动 → 启动范围选择', marqueeActive === true, { marqueeActive });
 
-// ===== 3. 右键菜单文案（无快捷键） =====
+// ===== 3. 右键菜单は範囲選択モード専用（編集モードでは出さない） =====
+// 3a. 編集モードに戻す → 右クリックしてもメニューは出ない
 await page.click('.wf-canvas-select-tool');
 await page.waitForTimeout(250);
+check('編集モードに戻した', await page.evaluate(`(${SETUP}).wfSelectionMode`) === false, null);
+await page.mouse.click(target.x, target.y, { button: 'right' });
+await page.waitForTimeout(350);
+const menuOff = await page.evaluate(`!!document.querySelector('.wf-canvas-context-menu')`);
+console.log('編集モードで右クリック → メニュー:', menuOff);
+check('編集モードで右クリック → メニューが出ない', menuOff === false, { menuOff });
+
+// 3b. 範囲選択モードでは出る（文案は快捷键なし）
+await page.click('.wf-canvas-select-tool');
+await page.waitForTimeout(250);
+check('範囲選択モードに戻した', await page.evaluate(`(${SETUP}).wfSelectionMode`) === true, null);
 await page.mouse.click(target.x, target.y, { button: 'right' });
 await page.waitForTimeout(350);
 const menu = await page.evaluate(`(() => {
@@ -133,7 +145,7 @@ const menu = await page.evaluate(`(() => {
   return { visible: !!m, items: [...(m?.querySelectorAll('.wf-canvas-context-menu-item') || [])].map((b) => b.textContent.trim()) };
 })()`);
 console.log('右键菜单:', JSON.stringify(menu));
-check('右键菜单可见', menu.visible === true, menu);
+check('範囲選択モードで右クリック → メニューが出る', menu.visible === true, menu);
 check('菜单项为「複製」「削除」且不含快捷键', JSON.stringify(menu.items) === JSON.stringify(['複製', '削除']), menu.items);
 
 // ===== 4. 只选中「開始」时删除 → 日文提示 =====

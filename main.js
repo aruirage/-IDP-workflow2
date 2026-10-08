@@ -5360,19 +5360,34 @@ const appOptions = {
       wfCanvasContextMenu.visible = false;
     }
 
-    /** 右クリックメニュー。選択中のノード（無ければ右クリックしたノード）を対象にする。 */
+    /**
+     * 右クリックメニュー（範囲選択モード専用）。
+     * 編集モードでは削除はカード右上角の叉号、接続は連線の × が担当するので、
+     * 複製 / 削除 の右クリックメニューは出さない（＝両モードの操作入口を混ぜない）。
+     * 選択中のノード（無ければ右クリックしたノード）を対象にする。
+     */
     function openWfCanvasContextMenu(event) {
       if (!isWorkflowTopologyEditable.value) return;
+      if (!wfSelectionMode.value) {
+        closeWfCanvasContextMenu();
+        return;
+      }
       const viewport = wfCanvasViewportRef.value;
       if (!viewport) return;
       if (!getEditableSelectedWorkflowNodeIds().size) {
-        const nodeElement = event.target?.closest?.('.wf-node-shell[data-node-id]');
-        if (!nodeElement) {
-          closeWfCanvasContextMenu();
-          return;
+        // 選択集合が空なら、右クリックしたノードを対象にする。
+        // 「開始ノードだけ選択」のように編集可能ノードが 1 つも無い場合は、選択枠
+        // （pointer-events:auto）がノードを覆っていてヒットテストで下のノードを拾えないので、
+        // 選択集合をそのまま対象にしてメニューを出す（メニュー側が理由を提示する）。
+        if (!wfSelectedNodeIds.size) {
+          const nodeElement = event.target?.closest?.('.wf-node-shell[data-node-id]');
+          if (!nodeElement) {
+            closeWfCanvasContextMenu();
+            return;
+          }
+          wfSelectedNodeIds.clear();
+          wfSelectedNodeIds.add(nodeElement.dataset.nodeId);
         }
-        wfSelectedNodeIds.clear();
-        wfSelectedNodeIds.add(nodeElement.dataset.nodeId);
       }
       const viewportRect = viewport.getBoundingClientRect();
       const menuWidth = 148;
