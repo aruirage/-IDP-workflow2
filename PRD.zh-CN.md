@@ -262,52 +262,52 @@ Step1 上传 template → Step2 字段读取 · 複数 QR 読取 开关 ON → S
 
 #### Step2 範囲選択モード（本期增量）
 
-画布工具栏的「リセット」按钮（一键删除開始ノード以外的全部节点与连接）已移除，该位置改为範囲選択モード的切换按钮。批量删除不再由单个按钮一次完成，改为先框选、再删除；框选出的节点可在选中框内任意位置整组拖动，复制与删除走右键菜单或快捷键。
+<ins class="change-added">画布工具栏的「リセット」按钮（一键删除開始ノード以外的全部节点与连接）已移除，该位置改为範囲選択モード的切换按钮。批量删除不再由单个按钮一次完成，改为先框选、再删除；框选出的节点可在选中框内任意位置整组拖动，复制与删除走右键菜单或快捷键。</ins>
 
-画布编辑分「編集モード」（默认）与「範囲選択モード」两种操作模式。差别在于「能不能直接对单个节点与连线下手」：範囲選択モード 下，节点卡片与连线上那些直接操作的入口（＋ / × / 叉号 / 右侧编辑面板）会隐藏或被选中框挡住，操作改为先框选、再对选中集合整组执行，或者走工具栏：
+<ins class="change-added">画布编辑分「編集モード」（默认）与「範囲選択モード」两种操作模式。差别在于「能不能直接对单个节点与连线下手」：範囲選択モード 下，节点卡片与连线上那些直接操作的入口（＋ / × / 叉号 / 右侧编辑面板）会隐藏或被选中框挡住，操作改为先框选、再对选中集合整组执行，或者走工具栏：</ins>
 
-| 操作                         | 編集モード（默认）      | 範囲選択モード                                |
+| <ins class="change-added">操作</ins> | <ins class="change-added">編集モード（默认）</ins> | <ins class="change-added">範囲選択モード</ins> |
 | -------------------------- | --------------- | --------------------------------------- |
-| 点击节点                       | 打开右侧编辑面板，可直接改该节点设置 | 只切换选中，不打开编辑面板                           |
-| 卡片上的 ＋（ノード追加・接続）           | 显示，可点击或拖拽       | 隐藏                                      |
-| 连线上的 ×（接続削除）               | 显示，可点击          | 隐藏                                      |
-| 卡片右上角的叉号（节点削除）             | 显示，可直接点击        | 显示但被选中框覆盖，框内点击不响应                       |
-| 拖动节点                       | 移动该节点           | 移动当前选中整组；框内任意位置（含未选中的节点、节点之间的空隙与连线）都是整组拖动 |
-| 拖动画布空白                     | 平移画布            | 框选（不平移）；起点落在已有选中框内时改为整组拖动               |
-| 右键菜单 複製 / 削除               | 可用（作用于当前选中的单个节点） | 可用（作用于整个选中集合）                           |
-| 快捷键                        | 可用              | 可用                                      |
-| 工具栏（ノードを追加 / 元に戻す / 缩放 / 整列） | 可用              | 可用                                      |
+| <ins class="change-added">点击节点</ins> | <ins class="change-added">打开右侧编辑面板，可直接改该节点设置</ins> | <ins class="change-added">只切换选中，不打开编辑面板</ins> |
+| <ins class="change-added">卡片上的 ＋（ノード追加・接続）</ins> | <ins class="change-added">显示，可点击或拖拽</ins> | <ins class="change-added">隐藏</ins> |
+| <ins class="change-added">连线上的 ×（接続削除）</ins> | <ins class="change-added">显示，可点击</ins> | <ins class="change-added">隐藏</ins> |
+| <ins class="change-added">卡片右上角的叉号（节点削除）</ins> | <ins class="change-added">显示，可直接点击</ins> | <ins class="change-added">显示但被选中框覆盖，框内点击不响应</ins> |
+| <ins class="change-added">拖动节点</ins> | <ins class="change-added">移动该节点</ins> | <ins class="change-added">移动当前选中整组；框内任意位置（含未选中的节点、节点之间的空隙与连线）都是整组拖动</ins> |
+| <ins class="change-added">拖动画布空白</ins> | <ins class="change-added">平移画布</ins> | <ins class="change-added">框选（不平移）；起点落在已有选中框内时改为整组拖动</ins> |
+| <ins class="change-added">右键菜单 複製 / 削除</ins> | <ins class="change-added">无（删除走卡片右上角的叉号）</ins> | <ins class="change-added">可用（作用于整个选中集合）</ins> |
+| <ins class="change-added">快捷键</ins> | <ins class="change-added">可用</ins> | <ins class="change-added">可用</ins> |
+| <ins class="change-added">工具栏（ノードを追加 / 元に戻す / 缩放 / 整列）</ins> | <ins class="change-added">可用</ins> | <ins class="change-added">可用</ins> |
 
-也就是说，範囲選択モード 下无法编辑节点设置（不打开右侧编辑面板）、无法直接点卡片叉号或连线 × 删除、也无法从节点卡片上的 ＋ 拖出连接；能做的只有框选后整组拖动 / 複製 / 削除（右键菜单或快捷键），外加工具栏的「ノードを追加」。
+<ins class="change-added">也就是说，範囲選択モード 下无法编辑节点设置（不打开右侧编辑面板）、无法直接点卡片叉号或连线 × 删除、也无法从节点卡片上的 ＋ 拖出连接；能做的只有框选后整组拖动 / 複製 / 削除（右键菜单或快捷键），外加工具栏的「ノードを追加」。</ins>
 
-功能点：
+<ins class="change-added">功能点：</ins>
 
-1. 範囲選択モード开关：开启后画布进入选择模式，点击节点只切换选中、不打开右侧编辑面板；关闭后回到編集モード。
-2. 框选：在选择模式下于画布按住左键拖出矩形，节点卡片与矩形有任意重叠即被选中，不要求完全框住。
-3. 选中框：松开后以包围全部选中节点的矩形高亮——实线边框、直角、外扩一圈内边距。框内（含节点之间的空白与连线）都是拖动面，按住任意位置即可整组移动。
-4. 整组复制与删除：右键菜单提供 複製 与 削除；快捷键 ⌘C 复制、⌘V 粘贴、⌘D 复制副本、⌫（Delete）删除。删除会同时移除选中节点两端的连接。
-5. 開始ノード不参与复制与删除。
-6. 选择模式下点击空白处清空选中；按住 ⇧ 框选为追加选择。
+<ins class="change-added">1. 範囲選択モード开关：开启后画布进入选择模式，点击节点只切换选中、不打开右侧编辑面板；关闭后回到編集モード。</ins>
+<ins class="change-added">2. 框选：在选择模式下于画布按住左键拖出矩形，节点卡片与矩形有任意重叠即被选中，不要求完全框住。</ins>
+<ins class="change-added">3. 选中框：松开后以包围全部选中节点的矩形高亮——实线边框、直角、外扩一圈内边距。框内（含节点之间的空白与连线）都是拖动面，按住任意位置即可整组移动。</ins>
+<ins class="change-added">4. 整组复制与删除：右键菜单提供 複製 与 削除；快捷键 ⌘C 复制、⌘V 粘贴、⌘D 复制副本、⌫（Delete）删除。删除会同时移除选中节点两端的连接。</ins>
+<ins class="change-added">5. 開始ノード不参与复制与删除。</ins>
+<ins class="change-added">6. 选择模式下点击空白处清空选中；按住 ⇧ 框选为追加选择。</ins>
 
-画布快捷键（两种模式通用）：
+<ins class="change-added">画布快捷键（两种模式通用）：</ins>
 
-| 快捷键        | 动作                                   |
+| <ins class="change-added">快捷键</ins> | <ins class="change-added">动作</ins> |
 | ---------- | ------------------------------------ |
-| ⌘Z / ⇧⌘Z   | 元に戻す / やり直し                          |
-| ⌘C / ⌘V    | コピー / 貼り付け（选中节点及节点之间的连接一并复制）         |
-| ⌘D         | 複製（复制并立即粘贴出副本）                       |
-| ⌫ / Delete | 删除选中节点；无节点选中时删除选中的连接                 |
+| <ins class="change-added">⌘Z / ⇧⌘Z</ins> | <ins class="change-added">元に戻す / やり直し</ins> |
+| <ins class="change-added">⌘C / ⌘V</ins> | <ins class="change-added">コピー / 貼り付け（选中节点及节点之间的连接一并复制）</ins> |
+| <ins class="change-added">⌘D</ins> | <ins class="change-added">複製（复制并立即粘贴出副本）</ins> |
+| <ins class="change-added">⌫ / Delete</ins> | <ins class="change-added">删除选中节点；无节点选中时删除选中的连接</ins> |
 
-以上增删改操作都会写入画布工具栏的「変更履歴」，按 ノード構成を変更 / ノード位置を変更 / 接続を変更 / ノード設定を編集 四类归档；履歴仅在本画面打开期间保留。
+<ins class="change-added">以上增删改操作都会写入画布工具栏的「変更履歴」，按 ノード構成を変更 / ノード位置を変更 / 接続を変更 / ノード設定を編集 四类归档；履歴仅在本画面打开期间保留。</ins>
 
-页面与入口：业务场景设置 Step2 工作流画布；入口为画布工具栏最右的範囲選択モード按钮，拓扑不可编辑时不显示。
+<ins class="change-added">页面与入口：业务场景设置 Step2 工作流画布；入口为画布工具栏最右的範囲選択モード按钮，拓扑不可编辑时不显示。</ins>
 
 
-| 按钮       | 界面文案（日语） | 适用场景        | 启用条件                  | 点击后                                                      |
+| <ins class="change-added">按钮</ins> | <ins class="change-added">界面文案（日语）</ins> | <ins class="change-added">适用场景</ins> | <ins class="change-added">启用条件</ins> | <ins class="change-added">点击后</ins> |
 | -------- | -------- | ----------- | --------------------- | -------------------------------------------------------- |
-| 範囲選択モード  | 範囲選択モード  | Step2 画布    | 拓扑可编辑                 | 进入选择模式，按钮高亮；再点一次退出，回到編集モード                             |
-| 複製       | 複製       | 画布 · 右键菜单   | 选中集合内有開始ノード以外的节点      | 复制选中节点与节点之间的连接；副本相对原节点向右下偏移 48px，连续粘贴逐次累加                |
-| 削除       | 削除       | 画布 · 右键菜单   | 选中集合内有開始ノード以外的节点      | 删除选中节点及与其相连的连接                                           |
+| <ins class="change-added">範囲選択モード</ins> | <ins class="change-added">範囲選択モード</ins> | <ins class="change-added">Step2 画布</ins> | <ins class="change-added">拓扑可编辑</ins> | <ins class="change-added">进入选择模式，按钮高亮；再点一次退出，回到編集モード</ins> |
+| <ins class="change-added">複製</ins> | <ins class="change-added">複製</ins> | <ins class="change-added">画布 · 右键菜单</ins> | <ins class="change-added">选中集合内有開始ノード以外的节点</ins> | <ins class="change-added">复制选中节点与节点之间的连接；副本相对原节点向右下偏移 48px，连续粘贴逐次累加</ins> |
+| <ins class="change-added">削除</ins> | <ins class="change-added">削除</ins> | <ins class="change-added">画布 · 右键菜单</ins> | <ins class="change-added">选中集合内有開始ノード以外的节点</ins> | <ins class="change-added">删除选中节点及与其相连的连接</ins> |
 
 
 #### Step3 通知设置（本期增量）
