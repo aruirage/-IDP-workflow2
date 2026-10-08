@@ -1962,6 +1962,7 @@ const NOTIFY_CHANNELS = [
 const NOTIFY_RECIPIENT_OPTIONS = [
   { value: 'operator', label: '操作員' },
   { value: 'operation_admin', label: '操作管理者' },
+  { value: 'admin', label: '管理者' },
 ];
 
 const NOTIFY_TEMPLATE_VAR_REFS = {

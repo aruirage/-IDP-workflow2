@@ -331,6 +331,7 @@ const HITL_ROLE_OPTIONS = [
   { value: 'case_owner', label: '担当者', hint: '案件に割り当てられた担当者へタスクを割り当て' },
   { value: 'operator', label: '操作員', hint: '通常の確認・修正作業を担当' },
   { value: 'operation_admin', label: '操作管理者', hint: '運用管理・例外確認を担当' },
+  { value: 'admin', label: '管理者', hint: 'テナント全体を管理。全案件の確認・修正を担当' },
 ];
 const HITL_GATE_ROLE_OPTIONS = HITL_ROLE_OPTIONS.filter((item) => item.value !== 'case_owner');
 

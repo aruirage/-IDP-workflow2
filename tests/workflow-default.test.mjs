@@ -629,6 +629,14 @@ test('places workflow reset at the end of the canvas history toolbar', async () 
   assert.match(main, /ElementPlus\.ElMessageBox\.confirm\('開始ノード以外のすべてのノードと接続を削除します。続行しますか？'/);
 });
 
+test('offers admin as a hitl node role and a notification recipient', async () => {
+  const mockData = await readFile(new URL('../scripts/mock-data.js', import.meta.url), 'utf8');
+  const core = await readFile(new URL('../scripts/workflow-core.js', import.meta.url), 'utf8');
+
+  assert.match(mockData, /const HITL_ROLE_OPTIONS = \[[\s\S]*\{ value: 'admin', label: '管理者'/);
+  assert.match(core, /const NOTIFY_RECIPIENT_OPTIONS = \[[\s\S]*\{ value: 'admin', label: '管理者' \}/);
+});
+
 test('uses four ordered workflow canvas view controls', async () => {
   const index = await readFile(new URL('../index.html', import.meta.url), 'utf8').then((t) => t.replace(/ data-page-node-id="[^"]*"/g, ''));
   const toolbarStart = index.indexOf('class="wf-canvas-floating-actions wf-canvas-view-actions"');
