@@ -148,6 +148,9 @@ async function openFixedDocReadTab(page) {
 }
 
 async function runCapture(page) {
+// 外部フォントは検証に不要。環境によっては Chrome 側で応答が返らず networkidle が
+// 永久に来なくなり goto がタイムアウトする。先に遮断しておく。
+  await page.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForSelector('.app-shell', { timeout: 60000 });
   await sleep(1000);

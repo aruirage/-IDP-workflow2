@@ -28,6 +28,7 @@ try {
 }
 await mkdir('public/scripts', { recursive: true });
 await mkdir('public/assets', { recursive: true });
+await mkdir('public/vendor', { recursive: true });
 
 for (const file of files) {
   await cp(file, `public/${file}`);
@@ -44,4 +45,8 @@ try {
   await cp('assets', 'public/assets', { recursive: true });
 } catch {
 }
+// Vue / Element Plus を unpkg から読むと合計 1.7MB・十数秒かかり、回線次第で
+// ERR_CONNECTION_CLOSED になってアプリが丸ごと起動しなくなる。vendor/ に同梱して配る。
+await cp('vendor', 'public/vendor', { recursive: true });
+
 await cp('tools/_headers', 'public/_headers');

@@ -27,6 +27,9 @@ const errors = [];
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
 
+// 外部フォントは検証に不要。環境によっては Chrome 側で応答が返らず networkidle が
+// 永久に来なくなり goto がタイムアウトする。先に遮断しておく。
+await page.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
 await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.waitForTimeout(900);
 await page.evaluate(`(() => { const s = ${SETUP}; s.currentModule = 'case-workflow'; s.workflowSetupStep = 2; })()`);

@@ -410,7 +410,7 @@ test('keeps draft and published workflow history separate', async () => {
   assert.match(main, /function switchWorkflowVersionView\(versionId = ''\)[\s\S]*if \(!draftVersionBuffer\)[\s\S]*draftVersionBuffer\.scene\.publishStatus = 'draft';/);
   assert.match(index, /class="wf-version-history-btn" title="バージョン履歴"/);
   assert.match(index, /<el-icon class="wf-version-history-icon"><clock \/><\/el-icon>/);
-  assert.match(index, /@element-plus\/icons-vue@2\.3\.1\/dist\/index\.iife\.min\.js/);
+  assert.match(index, /vendor\/element-plus-icons-vue-2\.3\.1\.iife\.min\.js/);
   assert.match(main, /app\.component\('Clock', ElementPlusIconsVue\.Clock\);/);
   assert.doesNotMatch(index, /<span>バージョン履歴<\/span>/);
   assert.match(index, />現在の下書き</);

@@ -9,8 +9,22 @@
   <title>NeosAI IDP Universe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/element-plus@2.9.1/dist/index.css" />
+  <!-- Google Fonts は非同期で読む。media="print" で初回描画をブロックさせず、
+       読み終わったら onload で media を all に戻す。回線が詰まって応答が返らない
+       場合でも、後続の <script>（Vue / Element Plus / main.js）が実行される。 -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </noscript>
+  <link rel="stylesheet" href="vendor/element-plus-2.9.1.css" />
   <link rel="stylesheet" href="style.css?v=704" />
   <style>[v-cloak] { display: none !important; }</style>
 </head>
@@ -4081,9 +4095,9 @@
 
   <script>
   </script>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <script src="https://unpkg.com/element-plus@2.9.1/dist/index.full.min.js"></script>
-  <script src="https://unpkg.com/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+  <script src="vendor/vue-3.5.43.global.prod.js"></script>
+  <script src="vendor/element-plus-2.9.1.full.min.js"></script>
+  <script src="vendor/element-plus-icons-vue-2.3.1.iife.min.js"></script>
   <script src="scripts/workflow-core.js?v=687"></script>
   <script src="scripts/mock-data.js?v=728"></script>
   <script src="scripts/scene-config.js?v=680"></script>

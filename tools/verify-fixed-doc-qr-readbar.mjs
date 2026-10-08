@@ -105,6 +105,9 @@ const check = (name, cond, detail) => {
   console.log(`${cond ? 'ok  ' : 'FAIL'} ${name}${cond ? '' : ` :: ${JSON.stringify(detail)}`}`);
 };
 
+// 外部フォントは検証に不要。環境によっては Chrome 側で応答が返らず networkidle が
+// 永久に来なくなり goto がタイムアウトする。先に遮断しておく。
+await page.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
 await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.waitForTimeout(900);
 

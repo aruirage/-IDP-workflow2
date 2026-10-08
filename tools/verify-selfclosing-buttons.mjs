@@ -9,6 +9,9 @@ import fs from 'node:fs';
 const BASE = process.env.PREVIEW_URL || 'http://127.0.0.1:4175/';
 const browser = await chromium.launch({ channel: 'chrome' });
 const page = await browser.newPage({ viewport: { width: 1680, height: 1000 } });
+// 外部フォントは検証に不要。環境によっては Chrome 側で応答が返らず networkidle が
+// 永久に来なくなり goto がタイムアウトする。先に遮断しておく。
+await page.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
 await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.waitForSelector('#app', { timeout: 10000 });
 
