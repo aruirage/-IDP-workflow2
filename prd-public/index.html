@@ -6,7 +6,20 @@
   <title>NeosAI IDP — PRD 评审稿</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Google Fonts は非同期で読む。media="print" で初回描画をブロックさせず、読み終わったら
+       onload で media を all に戻す。応答が返らない回線でもページ本体は表示される。 -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </noscript>
   <style>
     :root {
       --sidebar-w: 280px;
@@ -195,6 +208,13 @@
       border-radius: 8px;
       overflow: auto;
     }
+    .mermaid-unavailable .mermaid {
+      white-space: pre;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #475467;
+    }
     .paper hr {
       border: none;
       border-top: 1px solid var(--border);
@@ -379,7 +399,7 @@
       </div>
     </aside>
     <main class="main">
-      <div class="main__meta">由 PRD.zh-CN.md 生成 · 2026/10/8 14:46:35</div>
+      <div class="main__meta">由 PRD.zh-CN.md 生成 · 2026/10/8 14:58:38</div>
       <article class="paper">
 <h1>NeosAI 日本保险 IDP — 产品需求文档</h1>
 <p>本稿表记：<mark class="change-modified">黄色＝修改</mark>、<ins class="change-added">蓝色＝新增</ins>、<del class="change-deleted">红色＝删除</del>。</p>
@@ -752,15 +772,27 @@
       </article>
     </main>
   </div>
-  <script type="module">
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: 'neutral',
-      securityLevel: 'loose',
-      flowchart: { htmlLabels: true, curve: 'basis' }
-    });
-    await mermaid.run({ querySelector: '.mermaid' });
+  <script src="vendor/mermaid-10.9.8.min.js"></script>
+  <script>
+    (function () {
+      const blocks = document.querySelectorAll('.mermaid');
+      if (!blocks.length) return;
+      // ローカルの mermaid が読めなかった場合は生ソースをコードブロックとして見せる
+      if (!window.mermaid) {
+        document.documentElement.classList.add('mermaid-unavailable');
+        return;
+      }
+      window.mermaid.initialize({
+        startOnLoad: false,
+        theme: 'neutral',
+        securityLevel: 'loose',
+        flowchart: { htmlLabels: true, curve: 'basis' }
+      });
+      window.mermaid.run({ querySelector: '.mermaid' }).catch(function (error) {
+        console.error('[PRD] mermaid render failed:', error);
+        document.documentElement.classList.add('mermaid-unavailable');
+      });
+    })();
   </script>
   <div id="prdLightbox" class="lightbox" aria-hidden="true">
     <button type="button" class="lightbox-close" data-lightbox-close aria-label="关闭">×</button>

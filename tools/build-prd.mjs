@@ -9,6 +9,9 @@ const HEADERS_PATH = path.join(ROOT, 'tools', '_headers');
 const FIGURES_PATH = path.join(ROOT, 'tools', 'prd-figures.json');
 const PRD_SCREENSHOTS_DIR = path.join(ROOT, 'assets', 'prd-screenshots');
 const ASSETS_DIR = path.join(OUT_DIR, 'assets');
+// PRD 専用のローカル依存（原型の vendor/ とは別。public/ には配らない）
+const PRD_VENDOR_DIR = path.join(ROOT, 'prd-vendor');
+const VENDOR_DIR = path.join(OUT_DIR, 'vendor');
 
 /** filename → mtimeMs，用于 img src 缓存破坏 */
 const assetVersions = new Map();
@@ -600,6 +603,13 @@ const STYLES = `
       border-radius: 8px;
       overflow: auto;
     }
+    .mermaid-unavailable .mermaid {
+      white-space: pre;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #475467;
+    }
     .paper hr {
       border: none;
       border-top: 1px solid var(--border);
@@ -776,7 +786,20 @@ function buildHtml(md, figuresConfig) {
   <title>NeosAI IDP — PRD 评审稿</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Google Fonts は非同期で読む。media="print" で初回描画をブロックさせず、読み終わったら
+       onload で media を all に戻す。応答が返らない回線でもページ本体は表示される。 -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </noscript>
   <style>${STYLES}
   </style>
 </head>
@@ -793,15 +816,27 @@ ${content}
       </article>
     </main>
   </div>
-  <script type="module">
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: 'neutral',
-      securityLevel: 'loose',
-      flowchart: { htmlLabels: true, curve: 'basis' }
-    });
-    await mermaid.run({ querySelector: '.mermaid' });
+  <script src="vendor/mermaid-10.9.8.min.js"></script>
+  <script>
+    (function () {
+      const blocks = document.querySelectorAll('.mermaid');
+      if (!blocks.length) return;
+      // ローカルの mermaid が読めなかった場合は生ソースをコードブロックとして見せる
+      if (!window.mermaid) {
+        document.documentElement.classList.add('mermaid-unavailable');
+        return;
+      }
+      window.mermaid.initialize({
+        startOnLoad: false,
+        theme: 'neutral',
+        securityLevel: 'loose',
+        flowchart: { htmlLabels: true, curve: 'basis' }
+      });
+      window.mermaid.run({ querySelector: '.mermaid' }).catch(function (error) {
+        console.error('[PRD] mermaid render failed:', error);
+        document.documentElement.classList.add('mermaid-unavailable');
+      });
+    })();
   </script>
   <div id="prdLightbox" class="lightbox" aria-hidden="true">
     <button type="button" class="lightbox-close" data-lightbox-close aria-label="关闭">×</button>
@@ -911,10 +946,31 @@ async function syncPrdScreenshotAssets(figuresConfig) {
   }
 }
 
+/**
+ * prd-vendor/ を prd-public/vendor/ に同期する。
+ * mermaid は CDN から ESM を動的 import していたが、回線が詰まると図が
+ * まるごと描画されない（＝PRD のフロー図が黙って消える）ためローカル化した。
+ */
+async function syncPrdVendor() {
+  let files = [];
+  try {
+    files = await readdir(PRD_VENDOR_DIR);
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+    console.warn('prd-vendor/ が見つかりません。mermaid は描画されません。');
+    return;
+  }
+  await mkdir(VENDOR_DIR, { recursive: true });
+  for (const file of files) {
+    await copyFile(path.join(PRD_VENDOR_DIR, file), path.join(VENDOR_DIR, file));
+  }
+}
+
 const md = await readFile(MD_PATH, 'utf8');
 const figuresConfig = await loadFiguresConfig();
 await mkdir(OUT_DIR, { recursive: true });
 await syncPrdScreenshotAssets(figuresConfig);
+await syncPrdVendor();
 await writeFile(OUT_PATH, buildHtml(md, figuresConfig), 'utf8');
 await copyFile(HEADERS_PATH, path.join(OUT_DIR, '_headers'));
 console.log(`PRD site written to ${OUT_PATH}`);
