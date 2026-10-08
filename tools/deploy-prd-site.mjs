@@ -9,6 +9,7 @@ import { execSync } from 'node:child_process';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const PRD_PUBLIC = path.join(ROOT, 'prd-public');
+const PRD_VENDOR = path.join(PRD_PUBLIC, 'vendor');
 const REPO_URL = 'git@github.com:aruirage/idp-ph2-prd.git';
 const DEPLOY_DIR = path.join(ROOT, '.deploy-idp-ph2-prd');
 
@@ -25,6 +26,11 @@ const VERCEL_JSON = {
     },
     {
       source: '/assets/(.*)',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+    },
+    {
+      // ファイル名にバージョンが入っているので immutable でよい
+      source: '/vendor/(.*)',
       headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
     },
   ],
@@ -61,6 +67,14 @@ try {
 await cp(path.join(PRD_PUBLIC, 'index.html'), path.join(DEPLOY_DIR, 'index.html'));
 await rm(path.join(DEPLOY_DIR, 'assets'), { recursive: true, force: true });
 await cp(path.join(PRD_PUBLIC, 'assets'), path.join(DEPLOY_DIR, 'assets'), { recursive: true });
+// vendor/ を忘れると公開サイトで mermaid が 404 になり、フロー図がコードブロックに落ちる。
+await rm(path.join(DEPLOY_DIR, 'vendor'), { recursive: true, force: true });
+try {
+  await cp(PRD_VENDOR, path.join(DEPLOY_DIR, 'vendor'), { recursive: true });
+} catch (error) {
+  if (error?.code !== 'ENOENT') throw error;
+  console.warn('prd-public/vendor/ が無いため vendor を配布できません（mermaid が 404 になります）');
+}
 await writeFile(path.join(DEPLOY_DIR, 'vercel.json'), `${JSON.stringify(VERCEL_JSON, null, 2)}\n`);
 await writeFile(path.join(DEPLOY_DIR, 'README.md'), README);
 
