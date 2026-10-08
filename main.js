@@ -4367,17 +4367,20 @@ const appOptions = {
       wfHistoryIndex.value = 0;
     }
 
+    /**
+     * 履歴スナップショットのノードを、今のノードと突き合わせて復元する。
+     * **スナップショットにあるフィールドは必ずスナップショットの値で上書きする。**
+     * ここで現在値を優先すると、条件・閾値・通知・OCR 設定といったノード設定が
+     * 復元されず、「履歴をクリックしても何も戻らない」ように見える。
+     * 現在値から拾うのは、スナップショットに存在しないフィールド（UI 用の一時状態など）だけ。
+     */
     function mergeWorkflowNodeForCanvasRestore(restoredNode, currentNode) {
-      if (!currentNode || currentNode.type !== restoredNode.type) return restoredNode;
-      return {
-        ...cloneJson(currentNode),
-        id: restoredNode.id,
-        type: restoredNode.type,
-        label: restoredNode.label,
-        x: restoredNode.x,
-        y: restoredNode.y,
-        isStart: restoredNode.isStart,
-      };
+      if (!currentNode) return restoredNode;
+      const merged = { ...restoredNode };
+      for (const key of Object.keys(currentNode)) {
+        if (!(key in merged)) merged[key] = currentNode[key];
+      }
+      return merged;
     }
 
     function restoreWorkflowSnapshot(snapshot) {
@@ -4410,6 +4413,7 @@ const appOptions = {
         text.includes('ノードを追加')
         || text.includes('ノードを挿入')
         || text.includes('ノードを削除')
+        || text.includes('貼り付け')   // 選択ノードを貼り付け = ノードが増えるので構成変更に寄せる
         || text.includes('開始ノードを挿入')
         || text.includes('終了ノードを挿入')
       ) return 'ノード構成を変更';

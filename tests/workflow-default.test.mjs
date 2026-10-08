@@ -740,3 +740,16 @@ test('explains the publishable status beside every workflow status badge', async
   assert.equal((index.match(/class="wf-publish-help"/g) || []).length, 4);
   assert.match(style, /\.wf-publish-help\s*\{[^}]*cursor:\s*help;/s);
 });
+
+test('restores node settings as well as layout from the change history', async () => {
+  const main = await readFile(new URL('../main.js', import.meta.url), 'utf8');
+
+  // 履歴スナップショットのノードは「スナップショット側の値」で復元する。
+  // 現在値で上書きすると条件・閾値・通知などのノード設定が戻らず、
+  // 「履歴をクリックしても何も戻らない」ように見える（実機で再現済み）。
+  assert.match(main, /function mergeWorkflowNodeForCanvasRestore\(restoredNode, currentNode\)[\s\S]*const merged = \{ \.\.\.restoredNode \};/);
+  assert.match(main, /const merged = \{ \.\.\.restoredNode \};[\s\S]*if \(!\(key in merged\)\) merged\[key\] = currentNode\[key\];/);
+  assert.doesNotMatch(main, /\.\.\.cloneJson\(currentNode\),\s*\n\s*id: restoredNode\.id,/);
+  assert.match(main, /function restoreWorkflowSnapshot\(snapshot\)[\s\S]*wf\.nodes = normalized\.nodes\.map\([\s\S]*mergeWorkflowNodeForCanvasRestore/);
+  assert.match(main, /function restoreWorkflowHistoryEntry\(index\)[\s\S]*restoreWorkflowSnapshot\(wfHistoryTimeline\.value\[index\]\.workflow\)/);
+});
