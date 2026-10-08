@@ -4,7 +4,7 @@
     "step1-分类设定": [
       {
         "file": "fixed-doc-step1-classification-threshold.png",
-        "caption": "账票类型 Step1 · 分類信頼度閾値（案件集约时的画像分类置信度）"
+        "caption": "账票类型 Step1 · 帳票分類信頼度閾値（案件集约时的画像分类置信度）"
       }
     ],
     "step2-脱敏列": [
